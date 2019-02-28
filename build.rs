@@ -1,9 +1,23 @@
 extern crate autocfg;
+extern crate rustc_version;
 
 use std::env;
 
 fn main() {
     let ac = autocfg::new();
+    if probe("fn main() { 0i128; }") {
+        println!("cargo:rustc-cfg=has_i128");
+    } else if env::var_os("CARGO_FEATURE_I128").is_some() {
+        panic!("i128 support was not detected!");
+    }
+
+    match rustc_version::version() {
+        Ok(ref version) if version.major >= 1 && version.minor >= 32 => {
+            println!("cargo:rustc-cfg=int_to_from_bytes");
+        }
+        _ => {}
+    }
+}
 
     // If the "i128" feature is explicity requested, don't bother probing for it.
     // It will still cause a build error if that was set improperly.
