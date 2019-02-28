@@ -11,9 +11,15 @@ fn main() {
         panic!("i128 support was not detected!");
     }
 
-    match rustc_version::version() {
-        Ok(ref version) if version.major >= 1 && version.minor >= 32 => {
+    match rustc_version::version_meta() {
+        Ok(ref meta) if meta.semver.major >= 1 && meta.semver.minor >= 32 => {
             println!("cargo:rustc-cfg=int_to_from_bytes");
+        }
+        Ok(ref meta)
+            if env::var_os("CARGO_FEATURE_INT_TO_FROM_BYTES").is_some()
+                && meta.channel == rustc_version::Channel::Stable =>
+        {
+            panic!("`int_to_from_bytes` support was not stabilizations!");
         }
         _ => {}
     }
