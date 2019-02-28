@@ -1,3 +1,4 @@
+use core::mem::size_of;
 use core::ops::{BitAnd, BitOr, BitXor, Not, Shl, Shr};
 
 use bounds::Bounded;
@@ -31,6 +32,12 @@ use {Num, NumCast};
 /// This trait and many of the method names originate in the unstable `core::num::Int` trait from
 /// the rust standard library. The original trait was never stabilized and thus removed from the
 /// standard library.
+
+pub trait Layout {
+    /// The type representation as a byte array.
+    type Bytes;
+}
+
 pub trait PrimInt:
     Sized
     + Copy
@@ -51,6 +58,7 @@ pub trait PrimInt:
     + CheckedMul<Output = Self>
     + CheckedDiv<Output = Self>
     + Saturating
+    + Layout
 {
     /// Returns the number of ones in the binary representation of `self`.
     ///
@@ -356,6 +364,98 @@ pub trait PrimInt:
     /// assert_eq!(2i32.pow(4), 16);
     /// ```
     fn pow(self, exp: u32) -> Self;
+
+    /// Return the memory representation of this integer as a byte array in big-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_traits::PrimInt;
+    ///
+    /// let bytes = 0x12345678u32.to_be_bytes();
+    /// assert_eq!(bytes, [0x12, 0x34, 0x56, 0x78]);
+    /// ```
+    fn to_be_bytes(self) -> Self::Bytes;
+
+    /// Return the memory representation of this integer as a byte array in little-endian byte order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_traits::PrimInt;
+    ///
+    /// let bytes = 0x12345678u32.to_le_bytes();
+    /// assert_eq!(bytes, [0x78, 0x56, 0x34, 0x12]);
+    /// ```
+    fn to_le_bytes(self) -> Self::Bytes;
+
+    /// Return the memory representation of this integer as a byte array in native byte order.
+    ///
+    /// As the target platform's native endianness is used,
+    /// portable code should use [`to_be_bytes`] or [`to_le_bytes`], as appropriate, instead.
+    ///
+    /// [`to_be_bytes`]: #method.to_be_bytes
+    /// [`to_le_bytes`]: #method.to_le_bytes
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_traits::PrimInt;
+    ///
+    /// let bytes = 0x12345678u32.to_ne_bytes();
+    /// assert_eq!(bytes, if cfg!(target_endian = "big") {
+    ///     [0x12, 0x34, 0x56, 0x78]
+    /// } else {
+    ///     [0x78, 0x56, 0x34, 0x12]
+    /// });
+    /// ```
+    fn to_ne_bytes(self) -> Self::Bytes;
+
+    /// Create an integer value from its representation as a byte array in big endian.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_traits::PrimInt;
+    ///
+    /// let value = u32::from_be_bytes([0x12, 0x34, 0x56, 0x78]);
+    /// assert_eq!(value, 0x12345678);
+    /// ```
+    fn from_be_bytes(bytes: Self::Bytes) -> Self;
+
+    /// Create an integer value from its representation as a byte array in little endian.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_traits::PrimInt;
+    ///
+    /// let value = u32::from_le_bytes([0x78, 0x56, 0x34, 0x12]);
+    /// assert_eq!(value, 0x12345678);
+    /// ```
+    fn from_le_bytes(bytes: Self::Bytes) -> Self;
+
+    /// Create an integer value from its memory representation as a byte array in native endianness.
+    ///
+    /// As the target platform's native endianness is used,
+    /// portable code likely wants to use [`from_be_bytes`] or [`from_le_bytes`], as appropriate instead.
+    ///
+    /// [`from_be_bytes`]: #method.from_be_bytes
+    /// [`from_le_bytes`]: #method.from_le_bytes
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use num_traits::PrimInt;
+    ///
+    /// let value = u32::from_ne_bytes(if cfg!(target_endian = "big") {
+    ///     [0x12, 0x34, 0x56, 0x78]
+    /// } else {
+    ///     [0x78, 0x56, 0x34, 0x12]
+    /// });
+    /// assert_eq!(value, 0x12345678);
+    /// ```
+    fn from_ne_bytes(bytes: Self::Bytes) -> Self;
 }
 
 fn one_per_byte<P: PrimInt>() -> P {
@@ -491,6 +591,40 @@ macro_rules! prim_int_impl {
             fn pow(self, exp: u32) -> Self {
                 <$T>::pow(self, exp)
             }
+
+            #[inline]
+            fn to_be_bytes(self) -> Self::Bytes {
+                <$T>::to_be_bytes(self)
+            }
+
+            #[inline]
+            fn to_le_bytes(self) -> Self::Bytes {
+                <$T>::to_le_bytes(self)
+            }
+
+            #[inline]
+            fn to_ne_bytes(self) -> Self::Bytes {
+                <$T>::to_ne_bytes(self)
+            }
+
+            #[inline]
+            fn from_be_bytes(bytes: Self::Bytes) -> Self {
+                <$T>::from_be_bytes(bytes)
+            }
+
+            #[inline]
+            fn from_le_bytes(bytes: Self::Bytes) -> Self {
+                <$T>::from_le_bytes(bytes)
+            }
+
+            #[inline]
+            fn from_ne_bytes(bytes: Self::Bytes) -> Self {
+                <$T>::from_ne_bytes(bytes)
+            }
+        }
+
+        impl Layout for $T {
+            type Bytes = [u8; size_of::<$T>()];
         }
     };
 }

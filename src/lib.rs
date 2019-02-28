@@ -36,7 +36,7 @@ pub use float::FloatConst;
 // pub use real::{FloatCore, Real}; // NOTE: Don't do this, it breaks `use num_traits::*;`.
 pub use cast::{cast, AsPrimitive, FromPrimitive, NumCast, ToPrimitive};
 pub use identities::{one, zero, One, Zero};
-pub use int::PrimInt;
+pub use int::{Layout, PrimInt};
 pub use ops::checked::{
     CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedShl, CheckedShr, CheckedSub,
 };
