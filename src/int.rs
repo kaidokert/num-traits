@@ -2,6 +2,7 @@ use core::mem::transmute;
 use core::ops::{BitAnd, BitOr, BitXor, Not, Shl, Shr};
 
 use bounds::Bounded;
+use ops::bytes::IntToFromBytes;
 use ops::checked::*;
 use ops::saturating::Saturating;
 use {Num, NumCast};
@@ -58,7 +59,7 @@ pub trait PrimInt:
     + CheckedMul<Output = Self>
     + CheckedDiv<Output = Self>
     + Saturating
-    + Layout
+    + IntToFromBytes
 {
     /// Returns the number of ones in the binary representation of `self`.
     ///
@@ -364,98 +365,6 @@ pub trait PrimInt:
     /// assert_eq!(2i32.pow(4), 16);
     /// ```
     fn pow(self, exp: u32) -> Self;
-
-    /// Return the memory representation of this integer as a byte array in big-endian byte order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_traits::PrimInt;
-    ///
-    /// let bytes = 0x12345678u32.to_be_bytes();
-    /// assert_eq!(bytes, [0x12, 0x34, 0x56, 0x78]);
-    /// ```
-    fn to_be_bytes(self) -> Self::Bytes;
-
-    /// Return the memory representation of this integer as a byte array in little-endian byte order.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_traits::PrimInt;
-    ///
-    /// let bytes = 0x12345678u32.to_le_bytes();
-    /// assert_eq!(bytes, [0x78, 0x56, 0x34, 0x12]);
-    /// ```
-    fn to_le_bytes(self) -> Self::Bytes;
-
-    /// Return the memory representation of this integer as a byte array in native byte order.
-    ///
-    /// As the target platform's native endianness is used,
-    /// portable code should use [`to_be_bytes`] or [`to_le_bytes`], as appropriate, instead.
-    ///
-    /// [`to_be_bytes`]: #method.to_be_bytes
-    /// [`to_le_bytes`]: #method.to_le_bytes
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_traits::PrimInt;
-    ///
-    /// let bytes = 0x12345678u32.to_ne_bytes();
-    /// assert_eq!(bytes, if cfg!(target_endian = "big") {
-    ///     [0x12, 0x34, 0x56, 0x78]
-    /// } else {
-    ///     [0x78, 0x56, 0x34, 0x12]
-    /// });
-    /// ```
-    fn to_ne_bytes(self) -> Self::Bytes;
-
-    /// Create an integer value from its representation as a byte array in big endian.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_traits::PrimInt;
-    ///
-    /// let value = u32::from_be_bytes([0x12, 0x34, 0x56, 0x78]);
-    /// assert_eq!(value, 0x12345678);
-    /// ```
-    fn from_be_bytes(bytes: Self::Bytes) -> Self;
-
-    /// Create an integer value from its representation as a byte array in little endian.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_traits::PrimInt;
-    ///
-    /// let value = u32::from_le_bytes([0x78, 0x56, 0x34, 0x12]);
-    /// assert_eq!(value, 0x12345678);
-    /// ```
-    fn from_le_bytes(bytes: Self::Bytes) -> Self;
-
-    /// Create an integer value from its memory representation as a byte array in native endianness.
-    ///
-    /// As the target platform's native endianness is used,
-    /// portable code likely wants to use [`from_be_bytes`] or [`from_le_bytes`], as appropriate instead.
-    ///
-    /// [`from_be_bytes`]: #method.from_be_bytes
-    /// [`from_le_bytes`]: #method.from_le_bytes
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use num_traits::PrimInt;
-    ///
-    /// let value = u32::from_ne_bytes(if cfg!(target_endian = "big") {
-    ///     [0x12, 0x34, 0x56, 0x78]
-    /// } else {
-    ///     [0x78, 0x56, 0x34, 0x12]
-    /// });
-    /// assert_eq!(value, 0x12345678);
-    /// ```
-    fn from_ne_bytes(bytes: Self::Bytes) -> Self;
 }
 
 fn one_per_byte<P: PrimInt>() -> P {
@@ -591,82 +500,76 @@ macro_rules! prim_int_impl {
             fn pow(self, exp: u32) -> Self {
                 <$T>::pow(self, exp)
             }
+        }
 
-            #[cfg(feature = "int_to_from_bytes")]
+        #[cfg(feature = "int_to_from_bytes")]
+        impl IntToFromBytes for $T {
+            type Bytes = [u8; $L];
+
             #[inline]
             fn to_be_bytes(self) -> Self::Bytes {
                 <$T>::to_be_bytes(self)
             }
 
-            #[cfg(feature = "int_to_from_bytes")]
             #[inline]
             fn to_le_bytes(self) -> Self::Bytes {
                 <$T>::to_le_bytes(self)
             }
 
-            #[cfg(feature = "int_to_from_bytes")]
             #[inline]
             fn to_ne_bytes(self) -> Self::Bytes {
                 <$T>::to_ne_bytes(self)
             }
 
-            #[cfg(feature = "int_to_from_bytes")]
             #[inline]
             fn from_be_bytes(bytes: Self::Bytes) -> Self {
                 <$T>::from_be_bytes(bytes)
             }
 
-            #[cfg(feature = "int_to_from_bytes")]
             #[inline]
             fn from_le_bytes(bytes: Self::Bytes) -> Self {
                 <$T>::from_le_bytes(bytes)
             }
 
-            #[cfg(feature = "int_to_from_bytes")]
             #[inline]
             fn from_ne_bytes(bytes: Self::Bytes) -> Self {
                 <$T>::from_ne_bytes(bytes)
             }
+        }
 
-            #[cfg(not(feature = "int_to_from_bytes"))]
+        #[cfg(not(feature = "int_to_from_bytes"))]
+        impl IntToFromBytes for $T {
+            type Bytes = [u8; $L];
+
             #[inline]
             fn to_be_bytes(self) -> Self::Bytes {
                 <$T>::to_ne_bytes(<$T>::to_be(self))
             }
 
-            #[cfg(not(feature = "int_to_from_bytes"))]
             #[inline]
             fn to_le_bytes(self) -> Self::Bytes {
                 <$T>::to_ne_bytes(<$T>::to_le(self))
             }
 
-            #[cfg(not(feature = "int_to_from_bytes"))]
             #[inline]
             fn to_ne_bytes(self) -> Self::Bytes {
                 unsafe { transmute(self) }
             }
 
-            #[cfg(not(feature = "int_to_from_bytes"))]
             #[inline]
             fn from_be_bytes(bytes: Self::Bytes) -> Self {
                 Self::from_be(Self::from_ne_bytes(bytes))
             }
 
-            #[cfg(not(feature = "int_to_from_bytes"))]
             #[inline]
             fn from_le_bytes(bytes: Self::Bytes) -> Self {
                 Self::from_le(Self::from_ne_bytes(bytes))
             }
 
-            #[cfg(not(feature = "int_to_from_bytes"))]
             #[inline]
             fn from_ne_bytes(bytes: Self::Bytes) -> Self {
                 unsafe { transmute(bytes) }
             }
-        }
-
-        impl Layout for $T {
-            type Bytes = [u8; $L];
         }
     };
 }

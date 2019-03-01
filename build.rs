@@ -11,17 +11,17 @@ fn main() {
         panic!("i128 support was not detected!");
     }
 
-    match rustc_version::version_meta() {
-        Ok(ref meta) if meta.semver.major >= 1 && meta.semver.minor >= 32 => {
-            println!("cargo:rustc-cfg=int_to_from_bytes");
-        }
-        Ok(ref meta)
-            if env::var_os("CARGO_FEATURE_INT_TO_FROM_BYTES").is_some()
-                && meta.channel == rustc_version::Channel::Stable =>
-        {
-            panic!("`int_to_from_bytes` support was not stabilizations!");
-        }
-        _ => {}
+    if probe(r#"
+    fn main() { 
+        let bytes = 0x1234567890123456u64.to_ne_bytes();
+
+        assert_eq!(bytes, if cfg!(target_endian = "big") {
+            [0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56]
+        } else {
+            [0x56, 0x34, 0x12, 0x90, 0x78, 0x56, 0x34, 0x12]
+        });
+    }"#) {
+        println!("cargo:rustc-cfg=int_to_from_bytes");
     }
 }
 
