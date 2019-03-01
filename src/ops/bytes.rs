@@ -1,3 +1,5 @@
+use core::mem::transmute;
+
 pub trait IntToFromBytes {
     type Bytes;
 
@@ -93,3 +95,93 @@ pub trait IntToFromBytes {
     /// ```
     fn from_ne_bytes(bytes: Self::Bytes) -> Self;
 }
+
+macro_rules! int_to_from_bytes_impl {
+    ($T:ty, $L:expr) => {
+        #[cfg(feature = "int_to_from_bytes")]
+        impl IntToFromBytes for $T {
+            type Bytes = [u8; $L];
+
+            #[inline]
+            fn to_be_bytes(self) -> Self::Bytes {
+                <$T>::to_be_bytes(self)
+            }
+
+            #[inline]
+            fn to_le_bytes(self) -> Self::Bytes {
+                <$T>::to_le_bytes(self)
+            }
+
+            #[inline]
+            fn to_ne_bytes(self) -> Self::Bytes {
+                <$T>::to_ne_bytes(self)
+            }
+
+            #[inline]
+            fn from_be_bytes(bytes: Self::Bytes) -> Self {
+                <$T>::from_be_bytes(bytes)
+            }
+
+            #[inline]
+            fn from_le_bytes(bytes: Self::Bytes) -> Self {
+                <$T>::from_le_bytes(bytes)
+            }
+
+            #[inline]
+            fn from_ne_bytes(bytes: Self::Bytes) -> Self {
+                <$T>::from_ne_bytes(bytes)
+            }
+        }
+
+        #[cfg(not(feature = "int_to_from_bytes"))]
+        impl IntToFromBytes for $T {
+            type Bytes = [u8; $L];
+
+            #[inline]
+            fn to_be_bytes(self) -> Self::Bytes {
+                <$T>::to_ne_bytes(<$T>::to_be(self))
+            }
+
+            #[inline]
+            fn to_le_bytes(self) -> Self::Bytes {
+                <$T>::to_ne_bytes(<$T>::to_le(self))
+            }
+
+            #[inline]
+            fn to_ne_bytes(self) -> Self::Bytes {
+                unsafe { transmute(self) }
+            }
+
+            #[inline]
+            fn from_be_bytes(bytes: Self::Bytes) -> Self {
+                Self::from_be(Self::from_ne_bytes(bytes))
+            }
+
+            #[inline]
+            fn from_le_bytes(bytes: Self::Bytes) -> Self {
+                Self::from_le(Self::from_ne_bytes(bytes))
+            }
+
+            #[inline]
+            fn from_ne_bytes(bytes: Self::Bytes) -> Self {
+                unsafe { transmute(bytes) }
+            }
+        }
+    };
+}
+
+// int_to_from_bytes_impl!(type, signed, unsigned);
+int_to_from_bytes_impl!(u8, 1);
+int_to_from_bytes_impl!(u16, 2);
+int_to_from_bytes_impl!(u32, 4);
+int_to_from_bytes_impl!(u64, 8);
+#[cfg(has_i128)]
+int_to_from_bytes_impl!(u128, 16);
+int_to_from_bytes_impl!(usize, 8);
+int_to_from_bytes_impl!(i8, 1);
+int_to_from_bytes_impl!(i16, 2);
+int_to_from_bytes_impl!(i32, 4);
+int_to_from_bytes_impl!(i64, 8);
+#[cfg(has_i128)]
+int_to_from_bytes_impl!(i128, 16);
+int_to_from_bytes_impl!(isize, 8);

@@ -1,4 +1,3 @@
-use core::mem::transmute;
 use core::ops::{BitAnd, BitOr, BitXor, Not, Shl, Shr};
 
 use bounds::Bounded;
@@ -401,7 +400,7 @@ fn reverse_bits_fallback<P: PrimInt>(i: P) -> P {
 }
 
 macro_rules! prim_int_impl {
-    ($T:ty, $S:ty, $U:ty, $L:expr) => {
+    ($T:ty, $S:ty, $U:ty) => {
         impl PrimInt for $T {
             #[inline]
             fn count_ones(self) -> u32 {
@@ -501,91 +500,21 @@ macro_rules! prim_int_impl {
                 <$T>::pow(self, exp)
             }
         }
-
-        #[cfg(feature = "int_to_from_bytes")]
-        impl IntToFromBytes for $T {
-            type Bytes = [u8; $L];
-
-            #[inline]
-            fn to_be_bytes(self) -> Self::Bytes {
-                <$T>::to_be_bytes(self)
-            }
-
-            #[inline]
-            fn to_le_bytes(self) -> Self::Bytes {
-                <$T>::to_le_bytes(self)
-            }
-
-            #[inline]
-            fn to_ne_bytes(self) -> Self::Bytes {
-                <$T>::to_ne_bytes(self)
-            }
-
-            #[inline]
-            fn from_be_bytes(bytes: Self::Bytes) -> Self {
-                <$T>::from_be_bytes(bytes)
-            }
-
-            #[inline]
-            fn from_le_bytes(bytes: Self::Bytes) -> Self {
-                <$T>::from_le_bytes(bytes)
-            }
-
-            #[inline]
-            fn from_ne_bytes(bytes: Self::Bytes) -> Self {
-                <$T>::from_ne_bytes(bytes)
-            }
-        }
-
-        #[cfg(not(feature = "int_to_from_bytes"))]
-        impl IntToFromBytes for $T {
-            type Bytes = [u8; $L];
-
-            #[inline]
-            fn to_be_bytes(self) -> Self::Bytes {
-                <$T>::to_ne_bytes(<$T>::to_be(self))
-            }
-
-            #[inline]
-            fn to_le_bytes(self) -> Self::Bytes {
-                <$T>::to_ne_bytes(<$T>::to_le(self))
-            }
-
-            #[inline]
-            fn to_ne_bytes(self) -> Self::Bytes {
-                unsafe { transmute(self) }
-            }
-
-            #[inline]
-            fn from_be_bytes(bytes: Self::Bytes) -> Self {
-                Self::from_be(Self::from_ne_bytes(bytes))
-            }
-
-            #[inline]
-            fn from_le_bytes(bytes: Self::Bytes) -> Self {
-                Self::from_le(Self::from_ne_bytes(bytes))
-            }
-
-            #[inline]
-            fn from_ne_bytes(bytes: Self::Bytes) -> Self {
-                unsafe { transmute(bytes) }
-            }
-        }
     };
 }
 
 // prim_int_impl!(type, signed, unsigned);
-prim_int_impl!(u8, i8, u8, 1);
-prim_int_impl!(u16, i16, u16, 2);
-prim_int_impl!(u32, i32, u32, 4);
-prim_int_impl!(u64, i64, u64, 8);
+prim_int_impl!(u8, i8, u8);
+prim_int_impl!(u16, i16, u16);
+prim_int_impl!(u32, i32, u32);
+prim_int_impl!(u64, i64, u64);
 #[cfg(has_i128)]
-prim_int_impl!(u128, i128, u128, 16);
-prim_int_impl!(usize, isize, usize, 8);
-prim_int_impl!(i8, i8, u8, 1);
-prim_int_impl!(i16, i16, u16, 2);
-prim_int_impl!(i32, i32, u32, 4);
-prim_int_impl!(i64, i64, u64, 8);
+prim_int_impl!(u128, i128, u128);
+prim_int_impl!(usize, isize, usize);
+prim_int_impl!(i8, i8, u8);
+prim_int_impl!(i16, i16, u16);
+prim_int_impl!(i32, i32, u32);
+prim_int_impl!(i64, i64, u64);
 #[cfg(has_i128)]
 prim_int_impl!(i128, i128, u128);
 prim_int_impl!(isize, isize, usize);
