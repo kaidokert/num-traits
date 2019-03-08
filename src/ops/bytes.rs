@@ -1,7 +1,21 @@
+use core::borrow::{Borrow, BorrowMut};
+use core::cmp::{Eq, Ord, PartialEq, PartialOrd};
+use core::fmt::Debug;
+use core::hash::Hash;
 use core::mem::transmute;
 
 pub trait IntToFromBytes {
-    type Bytes;
+    type Bytes: Debug
+        + AsRef<[u8]>
+        + AsMut<[u8]>
+        + PartialEq
+        + Eq
+        + PartialOrd
+        + Ord
+        + Hash
+        + Borrow<[u8]>
+        + BorrowMut<[u8]>
+        + Default;
 
     /// Return the memory representation of this integer as a byte array in big-endian byte order.
     ///
