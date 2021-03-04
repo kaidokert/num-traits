@@ -110,9 +110,9 @@ pub trait IntToFromBytes {
     fn from_ne_bytes(bytes: Self::Bytes) -> Self;
 }
 
-macro_rules! int_to_from_bytes_impl {
+macro_rules! has_int_to_from_bytes_impl {
     ($T:ty, $L:expr) => {
-        #[cfg(feature = "int_to_from_bytes")]
+        #[cfg(feature = "has_int_to_from_bytes")]
         impl IntToFromBytes for $T {
             type Bytes = [u8; $L];
 
@@ -147,7 +147,7 @@ macro_rules! int_to_from_bytes_impl {
             }
         }
 
-        #[cfg(not(feature = "int_to_from_bytes"))]
+        #[cfg(not(feature = "has_int_to_from_bytes"))]
         impl IntToFromBytes for $T {
             type Bytes = [u8; $L];
 
@@ -184,18 +184,18 @@ macro_rules! int_to_from_bytes_impl {
     };
 }
 
-// int_to_from_bytes_impl!(type, signed, unsigned);
-int_to_from_bytes_impl!(u8, 1);
-int_to_from_bytes_impl!(u16, 2);
-int_to_from_bytes_impl!(u32, 4);
-int_to_from_bytes_impl!(u64, 8);
+// has_int_to_from_bytes_impl!(type, signed, unsigned);
+has_int_to_from_bytes_impl!(u8, 1);
+has_int_to_from_bytes_impl!(u16, 2);
+has_int_to_from_bytes_impl!(u32, 4);
+has_int_to_from_bytes_impl!(u64, 8);
 #[cfg(has_i128)]
-int_to_from_bytes_impl!(u128, 16);
-int_to_from_bytes_impl!(usize, 8);
-int_to_from_bytes_impl!(i8, 1);
-int_to_from_bytes_impl!(i16, 2);
-int_to_from_bytes_impl!(i32, 4);
-int_to_from_bytes_impl!(i64, 8);
+has_int_to_from_bytes_impl!(u128, 16);
+has_int_to_from_bytes_impl!(usize, 8);
+has_int_to_from_bytes_impl!(i8, 1);
+has_int_to_from_bytes_impl!(i16, 2);
+has_int_to_from_bytes_impl!(i32, 4);
+has_int_to_from_bytes_impl!(i64, 8);
 #[cfg(has_i128)]
-int_to_from_bytes_impl!(i128, 16);
-int_to_from_bytes_impl!(isize, 8);
+has_int_to_from_bytes_impl!(i128, 16);
+has_int_to_from_bytes_impl!(isize, 8);

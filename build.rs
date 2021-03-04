@@ -44,6 +44,10 @@ fn main() {
     if env::var_os("CARGO_FEATURE_STD").is_some() {
         ac.emit_expression_cfg("1f64.copysign(-1f64)", "has_copysign");
     }
+    ac.emit_expression_cfg(
+        "0x1234567890123456u64.to_ne_bytes()",
+        "has_int_to_from_bytes",
+    );
 
     autocfg::rerun_path("build.rs");
 }
