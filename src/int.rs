@@ -1,7 +1,7 @@
 use core::ops::{BitAnd, BitOr, BitXor, Not, Shl, Shr};
 
 use bounds::Bounded;
-use ops::bytes::IntToFromBytes;
+use ops::bytes::ToFromBytes;
 use ops::checked::*;
 use ops::saturating::Saturating;
 use {Num, NumCast};
@@ -58,7 +58,7 @@ pub trait PrimInt:
     + CheckedMul<Output = Self>
     + CheckedDiv<Output = Self>
     + Saturating
-    + IntToFromBytes
+    + ToFromBytes
 {
     /// Returns the number of ones in the binary representation of `self`.
     ///

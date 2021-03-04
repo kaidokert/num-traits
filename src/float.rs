@@ -5,6 +5,7 @@ use core::ops::{Add, Div, Neg};
 use core::f32;
 use core::f64;
 
+use ops::bytes::ToFromBytes;
 use {Num, NumCast, ToPrimitive};
 
 #[cfg(all(not(feature = "std"), feature = "libm"))]
@@ -958,7 +959,7 @@ impl FloatCore for f64 {
 ///
 /// This trait is only available with the `std` feature, or with the `libm` feature otherwise.
 #[cfg(any(feature = "std", feature = "libm"))]
-pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
+pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> + ToFromBytes {
     /// Returns the `NaN` value.
     ///
     /// ```
