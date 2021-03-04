@@ -1,10 +1,9 @@
 use core::ops::{BitAnd, BitOr, BitXor, Not, Shl, Shr};
 
 use bounds::Bounded;
-use ops::bytes::ToFromBytes;
 use ops::checked::*;
 use ops::saturating::Saturating;
-use {Num, NumCast};
+use {Num, NumCast, ToFromBytes};
 
 /// Generic trait for primitive integers.
 ///
