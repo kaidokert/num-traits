@@ -26,4 +26,3 @@ i128 = []
 
 [build-dependencies]
 autocfg = "1"
-int_to_from_bytes = []

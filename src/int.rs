@@ -31,12 +31,6 @@ use {Num, NumCast};
 /// This trait and many of the method names originate in the unstable `core::num::Int` trait from
 /// the rust standard library. The original trait was never stabilized and thus removed from the
 /// standard library.
-
-pub trait Layout {
-    /// The type representation as a byte array.
-    type Bytes;
-}
-
 pub trait PrimInt:
     Sized
     + Copy
