@@ -27,7 +27,7 @@ pub trait ToFromBytes {
     /// let bytes = 0x12345678u32.to_be_bytes();
     /// assert_eq!(bytes, [0x12, 0x34, 0x56, 0x78]);
     /// ```
-    fn to_be_bytes(self) -> Self::Bytes;
+    fn to_be_bytes(&self) -> Self::Bytes;
 
     /// Return the memory representation of this number as a byte array in little-endian byte order.
     ///
@@ -39,7 +39,7 @@ pub trait ToFromBytes {
     /// let bytes = 0x12345678u32.to_le_bytes();
     /// assert_eq!(bytes, [0x78, 0x56, 0x34, 0x12]);
     /// ```
-    fn to_le_bytes(self) -> Self::Bytes;
+    fn to_le_bytes(&self) -> Self::Bytes;
 
     /// Return the memory representation of this number as a byte array in native byte order.
     ///
@@ -61,7 +61,7 @@ pub trait ToFromBytes {
     ///     [0x78, 0x56, 0x34, 0x12]
     /// });
     /// ```
-    fn to_ne_bytes(self) -> Self::Bytes;
+    fn to_ne_bytes(&self) -> Self::Bytes;
 
     /// Create a number from its representation as a byte array in big endian.
     ///
@@ -73,7 +73,7 @@ pub trait ToFromBytes {
     /// let value = u32::from_be_bytes([0x12, 0x34, 0x56, 0x78]);
     /// assert_eq!(value, 0x12345678);
     /// ```
-    fn from_be_bytes(bytes: Self::Bytes) -> Self;
+    fn from_be_bytes(bytes: &Self::Bytes) -> Self;
 
     /// Create a number from its representation as a byte array in little endian.
     ///
@@ -85,7 +85,7 @@ pub trait ToFromBytes {
     /// let value = u32::from_le_bytes([0x78, 0x56, 0x34, 0x12]);
     /// assert_eq!(value, 0x12345678);
     /// ```
-    fn from_le_bytes(bytes: Self::Bytes) -> Self;
+    fn from_le_bytes(bytes: &Self::Bytes) -> Self;
 
     /// Create a number from its memory representation as a byte array in native endianness.
     ///
@@ -107,7 +107,7 @@ pub trait ToFromBytes {
     /// });
     /// assert_eq!(value, 0x12345678);
     /// ```
-    fn from_ne_bytes(bytes: Self::Bytes) -> Self;
+    fn from_ne_bytes(bytes: &Self::Bytes) -> Self;
 }
 
 macro_rules! float_to_from_bytes_impl {
@@ -117,33 +117,33 @@ macro_rules! float_to_from_bytes_impl {
             type Bytes = [u8; $L];
 
             #[inline]
-            fn to_be_bytes(self) -> Self::Bytes {
-                <$T>::to_be_bytes(self)
+            fn to_be_bytes(&self) -> Self::Bytes {
+                <$T>::to_be_bytes(*self)
             }
 
             #[inline]
-            fn to_le_bytes(self) -> Self::Bytes {
-                <$T>::to_le_bytes(self)
+            fn to_le_bytes(&self) -> Self::Bytes {
+                <$T>::to_le_bytes(*self)
             }
 
             #[inline]
-            fn to_ne_bytes(self) -> Self::Bytes {
-                <$T>::to_ne_bytes(self)
+            fn to_ne_bytes(&self) -> Self::Bytes {
+                <$T>::to_ne_bytes(*self)
             }
 
             #[inline]
-            fn from_be_bytes(bytes: Self::Bytes) -> Self {
-                <$T>::from_be_bytes(bytes)
+            fn from_be_bytes(bytes: &Self::Bytes) -> Self {
+                <$T>::from_be_bytes(*bytes)
             }
 
             #[inline]
-            fn from_le_bytes(bytes: Self::Bytes) -> Self {
-                <$T>::from_le_bytes(bytes)
+            fn from_le_bytes(bytes: &Self::Bytes) -> Self {
+                <$T>::from_le_bytes(*bytes)
             }
 
             #[inline]
-            fn from_ne_bytes(bytes: Self::Bytes) -> Self {
-                <$T>::from_ne_bytes(bytes)
+            fn from_ne_bytes(bytes: &Self::Bytes) -> Self {
+                <$T>::from_ne_bytes(*bytes)
             }
         }
 
@@ -152,33 +152,37 @@ macro_rules! float_to_from_bytes_impl {
             type Bytes = [u8; $L];
 
             #[inline]
-            fn to_be_bytes(self) -> Self::Bytes {
-                <$I>::from_ne_bytes(self.to_ne_bytes()).to_be_bytes()
+            fn to_be_bytes(&self) -> Self::Bytes {
+                <$I as ToFromBytes>::from_ne_bytes(&self.to_ne_bytes()).to_be_bytes()
             }
 
             #[inline]
-            fn to_le_bytes(self) -> Self::Bytes {
-                <$I>::from_ne_bytes(self.to_ne_bytes()).to_le_bytes()
+            fn to_le_bytes(&self) -> Self::Bytes {
+                <$I as ToFromBytes>::from_ne_bytes(&self.to_ne_bytes()).to_le_bytes()
             }
 
             #[inline]
-            fn to_ne_bytes(self) -> Self::Bytes {
-                unsafe { transmute(self) }
+            fn to_ne_bytes(&self) -> Self::Bytes {
+                unsafe { transmute(*self) }
             }
 
             #[inline]
-            fn from_be_bytes(bytes: Self::Bytes) -> Self {
-                Self::from_ne_bytes(<$I>::from_be_bytes(bytes).to_ne_bytes())
+            fn from_be_bytes(bytes: &Self::Bytes) -> Self {
+                <Self as ToFromBytes>::from_ne_bytes(
+                    &<$I as ToFromBytes>::from_be_bytes(bytes).to_ne_bytes(),
+                )
             }
 
             #[inline]
-            fn from_le_bytes(bytes: Self::Bytes) -> Self {
-                Self::from_ne_bytes(<$I>::from_le_bytes(bytes).to_ne_bytes())
+            fn from_le_bytes(bytes: &Self::Bytes) -> Self {
+                <Self as ToFromBytes>::from_ne_bytes(
+                    &<$I as ToFromBytes>::from_le_bytes(bytes).to_ne_bytes(),
+                )
             }
 
             #[inline]
-            fn from_ne_bytes(bytes: Self::Bytes) -> Self {
-                unsafe { transmute(bytes) }
+            fn from_ne_bytes(bytes: &Self::Bytes) -> Self {
+                unsafe { transmute(*bytes) }
             }
         }
     };
@@ -191,33 +195,33 @@ macro_rules! int_to_from_bytes_impl {
             type Bytes = [u8; $L];
 
             #[inline]
-            fn to_be_bytes(self) -> Self::Bytes {
-                <$T>::to_be_bytes(self)
+            fn to_be_bytes(&self) -> Self::Bytes {
+                <$T>::to_be_bytes(*self)
             }
 
             #[inline]
-            fn to_le_bytes(self) -> Self::Bytes {
-                <$T>::to_le_bytes(self)
+            fn to_le_bytes(&self) -> Self::Bytes {
+                <$T>::to_le_bytes(*self)
             }
 
             #[inline]
-            fn to_ne_bytes(self) -> Self::Bytes {
-                <$T>::to_ne_bytes(self)
+            fn to_ne_bytes(&self) -> Self::Bytes {
+                <$T>::to_ne_bytes(*self)
             }
 
             #[inline]
-            fn from_be_bytes(bytes: Self::Bytes) -> Self {
-                <$T>::from_be_bytes(bytes)
+            fn from_be_bytes(bytes: &Self::Bytes) -> Self {
+                <$T>::from_be_bytes(*bytes)
             }
 
             #[inline]
-            fn from_le_bytes(bytes: Self::Bytes) -> Self {
-                <$T>::from_le_bytes(bytes)
+            fn from_le_bytes(bytes: &Self::Bytes) -> Self {
+                <$T>::from_le_bytes(*bytes)
             }
 
             #[inline]
-            fn from_ne_bytes(bytes: Self::Bytes) -> Self {
-                <$T>::from_ne_bytes(bytes)
+            fn from_ne_bytes(bytes: &Self::Bytes) -> Self {
+                <$T>::from_ne_bytes(*bytes)
             }
         }
 
@@ -226,33 +230,33 @@ macro_rules! int_to_from_bytes_impl {
             type Bytes = [u8; $L];
 
             #[inline]
-            fn to_be_bytes(self) -> Self::Bytes {
-                <$T>::to_ne_bytes(<$T>::to_be(self))
+            fn to_be_bytes(&self) -> Self::Bytes {
+                <$T as ToFromBytes>::to_ne_bytes(&<$T>::to_be(*self))
             }
 
             #[inline]
-            fn to_le_bytes(self) -> Self::Bytes {
-                <$T>::to_ne_bytes(<$T>::to_le(self))
+            fn to_le_bytes(&self) -> Self::Bytes {
+                <$T as ToFromBytes>::to_ne_bytes(&<$T>::to_le(*self))
             }
 
             #[inline]
-            fn to_ne_bytes(self) -> Self::Bytes {
-                unsafe { transmute(self) }
+            fn to_ne_bytes(&self) -> Self::Bytes {
+                unsafe { transmute(*self) }
             }
 
             #[inline]
-            fn from_be_bytes(bytes: Self::Bytes) -> Self {
-                Self::from_be(Self::from_ne_bytes(bytes))
+            fn from_be_bytes(bytes: &Self::Bytes) -> Self {
+                Self::from_be(<Self as ToFromBytes>::from_ne_bytes(bytes))
             }
 
             #[inline]
-            fn from_le_bytes(bytes: Self::Bytes) -> Self {
-                Self::from_le(Self::from_ne_bytes(bytes))
+            fn from_le_bytes(bytes: &Self::Bytes) -> Self {
+                Self::from_le(<Self as ToFromBytes>::from_ne_bytes(bytes))
             }
 
             #[inline]
-            fn from_ne_bytes(bytes: Self::Bytes) -> Self {
-                unsafe { transmute(bytes) }
+            fn from_ne_bytes(bytes: &Self::Bytes) -> Self {
+                unsafe { transmute(*bytes) }
             }
         }
     };
@@ -277,3 +281,66 @@ int_to_from_bytes_impl!(i128, 16);
 
 float_to_from_bytes_impl!(f32, u32, 4);
 float_to_from_bytes_impl!(f64, u64, 8);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn convert_between_int_and_bytes() {
+        macro_rules! check_to_from_bytes {
+            ($( $ty:ty )+) => {$(
+                let n: $ty = 1;
+                let be = <$ty as ToFromBytes>::to_be_bytes(&n);
+                let le = <$ty as ToFromBytes>::to_le_bytes(&n);
+                let ne = <$ty as ToFromBytes>::to_ne_bytes(&n);
+
+                assert_eq!(*be.last().unwrap(), 1);
+                assert_eq!(*le.first().unwrap(), 1);
+                if cfg!(target_endian = "big") {
+                    assert_eq!(*ne.last().unwrap(), 1);
+                } else {
+                    assert_eq!(*ne.first().unwrap(), 1);
+                }
+
+                assert_eq!(<$ty as ToFromBytes>::from_be_bytes(&be), n);
+                assert_eq!(<$ty as ToFromBytes>::from_le_bytes(&le), n);
+                if cfg!(target_endian = "big") {
+                    assert_eq!(<$ty as ToFromBytes>::from_ne_bytes(&be), n);
+                } else {
+                    assert_eq!(<$ty as ToFromBytes>::from_ne_bytes(&le), n);
+                }
+            )+}
+        }
+
+        check_to_from_bytes!(u8 u16 u32 u64 usize);
+        check_to_from_bytes!(i8 i16 i32 i64 isize);
+        #[cfg(has_i128)]
+        check_to_from_bytes!(i128 u128);
+    }
+
+    #[test]
+    fn convert_between_float_and_bytes() {
+        macro_rules! check_to_from_bytes {
+            ($( $ty:ty )+) => {$(
+                let n: $ty = 3.14;
+
+                let be = <$ty as ToFromBytes>::to_be_bytes(&n);
+                let le = <$ty as ToFromBytes>::to_le_bytes(&n);
+                let ne = <$ty as ToFromBytes>::to_ne_bytes(&n);
+
+                assert_eq!(<$ty as ToFromBytes>::from_be_bytes(&be), n);
+                assert_eq!(<$ty as ToFromBytes>::from_le_bytes(&le), n);
+                if cfg!(target_endian = "big") {
+                    assert_eq!(ne, be);
+                    assert_eq!(<$ty as ToFromBytes>::from_ne_bytes(&be), n);
+                } else {
+                    assert_eq!(ne, le);
+                    assert_eq!(<$ty as ToFromBytes>::from_ne_bytes(&le), n);
+                }
+            )+}
+        }
+
+        check_to_from_bytes!(f32 f64);
+    }
+}

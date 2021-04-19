@@ -5,7 +5,7 @@ use core::ops::{Add, Div, Neg};
 use core::f32;
 use core::f64;
 
-use {Num, NumCast, ToFromBytes, ToPrimitive};
+use {Num, NumCast, ToPrimitive};
 
 #[cfg(all(not(feature = "std"), feature = "libm"))]
 use libm;
@@ -13,7 +13,7 @@ use libm;
 /// Generic trait for floating point numbers that works with `no_std`.
 ///
 /// This trait implements a subset of the `Float` trait.
-pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy + ToFromBytes {
+pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// Returns positive infinity.
     ///
     /// # Examples
