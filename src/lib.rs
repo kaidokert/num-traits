@@ -37,7 +37,10 @@ pub use float::FloatConst;
 pub use cast::{cast, AsPrimitive, FromPrimitive, NumCast, ToPrimitive};
 pub use identities::{one, zero, One, Zero};
 pub use int::PrimInt;
+
+#[cfg(has_int_to_from_bytes)]
 pub use ops::bytes::ToFromBytes;
+
 pub use ops::checked::{
     CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedShl, CheckedShr, CheckedSub,
 };

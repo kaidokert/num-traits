@@ -1,3 +1,5 @@
+#![cfg(has_int_to_from_bytes)]
+
 use core::borrow::{Borrow, BorrowMut};
 use core::cmp::{Eq, Ord, PartialEq, PartialOrd};
 use core::fmt::Debug;
@@ -266,13 +268,19 @@ int_to_from_bytes_impl!(u8, 1);
 int_to_from_bytes_impl!(u16, 2);
 int_to_from_bytes_impl!(u32, 4);
 int_to_from_bytes_impl!(u64, 8);
+#[cfg(target_pointer_width = "64")]
 int_to_from_bytes_impl!(usize, 8);
+#[cfg(target_pointer_width = "32")]
+int_to_from_bytes_impl!(usize, 4);
 
 int_to_from_bytes_impl!(i8, 1);
 int_to_from_bytes_impl!(i16, 2);
 int_to_from_bytes_impl!(i32, 4);
 int_to_from_bytes_impl!(i64, 8);
+#[cfg(target_pointer_width = "64")]
 int_to_from_bytes_impl!(isize, 8);
+#[cfg(target_pointer_width = "32")]
+int_to_from_bytes_impl!(isize, 4);
 
 #[cfg(has_i128)]
 int_to_from_bytes_impl!(u128, 16);
