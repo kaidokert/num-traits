@@ -1,5 +1,7 @@
 FROM ubuntu:latest
 
+ARG VER
+
 RUN apt-get update \
     && apt-get install -qqy \
         wget gcc build-essential git \
@@ -10,7 +12,7 @@ RUN apt-get update \
 RUN set -eux; \
     wget -O rustup-init "https://sh.rustup.rs"; \
     chmod +x rustup-init; \
-    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain 1.45.0; \
+    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain ${VER:-1.45.0}; \
     rm rustup-init;
 
 ENV PATH="${PATH}:/root/.cargo/bin"

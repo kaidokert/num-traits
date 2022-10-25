@@ -136,7 +136,7 @@ pub trait ToFromBytes {
 
 macro_rules! float_to_from_bytes_impl {
     ($T:ty, $I:ty, $L:expr) => {
-        #[cfg(feature = "has_float_to_fxrom_bytes")]
+        #[cfg(feature = "has_float_to_from_bytes")]
         impl ToFromBytes for $T {
             type Bytes = [u8; $L];
 
@@ -171,26 +171,23 @@ macro_rules! float_to_from_bytes_impl {
             }
         }
 
-//        #[cfg(all(
-//            not(feature = "has_float_to_from_bytes"),
-//            feature = "has_int_to_from_bytes"
-//        ))]
+        #[cfg(not(feature = "has_float_to_from_bytes"))]
         impl ToFromBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]
             fn to_be_bytes(&self) -> Self::Bytes {
-                self.to_bits().to_be_bytes()
+                <$I as ToFromBytes>::to_be_bytes(&self.to_bits())
             }
 
             #[inline]
             fn to_le_bytes(&self) -> Self::Bytes {
-                self.to_bits().to_le_bytes()
+                <$I as ToFromBytes>::to_le_bytes(&self.to_bits())
             }
 
             #[inline]
             fn to_ne_bytes(&self) -> Self::Bytes {
-                self.to_bits().to_ne_bytes()
+                <$I as ToFromBytes>::to_ne_bytes(&self.to_bits())
             }
 
             #[inline]
