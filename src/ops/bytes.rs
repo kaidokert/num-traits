@@ -136,7 +136,7 @@ pub trait ToFromBytes {
 
 macro_rules! float_to_from_bytes_impl {
     ($T:ty, $I:ty, $L:expr) => {
-        #[cfg(feature = "has_float_to_from_bytes")]
+        #[cfg(feature = "has_float_to_fxrom_bytes")]
         impl ToFromBytes for $T {
             type Bytes = [u8; $L];
 
@@ -171,45 +171,41 @@ macro_rules! float_to_from_bytes_impl {
             }
         }
 
-        #[cfg(all(
-            not(feature = "has_float_to_from_bytes"),
-            feature = "has_int_to_from_bytes"
-        ))]
+//        #[cfg(all(
+//            not(feature = "has_float_to_from_bytes"),
+//            feature = "has_int_to_from_bytes"
+//        ))]
         impl ToFromBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]
             fn to_be_bytes(&self) -> Self::Bytes {
-                <$I as ToFromBytes>::from_ne_bytes(&self.to_ne_bytes()).to_be_bytes()
+                self.to_bits().to_be_bytes()
             }
 
             #[inline]
             fn to_le_bytes(&self) -> Self::Bytes {
-                <$I as ToFromBytes>::from_ne_bytes(&self.to_ne_bytes()).to_le_bytes()
+                self.to_bits().to_le_bytes()
             }
 
             #[inline]
             fn to_ne_bytes(&self) -> Self::Bytes {
-                unsafe { transmute(*self) }
+                self.to_bits().to_ne_bytes()
             }
 
             #[inline]
             fn from_be_bytes(bytes: &Self::Bytes) -> Self {
-                <Self as ToFromBytes>::from_ne_bytes(
-                    &<$I as ToFromBytes>::from_be_bytes(bytes).to_ne_bytes(),
-                )
+                Self::from_bits(<$I as ToFromBytes>::from_be_bytes(&bytes))
             }
 
             #[inline]
             fn from_le_bytes(bytes: &Self::Bytes) -> Self {
-                <Self as ToFromBytes>::from_ne_bytes(
-                    &<$I as ToFromBytes>::from_le_bytes(bytes).to_ne_bytes(),
-                )
+                Self::from_bits(<$I as ToFromBytes>::from_le_bytes(&bytes))
             }
 
             #[inline]
             fn from_ne_bytes(bytes: &Self::Bytes) -> Self {
-                unsafe { transmute(*bytes) }
+                Self::from_bits(<$I as ToFromBytes>::from_ne_bytes(&bytes))
             }
         }
     };
@@ -356,7 +352,6 @@ mod tests {
         check_to_from_bytes!(i128 u128);
     }
 
-    #[cfg(feature = "has_float_to_from_bytes")]
     #[test]
     fn convert_between_float_and_bytes() {
         macro_rules! check_to_from_bytes {
