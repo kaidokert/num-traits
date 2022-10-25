@@ -7,7 +7,10 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
     strategy:
+      fail-fast: false
       matrix:
         rust: [
           1.31.0, # MSRV
@@ -16,8 +19,8 @@ jobs:
           1.37.0, # has_reverse_bits
           1.38.0, # has_div_euclid
           1.44.0, # has_to_int_unchecked
-          1.45.0, # more reasons
-          1.46.0, # has_leading_trailing_ones
+          # 1.45.0, # more reasons
+          # 1.46.0, # has_leading_trailing_ones
           stable,
           beta,
           nightly,
