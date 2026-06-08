@@ -8,6 +8,7 @@ use core::{f32, f64};
 use core::{i128, i16, i32, i64, i8, isize};
 use core::{u128, u16, u32, u64, u8, usize};
 
+c0nst::c0nst! {
 /// A generic trait for converting a value to a number.
 ///
 /// A value can be represented by the target type when it lies within
@@ -18,115 +19,65 @@ use core::{u128, u16, u32, u64, u8, usize};
 /// On the other hand, conversions with possible precision loss or truncation
 /// are admitted, like an `f32` with a decimal part to an integer type, or
 /// even a large `f64` saturating to `f32` infinity.
-pub trait ToPrimitive {
+pub c0nst trait ToPrimitive {
     /// Converts the value of `self` to an `isize`. If the value cannot be
     /// represented by an `isize`, then `None` is returned.
-    #[inline]
-    fn to_isize(&self) -> Option<isize> {
-        self.to_i64().as_ref().and_then(ToPrimitive::to_isize)
-    }
+    fn to_isize(&self) -> Option<isize>;
 
     /// Converts the value of `self` to an `i8`. If the value cannot be
     /// represented by an `i8`, then `None` is returned.
-    #[inline]
-    fn to_i8(&self) -> Option<i8> {
-        self.to_i64().as_ref().and_then(ToPrimitive::to_i8)
-    }
+    fn to_i8(&self) -> Option<i8>;
 
     /// Converts the value of `self` to an `i16`. If the value cannot be
     /// represented by an `i16`, then `None` is returned.
-    #[inline]
-    fn to_i16(&self) -> Option<i16> {
-        self.to_i64().as_ref().and_then(ToPrimitive::to_i16)
-    }
+    fn to_i16(&self) -> Option<i16>;
 
     /// Converts the value of `self` to an `i32`. If the value cannot be
     /// represented by an `i32`, then `None` is returned.
-    #[inline]
-    fn to_i32(&self) -> Option<i32> {
-        self.to_i64().as_ref().and_then(ToPrimitive::to_i32)
-    }
+    fn to_i32(&self) -> Option<i32>;
 
     /// Converts the value of `self` to an `i64`. If the value cannot be
     /// represented by an `i64`, then `None` is returned.
     fn to_i64(&self) -> Option<i64>;
 
     /// Converts the value of `self` to an `i128`. If the value cannot be
-    /// represented by an `i128` (`i64` under the default implementation), then
-    /// `None` is returned.
-    ///
-    /// The default implementation converts through `to_i64()`. Types implementing
-    /// this trait should override this method if they can represent a greater range.
-    #[inline]
-    fn to_i128(&self) -> Option<i128> {
-        self.to_i64().map(From::from)
-    }
+    /// represented by an `i128`, then `None` is returned.
+    fn to_i128(&self) -> Option<i128>;
 
     /// Converts the value of `self` to a `usize`. If the value cannot be
     /// represented by a `usize`, then `None` is returned.
-    #[inline]
-    fn to_usize(&self) -> Option<usize> {
-        self.to_u64().as_ref().and_then(ToPrimitive::to_usize)
-    }
+    fn to_usize(&self) -> Option<usize>;
 
     /// Converts the value of `self` to a `u8`. If the value cannot be
     /// represented by a `u8`, then `None` is returned.
-    #[inline]
-    fn to_u8(&self) -> Option<u8> {
-        self.to_u64().as_ref().and_then(ToPrimitive::to_u8)
-    }
+    fn to_u8(&self) -> Option<u8>;
 
     /// Converts the value of `self` to a `u16`. If the value cannot be
     /// represented by a `u16`, then `None` is returned.
-    #[inline]
-    fn to_u16(&self) -> Option<u16> {
-        self.to_u64().as_ref().and_then(ToPrimitive::to_u16)
-    }
+    fn to_u16(&self) -> Option<u16>;
 
     /// Converts the value of `self` to a `u32`. If the value cannot be
     /// represented by a `u32`, then `None` is returned.
-    #[inline]
-    fn to_u32(&self) -> Option<u32> {
-        self.to_u64().as_ref().and_then(ToPrimitive::to_u32)
-    }
+    fn to_u32(&self) -> Option<u32>;
 
     /// Converts the value of `self` to a `u64`. If the value cannot be
     /// represented by a `u64`, then `None` is returned.
     fn to_u64(&self) -> Option<u64>;
 
     /// Converts the value of `self` to a `u128`. If the value cannot be
-    /// represented by a `u128` (`u64` under the default implementation), then
-    /// `None` is returned.
-    ///
-    /// The default implementation converts through `to_u64()`. Types implementing
-    /// this trait should override this method if they can represent a greater range.
-    #[inline]
-    fn to_u128(&self) -> Option<u128> {
-        self.to_u64().map(From::from)
-    }
+    /// represented by a `u128`, then `None` is returned.
+    fn to_u128(&self) -> Option<u128>;
 
     /// Converts the value of `self` to an `f32`. Overflows may map to positive
     /// or negative inifinity, otherwise `None` is returned if the value cannot
     /// be represented by an `f32`.
-    #[inline]
-    fn to_f32(&self) -> Option<f32> {
-        self.to_f64().as_ref().and_then(ToPrimitive::to_f32)
-    }
+    fn to_f32(&self) -> Option<f32>;
 
     /// Converts the value of `self` to an `f64`. Overflows may map to positive
     /// or negative inifinity, otherwise `None` is returned if the value cannot
     /// be represented by an `f64`.
-    ///
-    /// The default implementation tries to convert through `to_i64()`, and
-    /// failing that through `to_u64()`. Types implementing this trait should
-    /// override this method if they can represent a greater range.
-    #[inline]
-    fn to_f64(&self) -> Option<f64> {
-        match self.to_i64() {
-            Some(i) => i.to_f64(),
-            None => self.to_u64().as_ref().and_then(ToPrimitive::to_f64),
-        }
-    }
+    fn to_f64(&self) -> Option<f64>;
+}
 }
 
 macro_rules! impl_to_primitive_int_to_int {
@@ -160,7 +111,8 @@ macro_rules! impl_to_primitive_int_to_uint {
 
 macro_rules! impl_to_primitive_int {
     ($T:ident) => {
-        impl ToPrimitive for $T {
+        c0nst::c0nst! {
+        impl c0nst ToPrimitive for $T {
             impl_to_primitive_int_to_int! { $T:
                 fn to_isize -> isize;
                 fn to_i8 -> i8;
@@ -187,6 +139,7 @@ macro_rules! impl_to_primitive_int {
             fn to_f64(&self) -> Option<f64> {
                 Some(*self as f64)
             }
+        }
         }
     };
 }
@@ -228,7 +181,8 @@ macro_rules! impl_to_primitive_uint_to_uint {
 
 macro_rules! impl_to_primitive_uint {
     ($T:ident) => {
-        impl ToPrimitive for $T {
+        c0nst::c0nst! {
+        impl c0nst ToPrimitive for $T {
             impl_to_primitive_uint_to_int! { $T:
                 fn to_isize -> isize;
                 fn to_i8 -> i8;
@@ -256,6 +210,7 @@ macro_rules! impl_to_primitive_uint {
                 Some(*self as f64)
             }
         }
+        }
     };
 }
 
@@ -277,7 +232,8 @@ macro_rules! impl_to_primitive_nonzero_to_method {
 
 macro_rules! impl_to_primitive_nonzero {
     ($T:ident) => {
-        impl ToPrimitive for $T {
+        c0nst::c0nst! {
+        impl c0nst ToPrimitive for $T {
             impl_to_primitive_nonzero_to_method! { $T:
                 fn to_isize -> isize;
                 fn to_i8 -> i8;
@@ -296,6 +252,7 @@ macro_rules! impl_to_primitive_nonzero {
                 fn to_f32 -> f32;
                 fn to_f64 -> f64;
             }
+        }
         }
     };
 }
@@ -326,10 +283,11 @@ macro_rules! impl_to_primitive_float_to_float {
 }
 
 macro_rules! float_to_int_unchecked {
-    // SAFETY: Must not be NaN or infinite; must be representable as the integer after truncating.
-    // We already checked that the float is in the exclusive range `(MIN-1, MAX+1)`.
+    // The range check above already guarantees the value is representable.
+    // `to_int_unchecked` would be slightly faster but isn't const yet; the
+    // saturating `as` cast gives the same answer for in-range inputs.
     ($float:expr => $int:ty) => {
-        unsafe { $float.to_int_unchecked::<$int>() }
+        $float as $int
     };
 }
 
@@ -390,7 +348,8 @@ macro_rules! impl_to_primitive_float_to_unsigned_int {
 
 macro_rules! impl_to_primitive_float {
     ($T:ident) => {
-        impl ToPrimitive for $T {
+        c0nst::c0nst! {
+        impl c0nst ToPrimitive for $T {
             impl_to_primitive_float_to_signed_int! { $T:
                 fn to_isize -> isize;
                 fn to_i8 -> i8;
@@ -414,12 +373,14 @@ macro_rules! impl_to_primitive_float {
                 fn to_f64 -> f64;
             }
         }
+        }
     };
 }
 
 impl_to_primitive_float!(f32);
 impl_to_primitive_float!(f64);
 
+c0nst::c0nst! {
 /// A generic trait for converting a number to a value.
 ///
 /// A value can be represented by the target type when it lies within
@@ -430,34 +391,22 @@ impl_to_primitive_float!(f64);
 /// On the other hand, conversions with possible precision loss or truncation
 /// are admitted, like an `f32` with a decimal part to an integer type, or
 /// even a large `f64` saturating to `f32` infinity.
-pub trait FromPrimitive: Sized {
+pub c0nst trait FromPrimitive: Sized {
     /// Converts an `isize` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    #[inline]
-    fn from_isize(n: isize) -> Option<Self> {
-        n.to_i64().and_then(FromPrimitive::from_i64)
-    }
+    fn from_isize(n: isize) -> Option<Self>;
 
     /// Converts an `i8` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    #[inline]
-    fn from_i8(n: i8) -> Option<Self> {
-        FromPrimitive::from_i64(From::from(n))
-    }
+    fn from_i8(n: i8) -> Option<Self>;
 
     /// Converts an `i16` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    #[inline]
-    fn from_i16(n: i16) -> Option<Self> {
-        FromPrimitive::from_i64(From::from(n))
-    }
+    fn from_i16(n: i16) -> Option<Self>;
 
     /// Converts an `i32` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    #[inline]
-    fn from_i32(n: i32) -> Option<Self> {
-        FromPrimitive::from_i64(From::from(n))
-    }
+    fn from_i32(n: i32) -> Option<Self>;
 
     /// Converts an `i64` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
@@ -465,41 +414,23 @@ pub trait FromPrimitive: Sized {
 
     /// Converts an `i128` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    ///
-    /// The default implementation converts through `from_i64()`. Types implementing
-    /// this trait should override this method if they can represent a greater range.
-    #[inline]
-    fn from_i128(n: i128) -> Option<Self> {
-        n.to_i64().and_then(FromPrimitive::from_i64)
-    }
+    fn from_i128(n: i128) -> Option<Self>;
 
     /// Converts a `usize` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    #[inline]
-    fn from_usize(n: usize) -> Option<Self> {
-        n.to_u64().and_then(FromPrimitive::from_u64)
-    }
+    fn from_usize(n: usize) -> Option<Self>;
 
     /// Converts an `u8` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    #[inline]
-    fn from_u8(n: u8) -> Option<Self> {
-        FromPrimitive::from_u64(From::from(n))
-    }
+    fn from_u8(n: u8) -> Option<Self>;
 
     /// Converts an `u16` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    #[inline]
-    fn from_u16(n: u16) -> Option<Self> {
-        FromPrimitive::from_u64(From::from(n))
-    }
+    fn from_u16(n: u16) -> Option<Self>;
 
     /// Converts an `u32` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    #[inline]
-    fn from_u32(n: u32) -> Option<Self> {
-        FromPrimitive::from_u64(From::from(n))
-    }
+    fn from_u32(n: u32) -> Option<Self>;
 
     /// Converts an `u64` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
@@ -507,39 +438,22 @@ pub trait FromPrimitive: Sized {
 
     /// Converts an `u128` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    ///
-    /// The default implementation converts through `from_u64()`. Types implementing
-    /// this trait should override this method if they can represent a greater range.
-    #[inline]
-    fn from_u128(n: u128) -> Option<Self> {
-        n.to_u64().and_then(FromPrimitive::from_u64)
-    }
+    fn from_u128(n: u128) -> Option<Self>;
 
     /// Converts a `f32` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    #[inline]
-    fn from_f32(n: f32) -> Option<Self> {
-        FromPrimitive::from_f64(From::from(n))
-    }
+    fn from_f32(n: f32) -> Option<Self>;
 
     /// Converts a `f64` to return an optional value of this type. If the
     /// value cannot be represented by this type, then `None` is returned.
-    ///
-    /// The default implementation tries to convert through `from_i64()`, and
-    /// failing that through `from_u64()`. Types implementing this trait should
-    /// override this method if they can represent a greater range.
-    #[inline]
-    fn from_f64(n: f64) -> Option<Self> {
-        match n.to_i64() {
-            Some(i) => FromPrimitive::from_i64(i),
-            None => n.to_u64().and_then(FromPrimitive::from_u64),
-        }
-    }
+    fn from_f64(n: f64) -> Option<Self>;
+}
 }
 
 macro_rules! impl_from_primitive {
     ($T:ty, $to_ty:ident) => {
-        impl FromPrimitive for $T {
+        c0nst::c0nst! {
+        impl c0nst FromPrimitive for $T {
             #[inline]
             fn from_isize(n: isize) -> Option<$T> {
                 n.$to_ty()
@@ -598,6 +512,7 @@ macro_rules! impl_from_primitive {
             fn from_f64(n: f64) -> Option<$T> {
                 n.$to_ty()
             }
+        }
         }
     };
 }
@@ -617,67 +532,41 @@ impl_from_primitive!(u128, to_u128);
 impl_from_primitive!(f32, to_f32);
 impl_from_primitive!(f64, to_f64);
 
+// `Option::and_then` is not yet a const fn; written as `match` to stay
+// const-friendly while preserving semantics.
+macro_rules! impl_from_primitive_nonzero_one {
+    ($t:ty, $T:ty, $to_ty:ident, $method:ident) => {
+        #[inline]
+        fn $method(n: $t) -> Option<$T> {
+            match n.$to_ty() {
+                Some(v) => Self::new(v),
+                None => None,
+            }
+        }
+    };
+}
+
 macro_rules! impl_from_primitive_nonzero {
     ($T:ty, $to_ty:ident) => {
-        impl FromPrimitive for $T {
-            #[inline]
-            fn from_isize(n: isize) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_i8(n: i8) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_i16(n: i16) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_i32(n: i32) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_i64(n: i64) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_i128(n: i128) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
+        c0nst::c0nst! {
+        impl c0nst FromPrimitive for $T {
+            impl_from_primitive_nonzero_one!(isize, $T, $to_ty, from_isize);
+            impl_from_primitive_nonzero_one!(i8,    $T, $to_ty, from_i8);
+            impl_from_primitive_nonzero_one!(i16,   $T, $to_ty, from_i16);
+            impl_from_primitive_nonzero_one!(i32,   $T, $to_ty, from_i32);
+            impl_from_primitive_nonzero_one!(i64,   $T, $to_ty, from_i64);
+            impl_from_primitive_nonzero_one!(i128,  $T, $to_ty, from_i128);
 
-            #[inline]
-            fn from_usize(n: usize) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_u8(n: u8) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_u16(n: u16) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_u32(n: u32) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_u64(n: u64) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_u128(n: u128) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
+            impl_from_primitive_nonzero_one!(usize, $T, $to_ty, from_usize);
+            impl_from_primitive_nonzero_one!(u8,    $T, $to_ty, from_u8);
+            impl_from_primitive_nonzero_one!(u16,   $T, $to_ty, from_u16);
+            impl_from_primitive_nonzero_one!(u32,   $T, $to_ty, from_u32);
+            impl_from_primitive_nonzero_one!(u64,   $T, $to_ty, from_u64);
+            impl_from_primitive_nonzero_one!(u128,  $T, $to_ty, from_u128);
 
-            #[inline]
-            fn from_f32(n: f32) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
-            #[inline]
-            fn from_f64(n: f64) -> Option<$T> {
-                n.$to_ty().and_then(Self::new)
-            }
+            impl_from_primitive_nonzero_one!(f32, $T, $to_ty, from_f32);
+            impl_from_primitive_nonzero_one!(f64, $T, $to_ty, from_f64);
+        }
         }
     };
 }
@@ -704,7 +593,8 @@ macro_rules! impl_to_primitive_wrapping {
     )*}
 }
 
-impl<T: ToPrimitive> ToPrimitive for Wrapping<T> {
+c0nst::c0nst! {
+impl<T: [c0nst] ToPrimitive> c0nst ToPrimitive for Wrapping<T> {
     impl_to_primitive_wrapping! {
         fn to_isize -> isize;
         fn to_i8 -> i8;
@@ -724,17 +614,23 @@ impl<T: ToPrimitive> ToPrimitive for Wrapping<T> {
         fn to_f64 -> f64;
     }
 }
+}
 
 macro_rules! impl_from_primitive_wrapping {
     ($( fn $method:ident ( $i:ident ); )*) => {$(
         #[inline]
         fn $method(n: $i) -> Option<Self> {
-            T::$method(n).map(Wrapping)
+            // Hand-rolled match — `Option::map` is not yet a const fn.
+            match T::$method(n) {
+                Some(v) => Some(Wrapping(v)),
+                None => None,
+            }
         }
     )*}
 }
 
-impl<T: FromPrimitive> FromPrimitive for Wrapping<T> {
+c0nst::c0nst! {
+impl<T: [c0nst] FromPrimitive + [c0nst] Destruct> c0nst FromPrimitive for Wrapping<T> {
     impl_from_primitive_wrapping! {
         fn from_isize(isize);
         fn from_i8(i8);
@@ -754,24 +650,28 @@ impl<T: FromPrimitive> FromPrimitive for Wrapping<T> {
         fn from_f64(f64);
     }
 }
+}
 
+c0nst::c0nst! {
 /// Cast from one machine scalar to another.
 ///
 /// # Examples
 ///
 /// ```
-/// # use num_traits as num;
+/// # use const_num_traits as num;
 /// let twenty: f32 = num::cast(0x14).unwrap();
 /// assert_eq!(twenty, 20f32);
 /// ```
 ///
 #[inline]
-pub fn cast<T: NumCast, U: NumCast>(n: T) -> Option<U> {
+pub c0nst fn cast<T: [c0nst] NumCast + [c0nst] Destruct, U: [c0nst] NumCast>(n: T) -> Option<U> {
     NumCast::from(n)
 }
+}
 
+c0nst::c0nst! {
 /// An interface for casting between machine scalars.
-pub trait NumCast: Sized + ToPrimitive {
+pub c0nst trait NumCast: Sized + [c0nst] ToPrimitive {
     /// Creates a number from another value that can be converted into
     /// a primitive via the `ToPrimitive` trait. If the source value cannot be
     /// represented by the target type, then `None` is returned.
@@ -784,16 +684,19 @@ pub trait NumCast: Sized + ToPrimitive {
     /// On the other hand, conversions with possible precision loss or truncation
     /// are admitted, like an `f32` with a decimal part to an integer type, or
     /// even a large `f64` saturating to `f32` infinity.
-    fn from<T: ToPrimitive>(n: T) -> Option<Self>;
+    fn from<T: [c0nst] ToPrimitive + [c0nst] Destruct>(n: T) -> Option<Self>;
+}
 }
 
 macro_rules! impl_num_cast {
     ($T:ty, $conv:ident) => {
-        impl NumCast for $T {
+        c0nst::c0nst! {
+        impl c0nst NumCast for $T {
             #[inline]
-            fn from<N: ToPrimitive>(n: N) -> Option<$T> {
+            fn from<N: [c0nst] ToPrimitive + [c0nst] Destruct>(n: N) -> Option<$T> {
                 n.$conv()
             }
+        }
         }
     };
 }
@@ -815,11 +718,17 @@ impl_num_cast!(f64, to_f64);
 
 macro_rules! impl_num_cast_nonzero {
     ($T:ty, $conv:ident) => {
-        impl NumCast for $T {
+        c0nst::c0nst! {
+        impl c0nst NumCast for $T {
             #[inline]
-            fn from<N: ToPrimitive>(n: N) -> Option<$T> {
-                n.$conv().and_then(Self::new)
+            fn from<N: [c0nst] ToPrimitive + [c0nst] Destruct>(n: N) -> Option<$T> {
+                // `Option::and_then` isn't a const fn yet — hand-roll as match.
+                match n.$conv() {
+                    Some(v) => Self::new(v),
+                    None => None,
+                }
             }
+        }
         }
     };
 }
@@ -838,12 +747,19 @@ impl_num_cast_nonzero!(NonZeroI32, to_i32);
 impl_num_cast_nonzero!(NonZeroI64, to_i64);
 impl_num_cast_nonzero!(NonZeroI128, to_i128);
 
-impl<T: NumCast> NumCast for Wrapping<T> {
-    fn from<U: ToPrimitive>(n: U) -> Option<Self> {
-        T::from(n).map(Wrapping)
+c0nst::c0nst! {
+impl<T: [c0nst] NumCast + [c0nst] Destruct> c0nst NumCast for Wrapping<T> {
+    fn from<U: [c0nst] ToPrimitive + [c0nst] Destruct>(n: U) -> Option<Self> {
+        // Hand-rolled match — `Option::map` is not yet a const fn.
+        match T::from(n) {
+            Some(v) => Some(Wrapping(v)),
+            None => None,
+        }
     }
 }
+}
 
+c0nst::c0nst! {
 /// A generic interface for casting between machine scalars with the
 /// `as` operator, which admits narrowing and precision loss.
 /// Implementers of this trait `AsPrimitive` should behave like a primitive
@@ -853,7 +769,7 @@ impl<T: NumCast> NumCast for Wrapping<T> {
 /// # Examples
 ///
 /// ```
-/// # use num_traits::AsPrimitive;
+/// # use const_num_traits::AsPrimitive;
 /// let three: i32 = (3.14159265f32).as_();
 /// assert_eq!(three, 3);
 /// ```
@@ -866,22 +782,25 @@ impl<T: NumCast> NumCast for Wrapping<T> {
 /// type ([#10184](https://github.com/rust-lang/rust/issues/10184)).
 ///
 /// ```ignore
-/// # use num_traits::AsPrimitive;
+/// # use const_num_traits::AsPrimitive;
 /// let x: u8 = (1.04E+17).as_(); // UB
 /// ```
 ///
-pub trait AsPrimitive<T>: 'static + Copy
+pub c0nst trait AsPrimitive<T>: 'static + Copy
 where
     T: 'static + Copy,
 {
     /// Convert a value to another, using the `as` operator.
     fn as_(self) -> T;
 }
+}
 
 macro_rules! impl_as_primitive {
     (@ $T: ty =>  impl $U: ty ) => {
-        impl AsPrimitive<$U> for $T {
+        c0nst::c0nst! {
+        impl c0nst AsPrimitive<$U> for $T {
             #[inline] fn as_(self) -> $U { self as $U }
+        }
         }
     };
     (@ $T: ty => { $( $U: ty ),* } ) => {$(

@@ -4,8 +4,9 @@ use core::ops::Neg;
 use crate::float::FloatCore;
 use crate::Num;
 
+c0nst::c0nst! {
 /// Useful functions for signed numbers (i.e. numbers that can be negative).
-pub trait Signed: Sized + Num + Neg<Output = Self> {
+pub c0nst trait Signed: Sized + [c0nst] Num + [c0nst] Neg<Output = Self> {
     /// Computes the absolute value.
     ///
     /// For `f32` and `f64`, `NaN` will be returned if the number is `NaN`.
@@ -40,10 +41,12 @@ pub trait Signed: Sized + Num + Neg<Output = Self> {
     /// Returns true if the number is negative and false if the number is zero or positive.
     fn is_negative(&self) -> bool;
 }
+}
 
 macro_rules! signed_impl {
     ($($t:ty)*) => ($(
-        impl Signed for $t {
+        c0nst::c0nst! {
+        impl c0nst Signed for $t {
             #[inline]
             fn abs(&self) -> $t {
                 if self.is_negative() { -*self } else { *self }
@@ -69,11 +72,14 @@ macro_rules! signed_impl {
             #[inline]
             fn is_negative(&self) -> bool { *self < 0 }
         }
+        }
     )*)
 }
 
 signed_impl!(isize i8 i16 i32 i64 i128);
 
+// `Wrapping<T>: Num` is itself a non-const impl (std's `PartialEq` on
+// `Wrapping<T>` isn't const), so this stays non-const.
 impl<T: Signed> Signed for Wrapping<T>
 where
     Wrapping<T>: Num + Neg<Output = Wrapping<T>>,
@@ -104,6 +110,7 @@ where
     }
 }
 
+// Float Signed stays non-const: `FloatCore::signum` isn't const-callable.
 macro_rules! signed_float_impl {
     ($t:ty) => {
         impl Signed for $t {
@@ -153,25 +160,30 @@ macro_rules! signed_float_impl {
 signed_float_impl!(f32);
 signed_float_impl!(f64);
 
+c0nst::c0nst! {
 /// Computes the absolute value.
 ///
 /// For `f32` and `f64`, `NaN` will be returned if the number is `NaN`
 ///
 /// For signed integers, `::MIN` will be returned if the number is `::MIN`.
 #[inline(always)]
-pub fn abs<T: Signed>(value: T) -> T {
+pub c0nst fn abs<T: [c0nst] Signed + [c0nst] Destruct>(value: T) -> T {
     value.abs()
 }
+}
 
+c0nst::c0nst! {
 /// The positive difference of two numbers.
 ///
 /// Returns zero if `x` is less than or equal to `y`, otherwise the difference
 /// between `x` and `y` is returned.
 #[inline(always)]
-pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
+pub c0nst fn abs_sub<T: [c0nst] Signed + [c0nst] Destruct>(x: T, y: T) -> T {
     x.abs_sub(&y)
 }
+}
 
+c0nst::c0nst! {
 /// Returns the sign of the number.
 ///
 /// For `f32` and `f64`:
@@ -186,21 +198,27 @@ pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
 /// * `1` if the number is positive
 /// * `-1` if the number is negative
 #[inline(always)]
-pub fn signum<T: Signed>(value: T) -> T {
+pub c0nst fn signum<T: [c0nst] Signed + [c0nst] Destruct>(value: T) -> T {
     value.signum()
 }
+}
 
+c0nst::c0nst! {
 /// A trait for values which cannot be negative
-pub trait Unsigned: Num {}
+pub c0nst trait Unsigned: [c0nst] Num {}
+}
 
 macro_rules! empty_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
-        impl $name for $t {}
+        c0nst::c0nst! {
+        impl c0nst $name for $t {}
+        }
     )*)
 }
 
 empty_trait_impl!(Unsigned for usize u8 u16 u32 u64 u128);
 
+// Same `Wrapping<T>: Num` story as `Signed`: non-const blanket impl.
 impl<T: Unsigned> Unsigned for Wrapping<T> where Wrapping<T>: Num {}
 
 #[test]

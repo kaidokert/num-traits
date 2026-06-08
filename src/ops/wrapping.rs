@@ -3,28 +3,34 @@ use core::ops::{Add, Mul, Neg, Shl, Shr, Sub};
 
 macro_rules! wrapping_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
-        impl $trait_name for $t {
+        c0nst::c0nst! {
+        impl c0nst $trait_name for $t {
             #[inline]
             fn $method(&self, v: &Self) -> Self {
                 <$t>::$method(*self, *v)
             }
         }
+        }
     };
     ($trait_name:ident, $method:ident, $t:ty, $rhs:ty) => {
-        impl $trait_name<$rhs> for $t {
+        c0nst::c0nst! {
+        impl c0nst $trait_name<$rhs> for $t {
             #[inline]
             fn $method(&self, v: &$rhs) -> Self {
                 <$t>::$method(*self, *v)
             }
         }
+        }
     };
 }
 
+c0nst::c0nst! {
 /// Performs addition that wraps around on overflow.
-pub trait WrappingAdd: Sized + Add<Self, Output = Self> {
+pub c0nst trait WrappingAdd: Sized + [c0nst] Add<Self, Output = Self> {
     /// Wrapping (modular) addition. Computes `self + other`, wrapping around at the boundary of
     /// the type.
     fn wrapping_add(&self, v: &Self) -> Self;
+}
 }
 
 wrapping_impl!(WrappingAdd, wrapping_add, u8);
@@ -41,11 +47,13 @@ wrapping_impl!(WrappingAdd, wrapping_add, i64);
 wrapping_impl!(WrappingAdd, wrapping_add, isize);
 wrapping_impl!(WrappingAdd, wrapping_add, i128);
 
+c0nst::c0nst! {
 /// Performs subtraction that wraps around on overflow.
-pub trait WrappingSub: Sized + Sub<Self, Output = Self> {
+pub c0nst trait WrappingSub: Sized + [c0nst] Sub<Self, Output = Self> {
     /// Wrapping (modular) subtraction. Computes `self - other`, wrapping around at the boundary
     /// of the type.
     fn wrapping_sub(&self, v: &Self) -> Self;
+}
 }
 
 wrapping_impl!(WrappingSub, wrapping_sub, u8);
@@ -62,11 +70,13 @@ wrapping_impl!(WrappingSub, wrapping_sub, i64);
 wrapping_impl!(WrappingSub, wrapping_sub, isize);
 wrapping_impl!(WrappingSub, wrapping_sub, i128);
 
+c0nst::c0nst! {
 /// Performs multiplication that wraps around on overflow.
-pub trait WrappingMul: Sized + Mul<Self, Output = Self> {
+pub c0nst trait WrappingMul: Sized + [c0nst] Mul<Self, Output = Self> {
     /// Wrapping (modular) multiplication. Computes `self * other`, wrapping around at the boundary
     /// of the type.
     fn wrapping_mul(&self, v: &Self) -> Self;
+}
 }
 
 wrapping_impl!(WrappingMul, wrapping_mul, u8);
@@ -85,17 +95,20 @@ wrapping_impl!(WrappingMul, wrapping_mul, i128);
 
 macro_rules! wrapping_unary_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
-        impl $trait_name for $t {
+        c0nst::c0nst! {
+        impl c0nst $trait_name for $t {
             #[inline]
             fn $method(&self) -> $t {
                 <$t>::$method(*self)
             }
         }
+        }
     };
 }
 
+c0nst::c0nst! {
 /// Performs a negation that does not panic.
-pub trait WrappingNeg: Sized {
+pub c0nst trait WrappingNeg: Sized {
     /// Wrapping (modular) negation. Computes `-self`,
     /// wrapping around at the boundary of the type.
     ///
@@ -107,13 +120,14 @@ pub trait WrappingNeg: Sized {
     /// `MAX` is the corresponding signed type's maximum.
     ///
     /// ```
-    /// use num_traits::WrappingNeg;
+    /// use const_num_traits::WrappingNeg;
     ///
     /// assert_eq!(100i8.wrapping_neg(), -100);
     /// assert_eq!((-100i8).wrapping_neg(), 100);
     /// assert_eq!((-128i8).wrapping_neg(), -128); // wrapped!
     /// ```
     fn wrapping_neg(&self) -> Self;
+}
 }
 
 wrapping_unary_impl!(WrappingNeg, wrapping_neg, u8);
@@ -131,23 +145,26 @@ wrapping_unary_impl!(WrappingNeg, wrapping_neg, i128);
 
 macro_rules! wrapping_shift_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
-        impl $trait_name for $t {
+        c0nst::c0nst! {
+        impl c0nst $trait_name for $t {
             #[inline]
             fn $method(&self, rhs: u32) -> $t {
                 <$t>::$method(*self, rhs)
             }
         }
+        }
     };
 }
 
+c0nst::c0nst! {
 /// Performs a left shift that does not panic.
-pub trait WrappingShl: Sized + Shl<usize, Output = Self> {
+pub c0nst trait WrappingShl: Sized + [c0nst] Shl<usize, Output = Self> {
     /// Panic-free bitwise shift-left; yields `self << mask(rhs)`,
     /// where `mask` removes any high order bits of `rhs` that would
     /// cause the shift to exceed the bitwidth of the type.
     ///
     /// ```
-    /// use num_traits::WrappingShl;
+    /// use const_num_traits::WrappingShl;
     ///
     /// let x: u16 = 0x0001;
     ///
@@ -157,6 +174,7 @@ pub trait WrappingShl: Sized + Shl<usize, Output = Self> {
     /// assert_eq!(WrappingShl::wrapping_shl(&x, 16), 0x0001);
     /// ```
     fn wrapping_shl(&self, rhs: u32) -> Self;
+}
 }
 
 wrapping_shift_impl!(WrappingShl, wrapping_shl, u8);
@@ -173,14 +191,15 @@ wrapping_shift_impl!(WrappingShl, wrapping_shl, i64);
 wrapping_shift_impl!(WrappingShl, wrapping_shl, isize);
 wrapping_shift_impl!(WrappingShl, wrapping_shl, i128);
 
+c0nst::c0nst! {
 /// Performs a right shift that does not panic.
-pub trait WrappingShr: Sized + Shr<usize, Output = Self> {
+pub c0nst trait WrappingShr: Sized + [c0nst] Shr<usize, Output = Self> {
     /// Panic-free bitwise shift-right; yields `self >> mask(rhs)`,
     /// where `mask` removes any high order bits of `rhs` that would
     /// cause the shift to exceed the bitwidth of the type.
     ///
     /// ```
-    /// use num_traits::WrappingShr;
+    /// use const_num_traits::WrappingShr;
     ///
     /// let x: u16 = 0x8000;
     ///
@@ -190,6 +209,7 @@ pub trait WrappingShr: Sized + Shr<usize, Output = Self> {
     /// assert_eq!(WrappingShr::wrapping_shr(&x, 16), 0x8000);
     /// ```
     fn wrapping_shr(&self, rhs: u32) -> Self;
+}
 }
 
 wrapping_shift_impl!(WrappingShr, wrapping_shr, u8);
@@ -206,7 +226,8 @@ wrapping_shift_impl!(WrappingShr, wrapping_shr, i64);
 wrapping_shift_impl!(WrappingShr, wrapping_shr, isize);
 wrapping_shift_impl!(WrappingShr, wrapping_shr, i128);
 
-// Well this is a bit funny, but all the more appropriate.
+// Wrapping<T> blanket impls stay non-const: std's `Add`/`Sub`/`Mul`/`Neg`/`Shl`/`Shr`
+// impls for `Wrapping<T>` are not const-trait impls (same situation as Num).
 impl<T: WrappingAdd> WrappingAdd for Wrapping<T>
 where
     Wrapping<T>: Add<Output = Wrapping<T>>,
