@@ -13,7 +13,7 @@ readme = "README.md"
 build = "build.rs"
 exclude = ["/ci/*", "/.github/*"]
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.86"
 
 [package.metadata.docs.rs]
 features = ["std"]
