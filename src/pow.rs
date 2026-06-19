@@ -12,7 +12,7 @@ pub trait Pow<RHS> {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::Pow;
+    /// use const_num_traits::Pow;
     /// assert_eq!(Pow::pow(10u32, 2u32), 100);
     /// ```
     fn pow(self, rhs: RHS) -> Self::Output;
@@ -169,7 +169,7 @@ mod float_impls {
 /// # Example
 ///
 /// ```rust
-/// use num_traits::pow;
+/// use const_num_traits::pow;
 ///
 /// assert_eq!(pow(2i8, 4), 16);
 /// assert_eq!(pow(6u8, 3), 216);
@@ -209,7 +209,7 @@ pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> 
 /// # Example
 ///
 /// ```rust
-/// use num_traits::checked_pow;
+/// use const_num_traits::checked_pow;
 ///
 /// assert_eq!(checked_pow(2i8, 4), Some(16));
 /// assert_eq!(checked_pow(7i8, 8), None);

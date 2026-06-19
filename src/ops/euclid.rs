@@ -1,6 +1,7 @@
 use core::ops::{Div, Rem};
 
-pub trait Euclid: Sized + Div<Self, Output = Self> + Rem<Self, Output = Self> {
+c0nst::c0nst! {
+pub c0nst trait Euclid: Sized + [c0nst] Div<Self, Output = Self> + [c0nst] Rem<Self, Output = Self> {
     /// Calculates Euclidean division, the matching method for `rem_euclid`.
     ///
     /// This computes the integer `n` such that
@@ -11,7 +12,7 @@ pub trait Euclid: Sized + Div<Self, Output = Self> + Rem<Self, Output = Self> {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::Euclid;
+    /// use const_num_traits::Euclid;
     ///
     /// let a: i32 = 7;
     /// let b: i32 = 4;
@@ -36,7 +37,7 @@ pub trait Euclid: Sized + Div<Self, Output = Self> + Rem<Self, Output = Self> {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::Euclid;
+    /// use const_num_traits::Euclid;
     ///
     /// let a: i32 = 7;
     /// let b: i32 = 4;
@@ -55,7 +56,7 @@ pub trait Euclid: Sized + Div<Self, Output = Self> + Rem<Self, Output = Self> {
     /// # Examples
     ///
     /// ```
-    /// # use num_traits::Euclid;
+    /// # use const_num_traits::Euclid;
     /// let x = 5u8;
     /// let y = 3u8;
     ///
@@ -68,8 +69,33 @@ pub trait Euclid: Sized + Div<Self, Output = Self> + Rem<Self, Output = Self> {
         (self.div_euclid(v), self.rem_euclid(v))
     }
 }
+}
 
 macro_rules! euclid_forward_impl {
+    ($($t:ty)*) => {$(
+        c0nst::c0nst! {
+        impl c0nst Euclid for $t {
+            #[inline]
+            fn div_euclid(&self, v: &$t) -> Self {
+                <$t>::div_euclid(*self, *v)
+            }
+
+            #[inline]
+            fn rem_euclid(&self, v: &$t) -> Self {
+                <$t>::rem_euclid(*self, *v)
+            }
+        }
+        }
+    )*}
+}
+
+euclid_forward_impl!(isize i8 i16 i32 i64 i128);
+euclid_forward_impl!(usize u8 u16 u32 u64 u128);
+
+// f32/f64 keep plain (non-const) impls: their inherent `div_euclid`/`rem_euclid`
+// aren't const fns yet, so a separate non-const macro path is used.
+#[cfg(feature = "std")]
+macro_rules! euclid_forward_impl_float {
     ($($t:ty)*) => {$(
         impl Euclid for $t {
             #[inline]
@@ -85,11 +111,8 @@ macro_rules! euclid_forward_impl {
     )*}
 }
 
-euclid_forward_impl!(isize i8 i16 i32 i64 i128);
-euclid_forward_impl!(usize u8 u16 u32 u64 u128);
-
 #[cfg(feature = "std")]
-euclid_forward_impl!(f32 f64);
+euclid_forward_impl_float!(f32 f64);
 
 #[cfg(not(feature = "std"))]
 impl Euclid for f32 {
@@ -135,7 +158,8 @@ impl Euclid for f64 {
     }
 }
 
-pub trait CheckedEuclid: Euclid {
+c0nst::c0nst! {
+pub c0nst trait CheckedEuclid: [c0nst] Euclid {
     /// Performs euclid division, returning `None` on division by zero or if
     /// overflow occurred.
     fn checked_div_euclid(&self, v: &Self) -> Option<Self>;
@@ -147,12 +171,10 @@ pub trait CheckedEuclid: Euclid {
     /// Returns both the quotient and remainder from checked Euclidean division,
     /// returning `None` on division by zero or if overflow occurred.
     ///
-    /// By default, it internally calls both `CheckedEuclid::checked_div_euclid` and `CheckedEuclid::checked_rem_euclid`,
-    /// but it can be overridden in order to implement some optimization.
     /// # Examples
     ///
     /// ```
-    /// # use num_traits::CheckedEuclid;
+    /// # use const_num_traits::CheckedEuclid;
     /// let x = 5u8;
     /// let y = 3u8;
     ///
@@ -161,14 +183,14 @@ pub trait CheckedEuclid: Euclid {
     ///
     /// assert_eq!(Some((div.unwrap(), rem.unwrap())), CheckedEuclid::checked_div_rem_euclid(&x, &y));
     /// ```
-    fn checked_div_rem_euclid(&self, v: &Self) -> Option<(Self, Self)> {
-        Some((self.checked_div_euclid(v)?, self.checked_rem_euclid(v)?))
-    }
+    fn checked_div_rem_euclid(&self, v: &Self) -> Option<(Self, Self)>;
+}
 }
 
 macro_rules! checked_euclid_forward_impl {
     ($($t:ty)*) => {$(
-        impl CheckedEuclid for $t {
+        c0nst::c0nst! {
+        impl c0nst CheckedEuclid for $t {
             #[inline]
             fn checked_div_euclid(&self, v: &$t) -> Option<Self> {
                 <$t>::checked_div_euclid(*self, *v)
@@ -178,6 +200,22 @@ macro_rules! checked_euclid_forward_impl {
             fn checked_rem_euclid(&self, v: &$t) -> Option<Self> {
                 <$t>::checked_rem_euclid(*self, *v)
             }
+
+            // `?` desugars through `Try`/`FromResidual` which aren't const;
+            // hand-roll the bail-out via `match`.
+            #[inline]
+            fn checked_div_rem_euclid(&self, v: &$t) -> Option<(Self, Self)> {
+                let d = match <$t>::checked_div_euclid(*self, *v) {
+                    Some(x) => x,
+                    None => return None,
+                };
+                let r = match <$t>::checked_rem_euclid(*self, *v) {
+                    Some(x) => x,
+                    None => return None,
+                };
+                Some((d, r))
+            }
+        }
         }
     )*}
 }
@@ -235,6 +273,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "std")]
     fn euclid_float() {
         macro_rules! test_euclid {
             ($($t:ident)+) => {
@@ -242,14 +281,15 @@ mod tests {
                     {
                         let x: $t = 12.1;
                         let y: $t = 3.2;
+                        // Uses inherent `EPSILON` const now that `FloatCore` is gone.
                         assert!(Euclid::div_euclid(&x, &y) * y + Euclid::rem_euclid(&x, &y) - x
-                        <= 46.4 * <$t as crate::float::FloatCore>::epsilon());
+                        <= 46.4 * <$t>::EPSILON);
                         assert!(Euclid::div_euclid(&x, &-y) * -y + Euclid::rem_euclid(&x, &-y) - x
-                        <= 46.4 * <$t as crate::float::FloatCore>::epsilon());
+                        <= 46.4 * <$t>::EPSILON);
                         assert!(Euclid::div_euclid(&-x, &y) * y + Euclid::rem_euclid(&-x, &y) + x
-                        <= 46.4 * <$t as crate::float::FloatCore>::epsilon());
+                        <= 46.4 * <$t>::EPSILON);
                         assert!(Euclid::div_euclid(&-x, &-y) * -y + Euclid::rem_euclid(&-x, &-y) + x
-                        <= 46.4 * <$t as crate::float::FloatCore>::epsilon());
+                        <= 46.4 * <$t>::EPSILON);
                         assert_eq!((Euclid::div_euclid(&x, &y), Euclid::rem_euclid(&x, &y)), Euclid::div_rem_euclid(&x, &y));
                     }
                 )+

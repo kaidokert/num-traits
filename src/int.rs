@@ -5,6 +5,7 @@ use crate::ops::checked::*;
 use crate::ops::saturating::Saturating;
 use crate::{Num, NumCast};
 
+c0nst::c0nst! {
 /// Generic trait for primitive integers.
 ///
 /// The `PrimInt` trait is an abstraction over the builtin primitive integer types (e.g., `u8`,
@@ -31,33 +32,33 @@ use crate::{Num, NumCast};
 /// This trait and many of the method names originate in the unstable `core::num::Int` trait from
 /// the rust standard library. The original trait was never stabilized and thus removed from the
 /// standard library.
-pub trait PrimInt:
+pub c0nst trait PrimInt:
     Sized
     + Copy
-    + Num
-    + NumCast
-    + Bounded
-    + PartialOrd
-    + Ord
-    + Eq
-    + Not<Output = Self>
-    + BitAnd<Output = Self>
-    + BitOr<Output = Self>
-    + BitXor<Output = Self>
-    + Shl<usize, Output = Self>
-    + Shr<usize, Output = Self>
-    + CheckedAdd<Output = Self>
-    + CheckedSub<Output = Self>
-    + CheckedMul<Output = Self>
-    + CheckedDiv<Output = Self>
-    + Saturating
+    + [c0nst] Num
+    + [c0nst] NumCast
+    + [c0nst] Bounded
+    + [c0nst] PartialOrd
+    + [c0nst] Ord
+    + [c0nst] Eq
+    + [c0nst] Not<Output = Self>
+    + [c0nst] BitAnd<Output = Self>
+    + [c0nst] BitOr<Output = Self>
+    + [c0nst] BitXor<Output = Self>
+    + [c0nst] Shl<usize, Output = Self>
+    + [c0nst] Shr<usize, Output = Self>
+    + [c0nst] CheckedAdd<Output = Self>
+    + [c0nst] CheckedSub<Output = Self>
+    + [c0nst] CheckedMul<Output = Self>
+    + [c0nst] CheckedDiv<Output = Self>
+    + [c0nst] Saturating
 {
     /// Returns the number of ones in the binary representation of `self`.
     ///
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0b01001100u8;
     ///
@@ -70,7 +71,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0b01001100u8;
     ///
@@ -84,7 +85,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0xF00Du16;
     ///
@@ -100,7 +101,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0b0101000u16;
     ///
@@ -114,7 +115,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0xBEEFu16;
     ///
@@ -130,7 +131,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0b0101000u16;
     ///
@@ -144,7 +145,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0x3456789ABCDEF012u64;
@@ -159,7 +160,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0xDEF0123456789ABCu64;
@@ -176,7 +177,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0x3456789ABCDEF000u64;
@@ -193,7 +194,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0xFEDCBA9876543210u64;
     /// let m = 0xFFFFEDCBA9876543u64;
@@ -210,7 +211,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFi64;
     /// let m = 0x3456789ABCDEF000i64;
@@ -227,7 +228,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = -8i8; // 0b11111000
     /// let m = 62i8; // 0b00111110
@@ -241,7 +242,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0xEFCDAB8967452301u64;
@@ -258,7 +259,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x12345678u32;
     /// let m = 0x1e6a2c48u32;
@@ -277,7 +278,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -296,7 +297,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -315,7 +316,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -334,7 +335,7 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -351,14 +352,16 @@ pub trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use num_traits::PrimInt;
+    /// use const_num_traits::PrimInt;
     ///
     /// assert_eq!(2i32.pow(4), 16);
     /// ```
     fn pow(self, exp: u32) -> Self;
 }
+}
 
-fn one_per_byte<P: PrimInt>() -> P {
+c0nst::c0nst! {
+c0nst fn one_per_byte<P: [c0nst] PrimInt>() -> P {
     // i8, u8: return 0x01
     // i16, u16: return 0x0101 = (0x01 << 8) | 0x01
     // i32, u32: return 0x01010101 = (0x0101 << 16) | 0x0101
@@ -373,8 +376,10 @@ fn one_per_byte<P: PrimInt>() -> P {
     }
     ret
 }
+}
 
-fn reverse_bits_fallback<P: PrimInt>(i: P) -> P {
+c0nst::c0nst! {
+c0nst fn reverse_bits_fallback<P: [c0nst] PrimInt>(i: P) -> P {
     let rep_01: P = one_per_byte();
     let rep_03 = (rep_01 << 1) | rep_01;
     let rep_05 = (rep_01 << 2) | rep_01;
@@ -390,10 +395,12 @@ fn reverse_bits_fallback<P: PrimInt>(i: P) -> P {
     ret = ((ret & rep_55) << 1) | ((ret >> 1) & rep_55);
     ret
 }
+}
 
 macro_rules! prim_int_impl {
     ($T:ty, $S:ty, $U:ty) => {
-        impl PrimInt for $T {
+        c0nst::c0nst! {
+        impl c0nst PrimInt for $T {
             #[inline]
             fn count_ones(self) -> u32 {
                 <$T>::count_ones(self)
@@ -488,6 +495,7 @@ macro_rules! prim_int_impl {
             fn pow(self, exp: u32) -> Self {
                 <$T>::pow(self, exp)
             }
+        }
         }
     };
 }

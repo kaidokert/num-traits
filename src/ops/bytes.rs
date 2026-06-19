@@ -3,7 +3,8 @@ use core::cmp::{Eq, Ord, PartialEq, PartialOrd};
 use core::fmt::Debug;
 use core::hash::Hash;
 
-pub trait NumBytes:
+c0nst::c0nst! {
+pub c0nst trait NumBytes:
     Debug
     + AsRef<[u8]>
     + AsMut<[u8]>
@@ -16,8 +17,10 @@ pub trait NumBytes:
     + BorrowMut<[u8]>
 {
 }
+}
 
-impl<T> NumBytes for T where
+c0nst::c0nst! {
+impl<T> c0nst NumBytes for T where
     T: Debug
         + AsRef<[u8]>
         + AsMut<[u8]>
@@ -31,8 +34,10 @@ impl<T> NumBytes for T where
         + ?Sized
 {
 }
+}
 
-pub trait ToBytes {
+c0nst::c0nst! {
+pub c0nst trait ToBytes {
     type Bytes: NumBytes;
 
     /// Return the memory representation of this number as a byte array in big-endian byte order.
@@ -40,7 +45,7 @@ pub trait ToBytes {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::ToBytes;
+    /// use const_num_traits::ToBytes;
     ///
     /// let bytes = ToBytes::to_be_bytes(&0x12345678u32);
     /// assert_eq!(bytes, [0x12, 0x34, 0x56, 0x78]);
@@ -52,7 +57,7 @@ pub trait ToBytes {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::ToBytes;
+    /// use const_num_traits::ToBytes;
     ///
     /// let bytes = ToBytes::to_le_bytes(&0x12345678u32);
     /// assert_eq!(bytes, [0x78, 0x56, 0x34, 0x12]);
@@ -70,7 +75,7 @@ pub trait ToBytes {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::ToBytes;
+    /// use const_num_traits::ToBytes;
     ///
     /// #[cfg(target_endian = "big")]
     /// let expected = [0x12, 0x34, 0x56, 0x78];
@@ -89,8 +94,10 @@ pub trait ToBytes {
         bytes
     }
 }
+}
 
-pub trait FromBytes: Sized {
+c0nst::c0nst! {
+pub c0nst trait FromBytes: Sized {
     type Bytes: NumBytes + ?Sized;
 
     /// Create a number from its representation as a byte array in big endian.
@@ -98,7 +105,7 @@ pub trait FromBytes: Sized {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::FromBytes;
+    /// use const_num_traits::FromBytes;
     ///
     /// let value: u32 = FromBytes::from_be_bytes(&[0x12, 0x34, 0x56, 0x78]);
     /// assert_eq!(value, 0x12345678);
@@ -110,7 +117,7 @@ pub trait FromBytes: Sized {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::FromBytes;
+    /// use const_num_traits::FromBytes;
     ///
     /// let value: u32 = FromBytes::from_le_bytes(&[0x78, 0x56, 0x34, 0x12]);
     /// assert_eq!(value, 0x12345678);
@@ -128,7 +135,7 @@ pub trait FromBytes: Sized {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::FromBytes;
+    /// use const_num_traits::FromBytes;
     ///
     /// #[cfg(target_endian = "big")]
     /// let bytes = [0x12, 0x34, 0x56, 0x78];
@@ -147,10 +154,12 @@ pub trait FromBytes: Sized {
         this
     }
 }
+}
 
 macro_rules! float_to_from_bytes_impl {
     ($T:ty, $L:expr) => {
-        impl ToBytes for $T {
+        c0nst::c0nst! {
+        impl c0nst ToBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]
@@ -168,8 +177,10 @@ macro_rules! float_to_from_bytes_impl {
                 <$T>::to_ne_bytes(*self)
             }
         }
+        }
 
-        impl FromBytes for $T {
+        c0nst::c0nst! {
+        impl c0nst FromBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]
@@ -186,13 +197,15 @@ macro_rules! float_to_from_bytes_impl {
             fn from_ne_bytes(bytes: &Self::Bytes) -> Self {
                 <$T>::from_ne_bytes(*bytes)
             }
+        }
         }
     };
 }
 
 macro_rules! int_to_from_bytes_impl {
     ($T:ty, $L:expr) => {
-        impl ToBytes for $T {
+        c0nst::c0nst! {
+        impl c0nst ToBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]
@@ -210,8 +223,10 @@ macro_rules! int_to_from_bytes_impl {
                 <$T>::to_ne_bytes(*self)
             }
         }
+        }
 
-        impl FromBytes for $T {
+        c0nst::c0nst! {
+        impl c0nst FromBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]
@@ -228,6 +243,7 @@ macro_rules! int_to_from_bytes_impl {
             fn from_ne_bytes(bytes: &Self::Bytes) -> Self {
                 <$T>::from_ne_bytes(*bytes)
             }
+        }
         }
     };
 }

@@ -12,11 +12,15 @@
 //!
 //! ## Compatibility
 //!
-//! The `num-traits` crate is tested for rustc 1.60 and greater.
+//! The `const-num-traits` crate is tested for rustc 1.86 and greater.
 
-#![doc(html_root_url = "https://docs.rs/num-traits/0.2")]
+#![doc(html_root_url = "https://docs.rs/const-num-traits/0.1")]
 #![deny(unconditional_recursion)]
 #![no_std]
+#![cfg_attr(
+    feature = "nightly",
+    feature(const_trait_impl, const_ops, const_cmp, const_destruct)
+)]
 
 // Need to explicitly bring the crate in for inherent float methods
 #[cfg(feature = "std")]
@@ -31,7 +35,7 @@ pub use crate::bounds::Bounded;
 #[cfg(any(feature = "std", feature = "libm"))]
 pub use crate::float::Float;
 pub use crate::float::FloatConst;
-// pub use real::{FloatCore, Real}; // NOTE: Don't do this, it breaks `use num_traits::*;`.
+// pub use real::{FloatCore, Real}; // NOTE: Don't do this, it breaks `use const_num_traits::*;`.
 pub use crate::cast::{cast, AsPrimitive, FromPrimitive, NumCast, ToPrimitive};
 pub use crate::identities::{one, zero, ConstOne, ConstZero, One, Zero};
 pub use crate::int::PrimInt;
@@ -62,9 +66,10 @@ pub mod pow;
 pub mod real;
 pub mod sign;
 
+c0nst::c0nst! {
 /// The base trait for numeric types, covering `0` and `1` values,
 /// comparisons, basic numeric operations, and string conversion.
-pub trait Num: PartialEq + Zero + One + NumOps {
+pub c0nst trait Num: [c0nst] PartialEq + [c0nst] Zero + [c0nst] One + [c0nst] NumOps {
     type FromStrRadixErr;
 
     /// Convert from a string and radix (typically `2..=36`).
@@ -72,7 +77,7 @@ pub trait Num: PartialEq + Zero + One + NumOps {
     /// # Examples
     ///
     /// ```rust
-    /// use num_traits::Num;
+    /// use const_num_traits::Num;
     ///
     /// let result = <i32 as Num>::from_str_radix("27", 10);
     /// assert_eq!(result, Ok(27));
@@ -94,73 +99,99 @@ pub trait Num: PartialEq + Zero + One + NumOps {
     /// parsing doesn't make sense for that type.
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr>;
 }
+}
 
+c0nst::c0nst! {
 /// Generic trait for types implementing basic numeric operations
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumOps<Rhs = Self, Output = Self>:
-    Add<Rhs, Output = Output>
-    + Sub<Rhs, Output = Output>
-    + Mul<Rhs, Output = Output>
-    + Div<Rhs, Output = Output>
-    + Rem<Rhs, Output = Output>
+pub c0nst trait NumOps<Rhs = Self, Output = Self>:
+    [c0nst] Add<Rhs, Output = Output>
+    + [c0nst] Sub<Rhs, Output = Output>
+    + [c0nst] Mul<Rhs, Output = Output>
+    + [c0nst] Div<Rhs, Output = Output>
+    + [c0nst] Rem<Rhs, Output = Output>
 {
 }
-
-impl<T, Rhs, Output> NumOps<Rhs, Output> for T where
-    T: Add<Rhs, Output = Output>
-        + Sub<Rhs, Output = Output>
-        + Mul<Rhs, Output = Output>
-        + Div<Rhs, Output = Output>
-        + Rem<Rhs, Output = Output>
-{
 }
 
+c0nst::c0nst! {
+impl<T, Rhs, Output> c0nst NumOps<Rhs, Output> for T where
+    T: [c0nst] Add<Rhs, Output = Output>
+        + [c0nst] Sub<Rhs, Output = Output>
+        + [c0nst] Mul<Rhs, Output = Output>
+        + [c0nst] Div<Rhs, Output = Output>
+        + [c0nst] Rem<Rhs, Output = Output>
+{
+}
+}
+
+c0nst::c0nst! {
 /// The trait for `Num` types which also implement numeric operations taking
 /// the second operand by reference.
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumRef: Num + for<'r> NumOps<&'r Self> {}
-impl<T> NumRef for T where T: Num + for<'r> NumOps<&'r T> {}
+pub c0nst trait NumRef: [c0nst] Num + for<'r> [c0nst] NumOps<&'r Self> {}
+}
+c0nst::c0nst! {
+impl<T> c0nst NumRef for T where T: [c0nst] Num + for<'r> [c0nst] NumOps<&'r T> {}
+}
 
+c0nst::c0nst! {
 /// The trait for `Num` references which implement numeric operations, taking the
 /// second operand either by value or by reference.
 ///
 /// This is automatically implemented for all types which implement the operators. It covers
 /// every type implementing the operations though, regardless of it being a reference or
 /// related to `Num`.
-pub trait RefNum<Base>: NumOps<Base, Base> + for<'r> NumOps<&'r Base, Base> {}
-impl<T, Base> RefNum<Base> for T where T: NumOps<Base, Base> + for<'r> NumOps<&'r Base, Base> {}
+pub c0nst trait RefNum<Base>: [c0nst] NumOps<Base, Base> + for<'r> [c0nst] NumOps<&'r Base, Base> {}
+}
+c0nst::c0nst! {
+impl<T, Base> c0nst RefNum<Base> for T where T: [c0nst] NumOps<Base, Base> + for<'r> [c0nst] NumOps<&'r Base, Base> {}
+}
 
+c0nst::c0nst! {
 /// Generic trait for types implementing numeric assignment operators (like `+=`).
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumAssignOps<Rhs = Self>:
-    AddAssign<Rhs> + SubAssign<Rhs> + MulAssign<Rhs> + DivAssign<Rhs> + RemAssign<Rhs>
+pub c0nst trait NumAssignOps<Rhs = Self>:
+    [c0nst] AddAssign<Rhs> + [c0nst] SubAssign<Rhs> + [c0nst] MulAssign<Rhs> + [c0nst] DivAssign<Rhs> + [c0nst] RemAssign<Rhs>
 {
 }
-
-impl<T, Rhs> NumAssignOps<Rhs> for T where
-    T: AddAssign<Rhs> + SubAssign<Rhs> + MulAssign<Rhs> + DivAssign<Rhs> + RemAssign<Rhs>
-{
 }
 
+c0nst::c0nst! {
+impl<T, Rhs> c0nst NumAssignOps<Rhs> for T where
+    T: [c0nst] AddAssign<Rhs> + [c0nst] SubAssign<Rhs> + [c0nst] MulAssign<Rhs> + [c0nst] DivAssign<Rhs> + [c0nst] RemAssign<Rhs>
+{
+}
+}
+
+c0nst::c0nst! {
 /// The trait for `Num` types which also implement assignment operators.
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumAssign: Num + NumAssignOps {}
-impl<T> NumAssign for T where T: Num + NumAssignOps {}
+pub c0nst trait NumAssign: [c0nst] Num + [c0nst] NumAssignOps {}
+}
+c0nst::c0nst! {
+impl<T> c0nst NumAssign for T where T: [c0nst] Num + [c0nst] NumAssignOps {}
+}
 
+c0nst::c0nst! {
 /// The trait for `NumAssign` types which also implement assignment operations
 /// taking the second operand by reference.
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumAssignRef: NumAssign + for<'r> NumAssignOps<&'r Self> {}
-impl<T> NumAssignRef for T where T: NumAssign + for<'r> NumAssignOps<&'r T> {}
+pub c0nst trait NumAssignRef: [c0nst] NumAssign + for<'r> [c0nst] NumAssignOps<&'r Self> {}
+}
+c0nst::c0nst! {
+impl<T> c0nst NumAssignRef for T where T: [c0nst] NumAssign + for<'r> [c0nst] NumAssignOps<&'r T> {}
+}
 
 macro_rules! int_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
-        impl $name for $t {
+        c0nst::c0nst! {
+        impl c0nst $name for $t {
             type FromStrRadixErr = ::core::num::ParseIntError;
             #[inline]
             fn from_str_radix(s: &str, radix: u32)
@@ -169,11 +200,14 @@ macro_rules! int_trait_impl {
                 <$t>::from_str_radix(s, radix)
             }
         }
+        }
     )*)
 }
 int_trait_impl!(Num for usize u8 u16 u32 u64 u128);
 int_trait_impl!(Num for isize i8 i16 i32 i64 i128);
 
+// Wrapping<T>'s `PartialEq` impl in std isn't const yet, so this stays a
+// non-const impl of the (otherwise const) `Num` trait.
 impl<T: Num> Num for Wrapping<T>
 where
     Wrapping<T>: NumOps,
@@ -184,6 +218,7 @@ where
     }
 }
 
+// Same caveat as Wrapping<T>: no const PartialEq impl in std.
 #[cfg(has_num_saturating)]
 impl<T: Num> Num for core::num::Saturating<T>
 where
@@ -229,6 +264,9 @@ fn str_to_ascii_lower_eq_str(a: &str, b: &str) -> bool {
 // FIXME: The standard library from_str_radix on floats was deprecated, so we're stuck
 // with this implementation ourselves until we want to make a breaking change.
 // (would have to drop it from `Num` though)
+//
+// Non-const impl of the const `Num` trait: this parser uses iterators,
+// `Result::map_err`, `?`, and `str::parse`, none of which are const.
 macro_rules! float_trait_impl {
     ($name:ident for $($t:ident)*) => ($(
         impl $name for $t {
@@ -402,6 +440,7 @@ macro_rules! float_trait_impl {
 }
 float_trait_impl!(Num for f32 f64);
 
+c0nst::c0nst! {
 /// A value bounded by a minimum and a maximum
 ///
 ///  If input is less than min then this returns min.
@@ -410,7 +449,7 @@ float_trait_impl!(Num for f32 f64);
 ///
 /// **Panics** in debug mode if `!(min <= max)`.
 #[inline]
-pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
+pub c0nst fn clamp<T: [c0nst] PartialOrd + [c0nst] Destruct>(input: T, min: T, max: T) -> T {
     debug_assert!(min <= max, "min must be less than or equal to max");
     if input < min {
         min
@@ -420,7 +459,9 @@ pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
         input
     }
 }
+}
 
+c0nst::c0nst! {
 /// A value bounded by a minimum value
 ///
 ///  If input is less than min then this returns min.
@@ -430,7 +471,7 @@ pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
 /// **Panics** in debug mode if `!(min == min)`. (This occurs if `min` is `NAN`.)
 #[inline]
 #[allow(clippy::eq_op)]
-pub fn clamp_min<T: PartialOrd>(input: T, min: T) -> T {
+pub c0nst fn clamp_min<T: [c0nst] PartialOrd + [c0nst] Destruct>(input: T, min: T) -> T {
     debug_assert!(min == min, "min must not be NAN");
     if input < min {
         min
@@ -438,7 +479,9 @@ pub fn clamp_min<T: PartialOrd>(input: T, min: T) -> T {
         input
     }
 }
+}
 
+c0nst::c0nst! {
 /// A value bounded by a maximum value
 ///
 ///  If input is greater than max then this returns max.
@@ -448,13 +491,14 @@ pub fn clamp_min<T: PartialOrd>(input: T, min: T) -> T {
 /// **Panics** in debug mode if `!(max == max)`. (This occurs if `max` is `NAN`.)
 #[inline]
 #[allow(clippy::eq_op)]
-pub fn clamp_max<T: PartialOrd>(input: T, max: T) -> T {
+pub c0nst fn clamp_max<T: [c0nst] PartialOrd + [c0nst] Destruct>(input: T, max: T) -> T {
     debug_assert!(max == max, "max must not be NAN");
     if input > max {
         max
     } else {
         input
     }
+}
 }
 
 #[test]

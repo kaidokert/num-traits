@@ -1,8 +1,9 @@
 use core::ops::{Add, Mul, Sub};
 
+c0nst::c0nst! {
 /// Saturating math operations. Deprecated, use `SaturatingAdd`, `SaturatingSub` and
 /// `SaturatingMul` instead.
-pub trait Saturating {
+pub c0nst trait Saturating {
     /// Saturating addition operator.
     /// Returns a+b, saturating at the numeric bounds instead of overflowing.
     fn saturating_add(self, v: Self) -> Self;
@@ -11,10 +12,12 @@ pub trait Saturating {
     /// Returns a-b, saturating at the numeric bounds instead of overflowing.
     fn saturating_sub(self, v: Self) -> Self;
 }
+}
 
 macro_rules! deprecated_saturating_impl {
     ($trait_name:ident for $($t:ty)*) => {$(
-        impl $trait_name for $t {
+        c0nst::c0nst! {
+        impl c0nst $trait_name for $t {
             #[inline]
             fn saturating_add(self, v: Self) -> Self {
                 Self::saturating_add(self, v)
@@ -25,6 +28,7 @@ macro_rules! deprecated_saturating_impl {
                 Self::saturating_sub(self, v)
             }
         }
+        }
     )*}
 }
 
@@ -33,20 +37,24 @@ deprecated_saturating_impl!(Saturating for usize u8 u16 u32 u64 u128);
 
 macro_rules! saturating_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
-        impl $trait_name for $t {
+        c0nst::c0nst! {
+        impl c0nst $trait_name for $t {
             #[inline]
             fn $method(&self, v: &Self) -> Self {
                 <$t>::$method(*self, *v)
             }
         }
+        }
     };
 }
 
+c0nst::c0nst! {
 /// Performs addition that saturates at the numeric bounds instead of overflowing.
-pub trait SaturatingAdd: Sized + Add<Self, Output = Self> {
+pub c0nst trait SaturatingAdd: Sized + [c0nst] Add<Self, Output = Self> {
     /// Saturating addition. Computes `self + other`, saturating at the relevant high or low boundary of
     /// the type.
     fn saturating_add(&self, v: &Self) -> Self;
+}
 }
 
 saturating_impl!(SaturatingAdd, saturating_add, u8);
@@ -63,11 +71,13 @@ saturating_impl!(SaturatingAdd, saturating_add, i64);
 saturating_impl!(SaturatingAdd, saturating_add, isize);
 saturating_impl!(SaturatingAdd, saturating_add, i128);
 
+c0nst::c0nst! {
 /// Performs subtraction that saturates at the numeric bounds instead of overflowing.
-pub trait SaturatingSub: Sized + Sub<Self, Output = Self> {
+pub c0nst trait SaturatingSub: Sized + [c0nst] Sub<Self, Output = Self> {
     /// Saturating subtraction. Computes `self - other`, saturating at the relevant high or low boundary of
     /// the type.
     fn saturating_sub(&self, v: &Self) -> Self;
+}
 }
 
 saturating_impl!(SaturatingSub, saturating_sub, u8);
@@ -84,11 +94,13 @@ saturating_impl!(SaturatingSub, saturating_sub, i64);
 saturating_impl!(SaturatingSub, saturating_sub, isize);
 saturating_impl!(SaturatingSub, saturating_sub, i128);
 
+c0nst::c0nst! {
 /// Performs multiplication that saturates at the numeric bounds instead of overflowing.
-pub trait SaturatingMul: Sized + Mul<Self, Output = Self> {
+pub c0nst trait SaturatingMul: Sized + [c0nst] Mul<Self, Output = Self> {
     /// Saturating multiplication. Computes `self * other`, saturating at the relevant high or low boundary of
     /// the type.
     fn saturating_mul(&self, v: &Self) -> Self;
+}
 }
 
 saturating_impl!(SaturatingMul, saturating_mul, u8);
