@@ -22,12 +22,21 @@ rustdoc-args = ["--generate-link-to-definition"]
 [dependencies]
 c0nst = "0.2.1"
 libm = { version = "0.2.0", optional = true }
+subtle = { version = "2.6", default-features = false, features = ["i128"], optional = true }
 
 [features]
 default = ["std"]
 libm = ["dep:libm"]
 std = []
 nightly = ["c0nst/nightly"]
+# nightly + exact mirrors of unstable std APIs (e.g. `FormatInto` over
+# `core::fmt::NumBuffer`). Kept separate from `nightly` so const-traits-only
+# builds aren't exposed to churn in the `int_format_into` lang feature.
+nightly-std = ["nightly"]
+ct = ["dep:subtle"]
+# Opt-in zero-cost typestate proofs (e.g. `PowerOfTwo`) + their consuming ops.
+# Purely additive; off by default.
+typestate = []
 
 # vestigial features, now always in effect
 i128 = []

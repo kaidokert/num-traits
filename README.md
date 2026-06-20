@@ -1,9 +1,35 @@
-# num-traits
+# const-num-traits
 
-[![crate](https://img.shields.io/crates/v/num-traits.svg)](https://crates.io/crates/num-traits)
-[![documentation](https://docs.rs/num-traits/badge.svg)](https://docs.rs/num-traits)
-[![minimum rustc 1.60](https://img.shields.io/badge/rustc-1.60+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
-[![build status](https://github.com/rust-num/num-traits/workflows/master/badge.svg)](https://github.com/rust-num/num-traits/actions)
+A fork of [`num-traits`](https://github.com/rust-num/num-traits) with two goals:
+
+1. **Const traits**: the integer trait surface is `const trait` / `impl const`
+   on nightly (via the [`c0nst`](https://crates.io/crates/c0nst) macro crate),
+   while compiling to byte-identical plain traits on stable.
+2. **Complete coverage of modern Rust's integer operations**: every inherent
+   numeric method on the primitive integers in current nightly std — stable or
+   unstable — has a trait here, including the full
+   checked/wrapping/saturating/overflowing/strict variant matrix (`pow`,
+   `abs`, division, shifts, Euclidean division), bigint helpers
+   (`carrying_add`, `borrowing_sub`, `carrying_mul[_add]`, `widening_mul`,
+   carry-less multiplication), rounding (`div_ceil`/`div_floor`/`div_exact`,
+   `next_multiple_of`, `midpoint`), `ilog*`/`isqrt`/power-of-two ops,
+   bit manipulation (unbounded/funnel/exact shifts, bit isolation,
+   `bit_width`, PDEP/PEXT), mixed-signedness arithmetic, and conversions
+   (`cast_signed`/`cast_unsigned`, `widen`/`truncate`, generic
+   checked/wrapping/saturating/strict casts, `abs_diff`, `unsigned_abs`,
+   `clamp_magnitude`).
+
+Operations whose std counterparts are newer than the MSRV (1.86) or still
+unstable are hand-rolled with the same algorithms and panic messages as core,
+so they work on stable Rust and inside `const` on nightly. The `unsafe`
+`unchecked_*` family is deliberately not exposed.
+
+Enable const traits with the `nightly` feature on a nightly compiler:
+
+```toml
+[dependencies]
+const-num-traits = { version = "0.1", features = ["nightly"] }
+```
 
 Numeric traits for generic mathematics in Rust.
 
@@ -40,7 +66,9 @@ Release notes are available in [RELEASES.md](RELEASES.md).
 
 ## Compatibility
 
-The `num-traits` crate is tested for rustc 1.60 and greater.
+The `const-num-traits` crate is tested for rustc 1.86 and greater (upstream
+`num-traits` supports 1.60+; this fork raised the floor to delegate to
+inherent std methods stabilized through 1.86).
 
 ## License
 
