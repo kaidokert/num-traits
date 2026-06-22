@@ -32,7 +32,9 @@
 //! public parameters (see the crate-root CT convention) — and floats are
 //! outside the constant-time model, so [`Finite`] has none either.
 
+use crate::int::PrimBits;
 use crate::ops::parity::Parity;
+use crate::ops::pow2::IsPowerOfTwo;
 use core::marker::PhantomData;
 
 /// Proof that a value is a power of two (`2^k`, `k ≥ 0`), for an unsigned
@@ -96,6 +98,34 @@ impl<T> PowerOfTwo<T> {
     pub const fn exp(self) -> u32 {
         self.exp
     }
+}
+
+c0nst::c0nst! {
+impl<T> PowerOfTwo<T> {
+    /// Safe constructor for **any** carrier — not just the six primitives.
+    ///
+    /// `Some` iff `value` is a power of two; the exponent is recovered as
+    /// `BITS - 1 - leading_zeros` (width read as `T::ZERO.count_zeros()`). This
+    /// is the constructor a non-primitive carrier (a fixed big-integer, a CT
+    /// word) uses — the `unsafe` stays inside the crate, where the invariant is
+    /// local, so **no `unsafe` crosses the boundary**. The per-primitive
+    /// [`new`](Self::new) stays as the `const`-fast path for the 12 ints; this
+    /// blanket is `const`-callable on nightly for const-capable carriers.
+    #[inline]
+    pub c0nst fn new_checked(value: T) -> Option<Self>
+    where
+        T: [c0nst] IsPowerOfTwo + [c0nst] PrimBits,
+    {
+        if value.is_power_of_two() {
+            let width = T::ZERO.count_zeros();
+            let exp = width - 1 - value.leading_zeros();
+            // SAFETY: `value` is a power of two, so `exp < width` (= `T::BITS`).
+            Some(unsafe { Self::from_exp_unchecked(exp) })
+        } else {
+            None
+        }
+    }
+}
 }
 
 c0nst::c0nst! {
@@ -255,6 +285,26 @@ impl<T> BitIndex<T> {
     pub const fn get(self) -> u32 {
         self.index
     }
+}
+
+c0nst::c0nst! {
+impl<T> BitIndex<T> {
+    /// Safe constructor for **any** [`PrimBits`] carrier — not just the six
+    /// primitives. `Some` iff `index < T::BITS`, with the width read as
+    /// `T::ZERO.count_zeros()`; needs no `unsafe`. The per-primitive
+    /// [`new`](Self::new) stays as the `const`-fast path.
+    #[inline]
+    pub c0nst fn new_checked(index: u32) -> Option<Self>
+    where
+        T: [c0nst] PrimBits,
+    {
+        if index < T::ZERO.count_zeros() {
+            Some(BitIndex { index, _t: PhantomData })
+        } else {
+            None
+        }
+    }
+}
 }
 
 c0nst::c0nst! {
@@ -919,6 +969,13 @@ mod tests {
         // edges: 2^0 = 1, and the largest power of two for the type
         assert_eq!(PowerOfTwo::<u8>::new(1).unwrap().exp(), 0);
         assert_eq!(PowerOfTwo::<u8>::new(128).unwrap().get(), 128);
+
+        // the generic safe constructor agrees with the per-primitive `new`
+        assert_eq!(PowerOfTwo::<u32>::new_checked(64).unwrap().exp(), 6);
+        assert!(PowerOfTwo::<u32>::new_checked(63).is_none());
+        assert_eq!(PowerOfTwo::<u8>::new_checked(128).unwrap().get(), 128);
+        assert_eq!(BitIndex::<u32>::new_checked(5).unwrap().get(), 5);
+        assert!(BitIndex::<u32>::new_checked(32).is_none());
     }
 
     #[test]
