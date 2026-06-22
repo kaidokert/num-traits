@@ -34,12 +34,6 @@ nightly = ["c0nst/nightly"]
 # builds aren't exposed to churn in the `int_format_into` lang feature.
 nightly-std = ["nightly"]
 ct = ["dep:subtle"]
-# Opt-in zero-cost typestate proofs (e.g. `PowerOfTwo`) + their consuming ops.
-# Purely additive; off by default.
-typestate = []
-
-# vestigial features, now always in effect
-i128 = []
 
 [build-dependencies]
 autocfg = "1.2"

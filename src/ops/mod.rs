@@ -22,6 +22,5 @@ pub mod rounding;
 pub mod saturating;
 pub mod sqrt;
 pub mod strict;
-#[cfg(feature = "typestate")]
 pub mod typestate;
 pub mod wrapping;

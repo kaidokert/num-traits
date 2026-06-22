@@ -30,7 +30,6 @@ fn bytes_in_const() {
 }
 
 #[test]
-#[cfg(feature = "typestate")]
 fn power_of_two_typestate_in_const() {
     use const_num_traits::{PowerOfTwo, PowerOfTwoOps};
     // Proof constructed and consumed entirely in `const` (the ops are const

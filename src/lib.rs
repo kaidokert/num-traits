@@ -118,11 +118,10 @@ pub use crate::ops::overflowing::{
 };
 pub use crate::ops::parity::Parity;
 pub use crate::ops::pow2::{IsPowerOfTwo, NextPowerOfTwo};
-#[cfg(feature = "typestate")]
 pub use crate::ops::typestate::{
     DivNonZero, Even, HasNonZero, NonNegative, Odd, Positive, PowerOfTwo, PowerOfTwoOps,
 };
-#[cfg(all(feature = "typestate", feature = "ct"))]
+#[cfg(feature = "ct")]
 pub use crate::ops::typestate::CtNonZero;
 pub use crate::ops::rounding::{
     DivCeil, DivExact, DivFloor, Midpoint, MultipleOf, NextMultipleOf,
@@ -194,8 +193,12 @@ pub mod prelude {
     pub use crate::personality::*;
     pub use crate::ops::pow2::*;
     pub use crate::ops::rounding::*;
-    #[cfg(feature = "typestate")]
-    pub use crate::ops::typestate::*;
+    // typestate *traits* only (for method resolution); the wrapper *types*
+    // (`PowerOfTwo`/`Odd`/`Even`/`Positive`/`NonNegative`) stay crate-root-only,
+    // so the glob doesn't inject those generic names into consumers.
+    pub use crate::ops::typestate::{DivNonZero, HasNonZero, PowerOfTwoOps};
+    #[cfg(feature = "ct")]
+    pub use crate::ops::typestate::CtNonZero;
     pub use crate::ops::saturating::*;
     pub use crate::ops::sqrt::*;
     pub use crate::ops::strict::*;
