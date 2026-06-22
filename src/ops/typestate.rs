@@ -604,12 +604,23 @@ impl<T> Odd<T> {
     pub fn get(self) -> T { self.0 }
 }
 
+c0nst::c0nst! {
 impl<T: Parity + Copy> Odd<T> {
     /// `Some` iff `value` is odd.
+    ///
+    /// `const`-callable on nightly when `T: [const] Parity` — so a
+    /// compile-time-constant modulus can be proven odd inside a `const` block,
+    /// turning a downstream `Field::new(p).unwrap()` into a *compile error*
+    /// rather than a runtime `panic_fmt` symbol. Plain (non-const) on stable,
+    /// where the signature is unchanged.
     #[inline]
-    pub fn new(value: T) -> Option<Self> {
+    pub c0nst fn new(value: T) -> Option<Self>
+    where
+        T: [c0nst] Parity,
+    {
         if value.is_odd() { Some(Odd(value)) } else { None }
     }
+}
 }
 
 impl<T> Odd<T>
@@ -649,12 +660,20 @@ impl<T> Even<T> {
     pub fn get(self) -> T { self.0 }
 }
 
+c0nst::c0nst! {
 impl<T: Parity + Copy> Even<T> {
     /// `Some` iff `value` is even.
+    ///
+    /// `const`-callable on nightly when `T: [const] Parity` (the parity sibling
+    /// of [`Odd::new`]); plain on stable.
     #[inline]
-    pub fn new(value: T) -> Option<Self> {
+    pub c0nst fn new(value: T) -> Option<Self>
+    where
+        T: [c0nst] Parity,
+    {
         if value.is_even() { Some(Even(value)) } else { None }
     }
+}
 }
 
 impl<T> Even<T>

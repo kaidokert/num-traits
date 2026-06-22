@@ -46,7 +46,7 @@ fn power_of_two_typestate_in_const() {
 
 #[test]
 fn typestate_ops_in_const() {
-    use const_num_traits::{BitIndex, Finite, NonMin};
+    use const_num_traits::{BitIndex, Finite, NonMin, Odd};
     use const_num_traits::BitIndexOps;
 
     // BitIndexOps is a const trait on nightly; the shifts run in `const`.
@@ -64,6 +64,12 @@ fn typestate_ops_in_const() {
     // Finite constructed in `const` via the bit test.
     const F: Option<Finite<f64>> = Finite::<f64>::new(1.5);
     assert!(F.is_some());
+
+    // Odd::new is const-callable here because u32: [const] Parity — this is
+    // the panic-free path (a const modulus proven odd ⇒ no runtime panic).
+    const O: Option<Odd<u32>> = Odd::<u32>::new(7);
+    const E: Option<Odd<u32>> = Odd::<u32>::new(8);
+    assert!(O.is_some() && E.is_none());
 }
 
 #[test]

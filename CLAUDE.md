@@ -94,7 +94,7 @@ Every value-producing trait method takes `self`/`Self`/scalar args by value, mat
 - **`ct` feature** (`ct = ["dep:subtle"]`, src/ops/ct.rs): masked-return counterparts of Tier-B atoms (`CtIsZero`, `CtParity`, `CtIsPowerOfTwo`, `CtCheckedAdd/Sub/Mul/Neg`, `CtCheckedSignedDiff`) using `subtle::Choice`/`CtOption`. Plain traits — subtle isn't const; do NOT wrap them in `c0nst!`.
 - **CT tiers**: defined in the crate-root docs (Tier A/B/C + the public-parameter convention for shift amounts/exponents/bases); each ops module header carries its tier. Rule: a Tier-A trait never gets a Tier-C supertrait and never requires `PartialEq`/`Ord`/`Div`/`Rem`.
 - **`tests/compat_canary.rs`**: num-traits caller patterns that must keep compiling (`use const_num_traits as num_traits`). Run it after ANY trait reshaping.
-- Root re-exports: all new traits are re-exported from the crate root (the upstream Overflowing* traits stay module-path-only at `ops::overflowing`, preserving upstream behavior).
+- Root re-exports: all new traits are re-exported from the crate root, including the full `Overflowing*` family (`OverflowingAdd/Sub/Mul/Div/Rem/Neg/Abs/Shl/Shr/Pow`) at `src/lib.rs` — unlike upstream num-traits, which keeps them module-path-only at `ops::overflowing`. The fork roots them for consistency with every other op family (and so downstreams like modmath can `use const_num_traits::OverflowingAdd`); the module path still works too.
 - `tests/const_nightly.rs` is the const-callability canary: every new family computed in `const` initializers; only built with `--features nightly`.
 
 ### Const free fns
