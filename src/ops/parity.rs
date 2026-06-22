@@ -67,6 +67,26 @@ macro_rules! parity_impl {
 parity_impl!(usize u8 u16 u32 u64 u128);
 parity_impl!(isize i8 i16 i32 i64 i128);
 
+c0nst::c0nst! {
+/// Blanket impl: `&T` is [`Parity`] whenever `T: Parity + Copy`.
+///
+/// This lets zero-cost typestate constructors (e.g. `Odd::from_ref`) borrow-
+/// check the predicate without consuming the value — `from_ref` needs
+/// `&T: Parity`, which this supplies for every `Copy` `T`. Non-`Copy` types
+/// (heap bigints) implement `Parity for &Self` themselves.
+c0nst impl<T: [c0nst] Parity + Copy> Parity for &T {
+    #[inline]
+    fn is_odd(self) -> bool {
+        (*self).is_odd()
+    }
+
+    #[inline]
+    fn is_even(self) -> bool {
+        (*self).is_even()
+    }
+}
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

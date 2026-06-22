@@ -112,10 +112,18 @@ pub use crate::ops::mixed::{
     WrappingSubUnsigned,
 };
 pub use crate::ops::mul_add::{MulAdd, MulAddAssign};
+pub use crate::ops::overflowing::{
+    OverflowingAbs, OverflowingAdd, OverflowingDiv, OverflowingMul, OverflowingNeg,
+    OverflowingPow, OverflowingRem, OverflowingShl, OverflowingShr, OverflowingSub,
+};
 pub use crate::ops::parity::Parity;
 pub use crate::ops::pow2::{IsPowerOfTwo, NextPowerOfTwo};
 #[cfg(feature = "typestate")]
-pub use crate::ops::typestate::{PowerOfTwo, PowerOfTwoOps};
+pub use crate::ops::typestate::{
+    DivNonZero, Even, HasNonZero, NonNegative, Odd, Positive, PowerOfTwo, PowerOfTwoOps,
+};
+#[cfg(all(feature = "typestate", feature = "ct"))]
+pub use crate::ops::typestate::CtNonZero;
 pub use crate::ops::rounding::{
     DivCeil, DivExact, DivFloor, Midpoint, MultipleOf, NextMultipleOf,
 };
