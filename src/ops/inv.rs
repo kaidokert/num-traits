@@ -20,7 +20,7 @@ pub c0nst trait Inv {
 }
 
 c0nst::c0nst! {
-impl c0nst Inv for f32 {
+c0nst impl Inv for f32 {
     type Output = f32;
     #[inline]
     fn inv(self) -> f32 {
@@ -29,7 +29,7 @@ impl c0nst Inv for f32 {
 }
 }
 c0nst::c0nst! {
-impl c0nst Inv for f64 {
+c0nst impl Inv for f64 {
     type Output = f64;
     #[inline]
     fn inv(self) -> f64 {
@@ -38,7 +38,7 @@ impl c0nst Inv for f64 {
 }
 }
 c0nst::c0nst! {
-impl<'a> c0nst Inv for &'a f32 {
+c0nst impl<'a> Inv for &'a f32 {
     type Output = f32;
     #[inline]
     fn inv(self) -> f32 {
@@ -47,7 +47,7 @@ impl<'a> c0nst Inv for &'a f32 {
 }
 }
 c0nst::c0nst! {
-impl<'a> c0nst Inv for &'a f64 {
+c0nst impl<'a> Inv for &'a f64 {
     type Output = f64;
     #[inline]
     fn inv(self) -> f64 {

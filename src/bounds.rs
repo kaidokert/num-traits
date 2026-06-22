@@ -28,7 +28,7 @@ pub c0nst trait LowerBounded {
 
 c0nst::c0nst! {
 // FIXME: With a major version bump, this should be a supertrait instead
-impl<T: [c0nst] Bounded> c0nst LowerBounded for T {
+c0nst impl<T: [c0nst] Bounded> LowerBounded for T {
     fn min_value() -> T {
         Bounded::min_value()
     }
@@ -45,7 +45,7 @@ pub c0nst trait UpperBounded {
 
 c0nst::c0nst! {
 // FIXME: With a major version bump, this should be a supertrait instead
-impl<T: [c0nst] Bounded> c0nst UpperBounded for T {
+c0nst impl<T: [c0nst] Bounded> UpperBounded for T {
     fn max_value() -> T {
         Bounded::max_value()
     }
@@ -55,7 +55,7 @@ impl<T: [c0nst] Bounded> c0nst UpperBounded for T {
 macro_rules! bounded_impl {
     ($t:ty, $min:expr, $max:expr) => {
         c0nst::c0nst! {
-        impl c0nst Bounded for $t {
+        c0nst impl Bounded for $t {
             #[inline]
             fn min_value() -> $t {
                 $min
@@ -96,7 +96,7 @@ macro_rules! bounded_impl_nonzero_const {
 macro_rules! bounded_impl_nonzero {
     ($t:ty, $min:expr, $max:expr) => {
         c0nst::c0nst! {
-        impl c0nst Bounded for $t {
+        c0nst impl Bounded for $t {
             #[inline]
             fn min_value() -> $t {
                 // when MSRV is 1.70 we can use $t::MIN
@@ -130,7 +130,7 @@ bounded_impl_nonzero!(NonZeroI64, i64::MIN, i64::MAX);
 bounded_impl_nonzero!(NonZeroI128, i128::MIN, i128::MAX);
 
 c0nst::c0nst! {
-impl<T: [c0nst] Bounded> c0nst Bounded for Wrapping<T> {
+c0nst impl<T: [c0nst] Bounded> Bounded for Wrapping<T> {
     fn min_value() -> Self {
         Wrapping(T::min_value())
     }
@@ -160,7 +160,7 @@ macro_rules! for_each_tuple {
 macro_rules! bounded_tuple {
     ( $($name:ident)* ) => (
         c0nst::c0nst! {
-        impl<$($name: [c0nst] Bounded,)*> c0nst Bounded for ($($name,)*) {
+        c0nst impl<$($name: [c0nst] Bounded,)*> Bounded for ($($name,)*) {
             #[inline]
             fn min_value() -> Self {
                 ($($name::min_value(),)*)

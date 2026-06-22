@@ -20,7 +20,7 @@ pub c0nst trait NumBytes:
 }
 
 c0nst::c0nst! {
-impl<T> c0nst NumBytes for T where
+c0nst impl<T> NumBytes for T where
     T: Debug
         + AsRef<[u8]>
         + AsMut<[u8]>
@@ -165,7 +165,7 @@ pub c0nst trait FromBytes: Sized {
 macro_rules! float_to_from_bytes_impl {
     ($T:ty, $L:expr) => {
         c0nst::c0nst! {
-        impl c0nst ToBytes for $T {
+        c0nst impl ToBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]
@@ -186,7 +186,7 @@ macro_rules! float_to_from_bytes_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst FromBytes for $T {
+        c0nst impl FromBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]
@@ -211,7 +211,7 @@ macro_rules! float_to_from_bytes_impl {
 macro_rules! int_to_from_bytes_impl {
     ($T:ty, $L:expr) => {
         c0nst::c0nst! {
-        impl c0nst ToBytes for $T {
+        c0nst impl ToBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]
@@ -232,7 +232,7 @@ macro_rules! int_to_from_bytes_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst FromBytes for $T {
+        c0nst impl FromBytes for $T {
             type Bytes = [u8; $L];
 
             #[inline]

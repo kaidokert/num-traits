@@ -18,7 +18,7 @@ pub c0nst trait CheckedAdd: Sized + [c0nst] Add<Self> {
 macro_rules! checked_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self, v: $t) -> Option<$t> {
                 <$t>::$method(self, v)
@@ -156,7 +156,7 @@ checked_impl!(CheckedRem, checked_rem, i128);
 macro_rules! checked_impl_unary {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self) -> Option<$t> {
                 <$t>::$method(self)
@@ -196,7 +196,7 @@ pub c0nst trait CheckedNeg: Sized {
 macro_rules! checked_neg_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CheckedNeg for $t {
+        c0nst impl CheckedNeg for $t {
             type Output = $t;
             #[inline]
             fn checked_neg(self) -> Option<$t> {
@@ -233,7 +233,7 @@ pub c0nst trait CheckedShl: Sized + [c0nst] Shl<u32> {
 macro_rules! checked_shift_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self, rhs: u32) -> Option<$t> {
                 <$t>::$method(self, rhs)

@@ -99,7 +99,7 @@ macro_rules! from_ascii_impl {
     // $signed: whether a leading `-` is accepted
     ($signed:literal, $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst FromAscii for $t {
+        c0nst impl FromAscii for $t {
             #[inline]
             fn from_ascii(src: &[u8]) -> Result<Self, AsciiParseError> {
                 <Self as FromAscii>::from_ascii_radix(src, 10)

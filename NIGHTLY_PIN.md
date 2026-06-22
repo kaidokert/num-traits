@@ -1,13 +1,27 @@
-# Nightly toolchain pin
+# Nightly const-trait breakage — **RESOLVED 2026-06-21**
 
-`rust-toolchain.toml` pins this crate to **`nightly-2026-06-18`**. This is a
-**temporary** workaround for a const-trait *syntax* change in rustc that the
-[`c0nst`](https://crates.io/crates/c0nst) macro crate hasn't caught up to.
+> **Status: fixed.** The `rust-toolchain.toml` pin to `nightly-2026-06-18` has
+> been **removed**. The real fix was applied: all 160 `impl c0nst Trait` sites
+> were migrated to `c0nst impl Trait` (the keyword moved before `impl`), so the
+> `c0nst` macro now emits the new `const impl Trait` syntax on nightly and plain
+> `impl Trait` on stable. See `HOW_TO_FIX.md` for the migration procedure.
+>
+> **Consequence:** the `nightly` / `nightly-std` features now require nightly
+> **≥ 2026-06-19** (the new parser). Older nightlies will fail just as ≥06-19
+> used to. Verified: stable + nightly `f428d123a` (06-19) both build green.
+>
+> The rest of this file is kept as the historical bisect / root-cause record.
 
-Plain stable builds (`default` features) are unaffected by the underlying bug —
-the pin only matters for the `nightly` / `nightly-std` features (the
+---
+
+This documented a **temporary** pin (`rust-toolchain.toml` → `nightly-2026-06-18`)
+that worked around a const-trait *syntax* change in rustc that the
+[`c0nst`](https://crates.io/crates/c0nst) macro crate hadn't caught up to.
+
+Plain stable builds (`default` features) were unaffected by the underlying bug —
+the pin only mattered for the `nightly` / `nightly-std` features (the
 `const trait` / `impl const` surface). On nightly **≥ 2026-06-19** the crate
-fails to build those features.
+failed to build those features.
 
 ## Symptom
 

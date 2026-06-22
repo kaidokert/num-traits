@@ -39,7 +39,7 @@ pub c0nst trait DivCeil: Sized + [c0nst] Div<Self> {
 macro_rules! div_ceil_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst DivCeil for $t {
+        c0nst impl DivCeil for $t {
             #[inline]
             fn div_ceil(self, rhs: Self) -> Self {
                 <$t>::div_ceil(self, rhs)
@@ -50,7 +50,7 @@ macro_rules! div_ceil_impl {
     // signed div_ceil is still unstable in std; same branchless algorithm
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst DivCeil for $t {
+        c0nst impl DivCeil for $t {
             #[inline]
             fn div_ceil(self, rhs: Self) -> Self {
                 let d = self / rhs;
@@ -99,7 +99,7 @@ macro_rules! div_floor_impl {
     // unsigned div_floor is plain division (and still unstable in std)
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst DivFloor for $t {
+        c0nst impl DivFloor for $t {
             #[inline]
             fn div_floor(self, rhs: Self) -> Self {
                 self / rhs
@@ -109,7 +109,7 @@ macro_rules! div_floor_impl {
     )*};
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst DivFloor for $t {
+        c0nst impl DivFloor for $t {
             #[inline]
             fn div_floor(self, rhs: Self) -> Self {
                 let d = self / rhs;
@@ -159,7 +159,7 @@ pub c0nst trait DivExact: Sized + [c0nst] Div<Self> + [c0nst] Rem<Self> {
 macro_rules! div_exact_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst DivExact for $t {
+        c0nst impl DivExact for $t {
             #[inline]
             fn div_exact(self, rhs: Self) -> Option<Self> {
                 if self % rhs != 0 {
@@ -220,7 +220,7 @@ pub c0nst trait MultipleOf: Sized + [c0nst] Rem<Self> {
 macro_rules! multiple_of_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst MultipleOf for $t {
+        c0nst impl MultipleOf for $t {
             #[inline]
             fn is_multiple_of(self, rhs: Self) -> bool {
                 match rhs {
@@ -266,7 +266,7 @@ pub c0nst trait NextMultipleOf: Sized + [c0nst] Add<Self> + [c0nst] Rem<Self> {
 macro_rules! next_multiple_of_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst NextMultipleOf for $t {
+        c0nst impl NextMultipleOf for $t {
             #[inline]
             fn next_multiple_of(self, rhs: Self) -> Self {
                 <$t>::next_multiple_of(self, rhs)
@@ -282,7 +282,7 @@ macro_rules! next_multiple_of_impl {
     // signed next_multiple_of is still unstable in std; same algorithm
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst NextMultipleOf for $t {
+        c0nst impl NextMultipleOf for $t {
             #[inline]
             fn next_multiple_of(self, rhs: Self) -> Self {
                 // rhs == -1 would otherwise fail computing `MIN % -1`
@@ -354,7 +354,7 @@ pub c0nst trait Midpoint: Sized {
 macro_rules! midpoint_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst Midpoint for $t {
+        c0nst impl Midpoint for $t {
             type Output = $t;
             #[inline]
             fn midpoint(self, rhs: Self) -> Self {
@@ -367,7 +367,7 @@ macro_rules! midpoint_impl {
     // branchless Hacker's Delight algorithm as core
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst Midpoint for $t {
+        c0nst impl Midpoint for $t {
             type Output = $t;
             #[inline]
             fn midpoint(self, rhs: Self) -> Self {

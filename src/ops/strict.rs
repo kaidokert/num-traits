@@ -49,7 +49,7 @@ pub c0nst trait StrictMul: Sized + [c0nst] Mul<Self> {
 macro_rules! strict_binary_impl {
     ($trait_name:ident, $method:ident, $overflowing:ident, $msg:expr, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             #[track_caller]
             fn $method(self, v: Self) -> Self {
@@ -144,7 +144,7 @@ pub c0nst trait StrictNeg: Sized {
 macro_rules! strict_neg_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst StrictNeg for $t {
+        c0nst impl StrictNeg for $t {
             type Output = $t;
             #[inline]
             #[track_caller]
@@ -175,7 +175,7 @@ pub c0nst trait StrictAbs: Sized + [c0nst] Neg {
 macro_rules! strict_abs_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst StrictAbs for $t {
+        c0nst impl StrictAbs for $t {
             #[inline]
             #[track_caller]
             fn strict_abs(self) -> Self {
@@ -213,7 +213,7 @@ pub c0nst trait StrictShr: Sized + [c0nst] Shr<u32> {
 macro_rules! strict_shift_impl {
     ($trait_name:ident, $method:ident, $checked:ident, $msg:expr, $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             #[track_caller]
             fn $method(self, rhs: u32) -> Self {
@@ -278,7 +278,7 @@ pub c0nst trait StrictEuclid: [c0nst] Euclid {
 macro_rules! strict_euclid_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst StrictEuclid for $t {
+        c0nst impl StrictEuclid for $t {
             #[inline]
             #[track_caller]
             fn strict_div_euclid(self, v: $t) -> Self {

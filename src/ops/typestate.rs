@@ -123,7 +123,7 @@ macro_rules! pow2_typestate_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst PowerOfTwoOps for $t {
+        c0nst impl PowerOfTwoOps for $t {
             type Output = $t;
 
             #[inline]

@@ -162,7 +162,7 @@ pub trait Gamma: Sized {
 macro_rules! float_bits_impl {
     ($($t:ty => $b:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst FloatBits for $t {
+        c0nst impl FloatBits for $t {
             type Bits = $b;
 
             #[inline]
@@ -178,7 +178,7 @@ macro_rules! float_bits_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst NextUp for $t {
+        c0nst impl NextUp for $t {
             type Output = $t;
             #[inline]
             fn next_up(self) -> $t {
@@ -188,7 +188,7 @@ macro_rules! float_bits_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst NextDown for $t {
+        c0nst impl NextDown for $t {
             type Output = $t;
             #[inline]
             fn next_down(self) -> $t {
@@ -200,7 +200,7 @@ macro_rules! float_bits_impl {
         // minimum/maximum are still unstable in std; same comparison ladder
         // as core, const-compatible (float comparison is const-stable)
         c0nst::c0nst! {
-        impl c0nst Maximum for $t {
+        c0nst impl Maximum for $t {
             type Output = $t;
             #[inline]
             fn maximum(self, other: Self) -> $t {
@@ -223,7 +223,7 @@ macro_rules! float_bits_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst Minimum for $t {
+        c0nst impl Minimum for $t {
             type Output = $t;
             #[inline]
             fn minimum(self, other: Self) -> $t {
@@ -245,7 +245,7 @@ macro_rules! float_bits_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst Algebraic for $t {
+        c0nst impl Algebraic for $t {
             type Output = $t;
             #[inline]
             fn algebraic_add(self, rhs: Self) -> $t { self + rhs }

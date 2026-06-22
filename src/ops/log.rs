@@ -79,7 +79,7 @@ pub c0nst trait Ilog: Sized {
 macro_rules! ilog_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst Ilog2 for $t {
+        c0nst impl Ilog2 for $t {
             #[inline]
             fn ilog2(self) -> u32 {
                 <$t>::ilog2(self)
@@ -93,7 +93,7 @@ macro_rules! ilog_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst Ilog10 for $t {
+        c0nst impl Ilog10 for $t {
             #[inline]
             fn ilog10(self) -> u32 {
                 <$t>::ilog10(self)
@@ -107,7 +107,7 @@ macro_rules! ilog_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst Ilog for $t {
+        c0nst impl Ilog for $t {
             #[inline]
             fn ilog(self, base: Self) -> u32 {
                 <$t>::ilog(self, base)

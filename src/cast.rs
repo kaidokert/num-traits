@@ -142,7 +142,7 @@ macro_rules! impl_to_primitive_int_to_uint {
 macro_rules! impl_to_primitive_int {
     ($T:ident) => {
         c0nst::c0nst! {
-        impl c0nst ToPrimitive for $T {
+        c0nst impl ToPrimitive for $T {
             impl_to_primitive_int_to_int! { $T:
                 fn to_isize -> isize;
                 fn to_i8 -> i8;
@@ -212,7 +212,7 @@ macro_rules! impl_to_primitive_uint_to_uint {
 macro_rules! impl_to_primitive_uint {
     ($T:ident) => {
         c0nst::c0nst! {
-        impl c0nst ToPrimitive for $T {
+        c0nst impl ToPrimitive for $T {
             impl_to_primitive_uint_to_int! { $T:
                 fn to_isize -> isize;
                 fn to_i8 -> i8;
@@ -263,7 +263,7 @@ macro_rules! impl_to_primitive_nonzero_to_method {
 macro_rules! impl_to_primitive_nonzero {
     ($T:ident) => {
         c0nst::c0nst! {
-        impl c0nst ToPrimitive for $T {
+        c0nst impl ToPrimitive for $T {
             impl_to_primitive_nonzero_to_method! { $T:
                 fn to_isize -> isize;
                 fn to_i8 -> i8;
@@ -379,7 +379,7 @@ macro_rules! impl_to_primitive_float_to_unsigned_int {
 macro_rules! impl_to_primitive_float {
     ($T:ident) => {
         c0nst::c0nst! {
-        impl c0nst ToPrimitive for $T {
+        c0nst impl ToPrimitive for $T {
             impl_to_primitive_float_to_signed_int! { $T:
                 fn to_isize -> isize;
                 fn to_i8 -> i8;
@@ -492,7 +492,7 @@ pub c0nst trait FromPrimitive: Sized {
 macro_rules! impl_from_primitive {
     ($T:ty, $to_ty:ident) => {
         c0nst::c0nst! {
-        impl c0nst FromPrimitive for $T {
+        c0nst impl FromPrimitive for $T {
             #[inline]
             fn from_isize(n: isize) -> Option<$T> {
                 n.$to_ty()
@@ -588,7 +588,7 @@ macro_rules! impl_from_primitive_nonzero_one {
 macro_rules! impl_from_primitive_nonzero {
     ($T:ty, $to_ty:ident) => {
         c0nst::c0nst! {
-        impl c0nst FromPrimitive for $T {
+        c0nst impl FromPrimitive for $T {
             impl_from_primitive_nonzero_one!(isize, $T, $to_ty, from_isize);
             impl_from_primitive_nonzero_one!(i8,    $T, $to_ty, from_i8);
             impl_from_primitive_nonzero_one!(i16,   $T, $to_ty, from_i16);
@@ -633,7 +633,7 @@ macro_rules! impl_to_primitive_wrapping {
 }
 
 c0nst::c0nst! {
-impl<T: [c0nst] ToPrimitive> c0nst ToPrimitive for Wrapping<T> {
+c0nst impl<T: [c0nst] ToPrimitive> ToPrimitive for Wrapping<T> {
     impl_to_primitive_wrapping! {
         fn to_isize -> isize;
         fn to_i8 -> i8;
@@ -669,7 +669,7 @@ macro_rules! impl_from_primitive_wrapping {
 }
 
 c0nst::c0nst! {
-impl<T: [c0nst] FromPrimitive + [c0nst] Destruct> c0nst FromPrimitive for Wrapping<T> {
+c0nst impl<T: [c0nst] FromPrimitive + [c0nst] Destruct> FromPrimitive for Wrapping<T> {
     impl_from_primitive_wrapping! {
         fn from_isize(isize);
         fn from_i8(i8);
@@ -730,7 +730,7 @@ pub c0nst trait NumCast: Sized + [c0nst] ToPrimitive {
 macro_rules! impl_num_cast {
     ($T:ty, $conv:ident) => {
         c0nst::c0nst! {
-        impl c0nst NumCast for $T {
+        c0nst impl NumCast for $T {
             #[inline]
             fn from<N: [c0nst] ToPrimitive + [c0nst] Destruct>(n: N) -> Option<$T> {
                 n.$conv()
@@ -758,7 +758,7 @@ impl_num_cast!(f64, to_f64);
 macro_rules! impl_num_cast_nonzero {
     ($T:ty, $conv:ident) => {
         c0nst::c0nst! {
-        impl c0nst NumCast for $T {
+        c0nst impl NumCast for $T {
             #[inline]
             fn from<N: [c0nst] ToPrimitive + [c0nst] Destruct>(n: N) -> Option<$T> {
                 // `Option::and_then` isn't a const fn yet — hand-roll as match.
@@ -787,7 +787,7 @@ impl_num_cast_nonzero!(NonZeroI64, to_i64);
 impl_num_cast_nonzero!(NonZeroI128, to_i128);
 
 c0nst::c0nst! {
-impl<T: [c0nst] NumCast + [c0nst] Destruct> c0nst NumCast for Wrapping<T> {
+c0nst impl<T: [c0nst] NumCast + [c0nst] Destruct> NumCast for Wrapping<T> {
     fn from<U: [c0nst] ToPrimitive + [c0nst] Destruct>(n: U) -> Option<Self> {
         // Hand-rolled match — `Option::map` is not yet a const fn.
         match T::from(n) {
@@ -837,7 +837,7 @@ where
 macro_rules! impl_as_primitive {
     (@ $T: ty =>  impl $U: ty ) => {
         c0nst::c0nst! {
-        impl c0nst AsPrimitive<$U> for $T {
+        c0nst impl AsPrimitive<$U> for $T {
             #[inline] fn as_(self) -> $U { self as $U }
         }
         }

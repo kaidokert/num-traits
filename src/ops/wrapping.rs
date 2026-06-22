@@ -9,7 +9,7 @@ use core::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 macro_rules! wrapping_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self, v: Self) -> Self {
                 <$t>::$method(self, v)
@@ -19,7 +19,7 @@ macro_rules! wrapping_impl {
     };
     ($trait_name:ident, $method:ident, $t:ty, $rhs:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name<$rhs> for $t {
+        c0nst impl $trait_name<$rhs> for $t {
             #[inline]
             fn $method(self, v: $rhs) -> Self {
                 <$t>::$method(self, v)
@@ -101,7 +101,7 @@ wrapping_impl!(WrappingMul, wrapping_mul, i128);
 macro_rules! wrapping_neg_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst WrappingNeg for $t {
+        c0nst impl WrappingNeg for $t {
             type Output = $t;
             #[inline]
             fn wrapping_neg(self) -> $t {
@@ -115,7 +115,7 @@ macro_rules! wrapping_neg_impl {
 macro_rules! wrapping_unary_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self) -> $t {
                 <$t>::$method(self)
@@ -155,7 +155,7 @@ wrapping_neg_impl!(u8 u16 u32 u64 usize u128 i8 i16 i32 i64 isize i128);
 macro_rules! wrapping_shift_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self, rhs: u32) -> $t {
                 <$t>::$method(self, rhs)

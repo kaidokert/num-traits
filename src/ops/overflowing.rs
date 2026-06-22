@@ -11,7 +11,7 @@ use core::{u128, u16, u32, u64, u8, usize};
 macro_rules! overflowing_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self, v: Self) -> (Self, bool) {
                 <$t>::$method(self, v)
@@ -149,7 +149,7 @@ overflowing_impl!(OverflowingRem, overflowing_rem, i128);
 macro_rules! overflowing_neg_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst OverflowingNeg for $t {
+        c0nst impl OverflowingNeg for $t {
             type Output = $t;
             #[inline]
             fn overflowing_neg(self) -> ($t, bool) { <$t>::overflowing_neg(self) }
@@ -161,7 +161,7 @@ macro_rules! overflowing_neg_impl {
 macro_rules! overflowing_unary_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self) -> ($t, bool) {
                 <$t>::$method(self)
@@ -204,7 +204,7 @@ overflowing_unary_impl!(OverflowingAbs, overflowing_abs, i128);
 macro_rules! overflowing_u32_rhs_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self, rhs: u32) -> ($t, bool) {
                 <$t>::$method(self, rhs)

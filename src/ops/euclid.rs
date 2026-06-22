@@ -77,7 +77,7 @@ pub c0nst trait Euclid: Sized + [c0nst] Div<Self> + [c0nst] Rem<Self> {
 macro_rules! euclid_forward_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst Euclid for $t {
+        c0nst impl Euclid for $t {
             #[inline]
             fn div_euclid(self, v: $t) -> Self {
                 <$t>::div_euclid(self, v)
@@ -213,7 +213,7 @@ pub c0nst trait CheckedEuclid: [c0nst] Euclid {
 macro_rules! checked_euclid_forward_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CheckedEuclid for $t {
+        c0nst impl CheckedEuclid for $t {
             #[inline]
             fn checked_div_euclid(self, v: $t) -> Option<Self> {
                 <$t>::checked_div_euclid(self, v)
@@ -272,7 +272,7 @@ pub c0nst trait WrappingEuclid: [c0nst] Euclid {
 macro_rules! wrapping_euclid_forward_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst WrappingEuclid for $t {
+        c0nst impl WrappingEuclid for $t {
             #[inline]
             fn wrapping_div_euclid(self, v: $t) -> Self {
                 <$t>::wrapping_div_euclid(self, v)
@@ -317,7 +317,7 @@ pub c0nst trait OverflowingEuclid: [c0nst] Euclid {
 macro_rules! overflowing_euclid_forward_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst OverflowingEuclid for $t {
+        c0nst impl OverflowingEuclid for $t {
             #[inline]
             fn overflowing_div_euclid(self, v: $t) -> (Self, bool) {
                 <$t>::overflowing_div_euclid(self, v)

@@ -22,7 +22,7 @@ pub c0nst trait Saturating {
 macro_rules! deprecated_saturating_impl {
     ($trait_name:ident for $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn saturating_add(self, v: Self) -> Self {
                 Self::saturating_add(self, v)
@@ -43,7 +43,7 @@ deprecated_saturating_impl!(Saturating for usize u8 u16 u32 u64 u128);
 macro_rules! saturating_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self, v: Self) -> Self {
                 <$t>::$method(self, v)
@@ -160,7 +160,7 @@ saturating_impl!(SaturatingDiv, saturating_div, i128);
 macro_rules! saturating_unary_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn $method(self) -> $t {
                 <$t>::$method(self)
@@ -219,7 +219,7 @@ saturating_unary_impl!(SaturatingAbs, saturating_abs, i128);
 macro_rules! saturating_pow_impl {
     ($t:ty) => {
         c0nst::c0nst! {
-        impl c0nst SaturatingPow for $t {
+        c0nst impl SaturatingPow for $t {
             #[inline]
             fn saturating_pow(self, exp: u32) -> $t {
                 <$t>::saturating_pow(self, exp)

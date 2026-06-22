@@ -64,7 +64,7 @@ pub c0nst trait NextPowerOfTwo: Sized {
 macro_rules! power_of_two_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst IsPowerOfTwo for $t {
+        c0nst impl IsPowerOfTwo for $t {
             #[inline]
             fn is_power_of_two(self) -> bool {
                 <$t>::is_power_of_two(self)
@@ -73,7 +73,7 @@ macro_rules! power_of_two_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst NextPowerOfTwo for $t {
+        c0nst impl NextPowerOfTwo for $t {
             type Output = $t;
             #[inline]
             fn next_power_of_two(self) -> Self {

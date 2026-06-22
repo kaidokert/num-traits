@@ -48,7 +48,7 @@ pub c0nst trait AbsDiff: Sized {
 macro_rules! abs_diff_impl {
     ($($t:ty => $out:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst AbsDiff for $t {
+        c0nst impl AbsDiff for $t {
             type Output = $out;
 
             #[inline]
@@ -110,7 +110,7 @@ pub c0nst trait ClampMagnitude: Sized {
 macro_rules! unsigned_abs_impl {
     ($($t:ty => $u:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst UnsignedAbs for $t {
+        c0nst impl UnsignedAbs for $t {
             type Unsigned = $u;
 
             #[inline]
@@ -121,7 +121,7 @@ macro_rules! unsigned_abs_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst ClampMagnitude for $t {
+        c0nst impl ClampMagnitude for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -177,7 +177,7 @@ pub c0nst trait CastSigned: Sized {
 macro_rules! cast_signed_impl {
     ($($t:ty => $s:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CastSigned for $t {
+        c0nst impl CastSigned for $t {
             type Signed = $s;
 
             #[inline]
@@ -219,7 +219,7 @@ pub c0nst trait CastUnsigned: Sized {
 macro_rules! cast_unsigned_impl {
     ($($t:ty => $u:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CastUnsigned for $t {
+        c0nst impl CastUnsigned for $t {
             type Unsigned = $u;
 
             #[inline]
@@ -259,7 +259,7 @@ pub c0nst trait Widen<T>: Sized {
 macro_rules! widen_impl {
     ($($from:ty => $($to:ty),+;)*) => {$($(
         c0nst::c0nst! {
-        impl c0nst Widen<$to> for $from {
+        c0nst impl Widen<$to> for $from {
             #[inline]
             fn widen(self) -> $to {
                 self as $to
@@ -312,7 +312,7 @@ pub c0nst trait Truncate<T>: Sized {
 macro_rules! truncate_impl {
     ($($from:ty => $($to:ty),+;)*) => {$($(
         c0nst::c0nst! {
-        impl c0nst Truncate<$to> for $from {
+        c0nst impl Truncate<$to> for $from {
             #[inline]
             fn truncate(self) -> $to {
                 self as $to
@@ -407,7 +407,7 @@ pub c0nst trait SaturatingCast<T>: Sized {
 macro_rules! cast_pair_impl {
     ($from:ty => $($to:ty),*) => {$(
         c0nst::c0nst! {
-        impl c0nst CheckedCast<$to> for $from {
+        c0nst impl CheckedCast<$to> for $from {
             // The round-trip check catches truncation; the sign comparison
             // catches same-width reinterpretation (e.g. 200u8 -> -56i8).
             #[inline]
@@ -424,7 +424,7 @@ macro_rules! cast_pair_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst StrictCast<$to> for $from {
+        c0nst impl StrictCast<$to> for $from {
             #[inline]
             #[track_caller]
             fn strict_cast(self) -> $to {
@@ -437,7 +437,7 @@ macro_rules! cast_pair_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst WrappingCast<$to> for $from {
+        c0nst impl WrappingCast<$to> for $from {
             #[inline]
             fn wrapping_cast(self) -> $to {
                 self as $to
@@ -446,7 +446,7 @@ macro_rules! cast_pair_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst SaturatingCast<$to> for $from {
+        c0nst impl SaturatingCast<$to> for $from {
             #[inline]
             #[allow(unused_comparisons)]
             fn saturating_cast(self) -> $to {

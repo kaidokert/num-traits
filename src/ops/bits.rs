@@ -57,7 +57,7 @@ pub c0nst trait UnboundedShr: Sized + [c0nst] Shr<u32> {
 macro_rules! unbounded_shift_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst UnboundedShl for $t {
+        c0nst impl UnboundedShl for $t {
             #[inline]
             fn unbounded_shl(self, rhs: u32) -> Self {
                 if rhs < <$t>::BITS { self << rhs } else { 0 }
@@ -65,7 +65,7 @@ macro_rules! unbounded_shift_impl {
         }
         }
         c0nst::c0nst! {
-        impl c0nst UnboundedShr for $t {
+        c0nst impl UnboundedShr for $t {
             #[inline]
             fn unbounded_shr(self, rhs: u32) -> Self {
                 if rhs < <$t>::BITS { self >> rhs } else { 0 }
@@ -75,7 +75,7 @@ macro_rules! unbounded_shift_impl {
     )*};
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst UnboundedShl for $t {
+        c0nst impl UnboundedShl for $t {
             #[inline]
             fn unbounded_shl(self, rhs: u32) -> Self {
                 if rhs < <$t>::BITS { self << rhs } else { 0 }
@@ -83,7 +83,7 @@ macro_rules! unbounded_shift_impl {
         }
         }
         c0nst::c0nst! {
-        impl c0nst UnboundedShr for $t {
+        c0nst impl UnboundedShr for $t {
             #[inline]
             fn unbounded_shr(self, rhs: u32) -> Self {
                 if rhs < <$t>::BITS {
@@ -148,7 +148,7 @@ pub c0nst trait FunnelShr: Sized {
 macro_rules! funnel_shift_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst FunnelShl for $t {
+        c0nst impl FunnelShl for $t {
             type Output = $t;
             #[inline]
             #[track_caller]
@@ -163,7 +163,7 @@ macro_rules! funnel_shift_impl {
         }
         }
         c0nst::c0nst! {
-        impl c0nst FunnelShr for $t {
+        c0nst impl FunnelShr for $t {
             type Output = $t;
             #[inline]
             #[track_caller]
@@ -218,7 +218,7 @@ pub c0nst trait ShrExact: Sized + [c0nst] Shr<u32> {
 macro_rules! exact_shift_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst ShlExact for $t {
+        c0nst impl ShlExact for $t {
             #[inline]
             fn shl_exact(self, rhs: u32) -> Option<Self> {
                 if rhs <= <$t>::leading_zeros(self) && rhs < <$t>::BITS {
@@ -233,7 +233,7 @@ macro_rules! exact_shift_impl {
     )*};
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst ShlExact for $t {
+        c0nst impl ShlExact for $t {
             #[inline]
             fn shl_exact(self, rhs: u32) -> Option<Self> {
                 // for negative values the sign-extension bits are the
@@ -250,7 +250,7 @@ macro_rules! exact_shift_impl {
     )*};
     (@shr $t:ty) => {
         c0nst::c0nst! {
-        impl c0nst ShrExact for $t {
+        c0nst impl ShrExact for $t {
             #[inline]
             fn shr_exact(self, rhs: u32) -> Option<Self> {
                 if rhs <= <$t>::trailing_zeros(self) && rhs < <$t>::BITS {
@@ -336,7 +336,7 @@ macro_rules! isolate_one_impl {
     // unsigned instantiations
     ($($t:ty => $u:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst HighestOne for $t {
+        c0nst impl HighestOne for $t {
             #[inline]
             fn highest_one(self) -> Option<u32> {
                 if self == 0 {
@@ -349,7 +349,7 @@ macro_rules! isolate_one_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst LowestOne for $t {
+        c0nst impl LowestOne for $t {
             #[inline]
             fn lowest_one(self) -> Option<u32> {
                 if self == 0 {
@@ -362,7 +362,7 @@ macro_rules! isolate_one_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst IsolateHighestOne for $t {
+        c0nst impl IsolateHighestOne for $t {
             type Output = $t;
             #[inline]
             fn isolate_highest_one(self) -> Self {
@@ -373,7 +373,7 @@ macro_rules! isolate_one_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst IsolateLowestOne for $t {
+        c0nst impl IsolateLowestOne for $t {
             type Output = $t;
             #[inline]
             fn isolate_lowest_one(self) -> Self {
@@ -409,7 +409,7 @@ pub c0nst trait BitWidth: Sized {
 macro_rules! bit_width_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst BitWidth for $t {
+        c0nst impl BitWidth for $t {
             #[inline]
             fn bit_width(self) -> u32 {
                 <$t>::BITS - <$t>::leading_zeros(self)
@@ -458,7 +458,7 @@ pub c0nst trait ExtractBits: Sized {
 macro_rules! deposit_extract_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst DepositBits for $t {
+        c0nst impl DepositBits for $t {
             type Output = $t;
             #[inline]
             fn deposit_bits(self, mask: Self) -> Self {
@@ -479,7 +479,7 @@ macro_rules! deposit_extract_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst ExtractBits for $t {
+        c0nst impl ExtractBits for $t {
             type Output = $t;
             #[inline]
             fn extract_bits(self, mask: Self) -> Self {

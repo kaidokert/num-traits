@@ -41,7 +41,7 @@ pub trait ConstZero: Zero {
 macro_rules! zero_impl {
     ($t:ty, $v:expr) => {
         c0nst::c0nst! {
-        impl c0nst Zero for $t {
+        c0nst impl Zero for $t {
             #[inline]
             fn zero() -> $t {
                 $v
@@ -81,7 +81,7 @@ zero_impl!(f32, 0.0);
 zero_impl!(f64, 0.0);
 
 c0nst::c0nst! {
-impl<T: [c0nst] Zero> c0nst Zero for Wrapping<T>
+c0nst impl<T: [c0nst] Zero> Zero for Wrapping<T>
 where
     Wrapping<T>: [c0nst] Add<Output = Wrapping<T>>,
 {
@@ -108,7 +108,7 @@ where
 
 #[cfg(has_num_saturating)]
 c0nst::c0nst! {
-impl<T: [c0nst] Zero> c0nst Zero for Saturating<T>
+c0nst impl<T: [c0nst] Zero> Zero for Saturating<T>
 where
     Saturating<T>: [c0nst] Add<Output = Saturating<T>>,
 {
@@ -172,7 +172,7 @@ pub trait ConstOne: One {
 macro_rules! one_impl {
     ($t:ty, $v:expr) => {
         c0nst::c0nst! {
-        impl c0nst One for $t {
+        c0nst impl One for $t {
             #[inline]
             fn one() -> $t {
                 $v
@@ -212,7 +212,7 @@ one_impl!(f32, 1.0);
 one_impl!(f64, 1.0);
 
 c0nst::c0nst! {
-impl<T: [c0nst] One> c0nst One for Wrapping<T>
+c0nst impl<T: [c0nst] One> One for Wrapping<T>
 where
     Wrapping<T>: [c0nst] Mul<Output = Wrapping<T>>,
 {
@@ -239,7 +239,7 @@ where
 
 #[cfg(has_num_saturating)]
 c0nst::c0nst! {
-impl<T: [c0nst] One> c0nst One for Saturating<T>
+c0nst impl<T: [c0nst] One> One for Saturating<T>
 where
     Saturating<T>: [c0nst] Mul<Output = Saturating<T>>,
 {

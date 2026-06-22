@@ -50,7 +50,7 @@ pub c0nst trait CheckedIsqrt: Sized {
 macro_rules! isqrt_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst Isqrt for $t {
+        c0nst impl Isqrt for $t {
             type Output = $t;
             #[inline]
             fn isqrt(self) -> Self {
@@ -64,7 +64,7 @@ macro_rules! isqrt_impl {
 macro_rules! checked_isqrt_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CheckedIsqrt for $t {
+        c0nst impl CheckedIsqrt for $t {
             type Output = $t;
             #[inline]
             fn checked_isqrt(self) -> Option<Self> {

@@ -431,7 +431,7 @@ c0nst fn reverse_bits_fallback<P: [c0nst] PrimBits>(i: P) -> P {
 macro_rules! prim_int_impl {
     ($T:ty, $S:ty, $U:ty) => {
         c0nst::c0nst! {
-        impl c0nst PrimBits for $T {
+        c0nst impl PrimBits for $T {
             #[inline]
             fn count_ones(self) -> u32 {
                 <$T>::count_ones(self)
@@ -525,7 +525,7 @@ macro_rules! prim_int_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst PrimInt for $T {
+        c0nst impl PrimInt for $T {
             #[inline]
             fn pow(self, exp: u32) -> Self {
                 <$T>::pow(self, exp)

@@ -224,7 +224,7 @@ declare_mixed_trait! {
 macro_rules! mixed_signed_impl {
     ($($t:ty => $s:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CheckedAddSigned for $t {
+        c0nst impl CheckedAddSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -236,7 +236,7 @@ macro_rules! mixed_signed_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst WrappingAddSigned for $t {
+        c0nst impl WrappingAddSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -248,7 +248,7 @@ macro_rules! mixed_signed_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst OverflowingAddSigned for $t {
+        c0nst impl OverflowingAddSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -260,7 +260,7 @@ macro_rules! mixed_signed_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst SaturatingAddSigned for $t {
+        c0nst impl SaturatingAddSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -272,7 +272,7 @@ macro_rules! mixed_signed_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst StrictAddSigned for $t {
+        c0nst impl StrictAddSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -292,7 +292,7 @@ macro_rules! mixed_signed_impl {
         // the whole sub_signed family is newer than the MSRV (1.90/1.91);
         // same algorithms as core
         c0nst::c0nst! {
-        impl c0nst OverflowingSubSigned for $t {
+        c0nst impl OverflowingSubSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -307,7 +307,7 @@ macro_rules! mixed_signed_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst CheckedSubSigned for $t {
+        c0nst impl CheckedSubSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -325,7 +325,7 @@ macro_rules! mixed_signed_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst WrappingSubSigned for $t {
+        c0nst impl WrappingSubSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -337,7 +337,7 @@ macro_rules! mixed_signed_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst SaturatingSubSigned for $t {
+        c0nst impl SaturatingSubSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -357,7 +357,7 @@ macro_rules! mixed_signed_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst StrictSubSigned for $t {
+        c0nst impl StrictSubSigned for $t {
             type Signed = $s;
             type Output = $t;
 
@@ -388,7 +388,7 @@ mixed_signed_impl! {
 macro_rules! mixed_unsigned_impl {
     ($($t:ty => $u:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CheckedAddUnsigned for $t {
+        c0nst impl CheckedAddUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -400,7 +400,7 @@ macro_rules! mixed_unsigned_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst WrappingAddUnsigned for $t {
+        c0nst impl WrappingAddUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -412,7 +412,7 @@ macro_rules! mixed_unsigned_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst OverflowingAddUnsigned for $t {
+        c0nst impl OverflowingAddUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -424,7 +424,7 @@ macro_rules! mixed_unsigned_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst SaturatingAddUnsigned for $t {
+        c0nst impl SaturatingAddUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -436,7 +436,7 @@ macro_rules! mixed_unsigned_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst StrictAddUnsigned for $t {
+        c0nst impl StrictAddUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -453,7 +453,7 @@ macro_rules! mixed_unsigned_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst CheckedSubUnsigned for $t {
+        c0nst impl CheckedSubUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -465,7 +465,7 @@ macro_rules! mixed_unsigned_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst WrappingSubUnsigned for $t {
+        c0nst impl WrappingSubUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -477,7 +477,7 @@ macro_rules! mixed_unsigned_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst OverflowingSubUnsigned for $t {
+        c0nst impl OverflowingSubUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -489,7 +489,7 @@ macro_rules! mixed_unsigned_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst SaturatingSubUnsigned for $t {
+        c0nst impl SaturatingSubUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -501,7 +501,7 @@ macro_rules! mixed_unsigned_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst StrictSubUnsigned for $t {
+        c0nst impl StrictSubUnsigned for $t {
             type Unsigned = $u;
             type Output = $t;
 
@@ -550,7 +550,7 @@ pub c0nst trait CheckedSignedDiff: Sized {
 macro_rules! checked_signed_diff_impl {
     ($($t:ty => $s:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CheckedSignedDiff for $t {
+        c0nst impl CheckedSignedDiff for $t {
             type Signed = $s;
 
             // stable since 1.91, newer than the MSRV; same algorithm as core

@@ -37,7 +37,7 @@ pub c0nst trait CarrylessMul: Sized {
 macro_rules! carryless_mul_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CarrylessMul for $t {
+        c0nst impl CarrylessMul for $t {
             type Output = $t;
             #[inline]
             fn carryless_mul(self, rhs: Self) -> $t {
@@ -81,7 +81,7 @@ pub c0nst trait WideningCarrylessMul: Sized {
 macro_rules! widening_carryless_mul_impl {
     ($($t:ty => $w:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst WideningCarrylessMul for $t {
+        c0nst impl WideningCarrylessMul for $t {
             type Wide = $w;
 
             #[inline]
@@ -137,7 +137,7 @@ macro_rules! carrying_carryless_mul_impl {
     // clmul in the double-width type, then split
     ($($t:ty => $w:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CarryingCarrylessMul for $t {
+        c0nst impl CarryingCarrylessMul for $t {
             type Output = $t;
             #[inline]
             fn carrying_carryless_mul(self, rhs: Self, carry: Self) -> ($t, $t) {
@@ -181,7 +181,7 @@ const fn wide_clmul_u64(a: u64, b: u64) -> u128 {
 }
 
 c0nst::c0nst! {
-impl c0nst CarryingCarrylessMul for u128 {
+c0nst impl CarryingCarrylessMul for u128 {
     type Output = u128;
     #[inline]
     fn carrying_carryless_mul(self, rhs: Self, carry: Self) -> (u128, u128) {

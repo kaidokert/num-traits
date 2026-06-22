@@ -49,7 +49,7 @@ pub c0nst trait Parity {
 macro_rules! parity_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst Parity for $t {
+        c0nst impl Parity for $t {
             #[inline]
             fn is_odd(self) -> bool {
                 self & 1 == 1

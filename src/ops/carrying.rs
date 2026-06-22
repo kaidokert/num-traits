@@ -52,7 +52,7 @@ macro_rules! carrying_add_impl {
     // unsigned: carries combine with OR
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CarryingAdd for $t {
+        c0nst impl CarryingAdd for $t {
             #[inline]
             fn carrying_add(self, rhs: Self, carry: bool) -> ($t, bool) {
                 let (a, c1) = <$t>::overflowing_add(self, rhs);
@@ -66,7 +66,7 @@ macro_rules! carrying_add_impl {
     // signed: overflows cancel out pairwise, so XOR
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CarryingAdd for $t {
+        c0nst impl CarryingAdd for $t {
             #[inline]
             fn carrying_add(self, rhs: Self, carry: bool) -> ($t, bool) {
                 let (a, b) = <$t>::overflowing_add(self, rhs);
@@ -105,7 +105,7 @@ pub c0nst trait BorrowingSub: Sized + [c0nst] Sub<Self> {
 macro_rules! borrowing_sub_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst BorrowingSub for $t {
+        c0nst impl BorrowingSub for $t {
             #[inline]
             fn borrowing_sub(self, rhs: Self, borrow: bool) -> ($t, bool) {
                 let (a, c1) = <$t>::overflowing_sub(self, rhs);
@@ -117,7 +117,7 @@ macro_rules! borrowing_sub_impl {
     )*};
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst BorrowingSub for $t {
+        c0nst impl BorrowingSub for $t {
             #[inline]
             fn borrowing_sub(self, rhs: Self, borrow: bool) -> ($t, bool) {
                 let (a, b) = <$t>::overflowing_sub(self, rhs);
@@ -166,7 +166,7 @@ macro_rules! carrying_mul_impl {
     // comes back as the unsigned counterpart, like std
     ($($t:ty, $u:ty, $w:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst CarryingMul for $t {
+        c0nst impl CarryingMul for $t {
             type Unsigned = $u;
 
             #[inline]
@@ -228,7 +228,7 @@ pub(crate) const fn wide_mul_u128(a: u128, b: u128) -> (u128, u128) {
 }
 
 c0nst::c0nst! {
-impl c0nst CarryingMul for u128 {
+c0nst impl CarryingMul for u128 {
     type Unsigned = u128;
 
     #[inline]
@@ -252,7 +252,7 @@ impl c0nst CarryingMul for u128 {
 }
 
 c0nst::c0nst! {
-impl c0nst CarryingMul for i128 {
+c0nst impl CarryingMul for i128 {
     type Unsigned = u128;
 
     #[inline]
@@ -309,7 +309,7 @@ pub c0nst trait WideningMul: Sized + [c0nst] Mul<Self> {
 macro_rules! widening_mul_impl {
     ($($t:ty => $w:ty;)*) => {$(
         c0nst::c0nst! {
-        impl c0nst WideningMul for $t {
+        c0nst impl WideningMul for $t {
             type Wide = $w;
 
             #[inline]

@@ -255,7 +255,7 @@ pub c0nst trait RingOps<Rhs = Self, Output = Self>:
 }
 
 c0nst::c0nst! {
-impl<T, Rhs, Output> c0nst RingOps<Rhs, Output> for T where
+c0nst impl<T, Rhs, Output> RingOps<Rhs, Output> for T where
     T: [c0nst] Add<Rhs, Output = Output>
         + [c0nst] Sub<Rhs, Output = Output>
         + [c0nst] Mul<Rhs, Output = Output>
@@ -276,7 +276,7 @@ pub c0nst trait NumOps<Rhs = Self, Output = Self>:
 }
 
 c0nst::c0nst! {
-impl<T, Rhs, Output> c0nst NumOps<Rhs, Output> for T where
+c0nst impl<T, Rhs, Output> NumOps<Rhs, Output> for T where
     T: [c0nst] Add<Rhs, Output = Output>
         + [c0nst] Sub<Rhs, Output = Output>
         + [c0nst] Mul<Rhs, Output = Output>
@@ -294,7 +294,7 @@ c0nst::c0nst! {
 pub c0nst trait NumRef: [c0nst] Num + for<'r> [c0nst] NumOps<&'r Self> {}
 }
 c0nst::c0nst! {
-impl<T> c0nst NumRef for T where T: [c0nst] Num + for<'r> [c0nst] NumOps<&'r T> {}
+c0nst impl<T> NumRef for T where T: [c0nst] Num + for<'r> [c0nst] NumOps<&'r T> {}
 }
 
 c0nst::c0nst! {
@@ -307,7 +307,7 @@ c0nst::c0nst! {
 pub c0nst trait RefNum<Base>: [c0nst] NumOps<Base, Base> + for<'r> [c0nst] NumOps<&'r Base, Base> {}
 }
 c0nst::c0nst! {
-impl<T, Base> c0nst RefNum<Base> for T where T: [c0nst] NumOps<Base, Base> + for<'r> [c0nst] NumOps<&'r Base, Base> {}
+c0nst impl<T, Base> RefNum<Base> for T where T: [c0nst] NumOps<Base, Base> + for<'r> [c0nst] NumOps<&'r Base, Base> {}
 }
 
 c0nst::c0nst! {
@@ -321,7 +321,7 @@ pub c0nst trait NumAssignOps<Rhs = Self>:
 }
 
 c0nst::c0nst! {
-impl<T, Rhs> c0nst NumAssignOps<Rhs> for T where
+c0nst impl<T, Rhs> NumAssignOps<Rhs> for T where
     T: [c0nst] AddAssign<Rhs> + [c0nst] SubAssign<Rhs> + [c0nst] MulAssign<Rhs> + [c0nst] DivAssign<Rhs> + [c0nst] RemAssign<Rhs>
 {
 }
@@ -334,7 +334,7 @@ c0nst::c0nst! {
 pub c0nst trait NumAssign: [c0nst] Num + [c0nst] NumAssignOps {}
 }
 c0nst::c0nst! {
-impl<T> c0nst NumAssign for T where T: [c0nst] Num + [c0nst] NumAssignOps {}
+c0nst impl<T> NumAssign for T where T: [c0nst] Num + [c0nst] NumAssignOps {}
 }
 
 c0nst::c0nst! {
@@ -345,7 +345,7 @@ c0nst::c0nst! {
 pub c0nst trait NumAssignRef: [c0nst] NumAssign + for<'r> [c0nst] NumAssignOps<&'r Self> {}
 }
 c0nst::c0nst! {
-impl<T> c0nst NumAssignRef for T where T: [c0nst] NumAssign + for<'r> [c0nst] NumAssignOps<&'r T> {}
+c0nst impl<T> NumAssignRef for T where T: [c0nst] NumAssign + for<'r> [c0nst] NumAssignOps<&'r T> {}
 }
 
 /// Conversion from a string in a given radix.
@@ -412,7 +412,7 @@ impl<T: FromStrRadix> FromStrRadix for core::num::Saturating<T> {
 macro_rules! int_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         c0nst::c0nst! {
-        impl c0nst $name for $t {
+        c0nst impl $name for $t {
             type FromStrRadixErr = ::core::num::ParseIntError;
             #[inline]
             fn from_str_radix(s: &str, radix: u32)

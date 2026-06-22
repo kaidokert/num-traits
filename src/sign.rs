@@ -58,7 +58,7 @@ pub c0nst trait Signed: Sized + [c0nst] Num + [c0nst] Neg + [c0nst] Signum {
 macro_rules! signed_impl {
     ($($t:ty)*) => ($(
         c0nst::c0nst! {
-        impl c0nst Signum for $t {
+        c0nst impl Signum for $t {
             type Output = $t;
             #[inline]
             fn signum(self) -> $t {
@@ -72,7 +72,7 @@ macro_rules! signed_impl {
         }
 
         c0nst::c0nst! {
-        impl c0nst Signed for $t {
+        c0nst impl Signed for $t {
             #[inline]
             fn abs(self) -> $t {
                 if self.is_negative() { -self } else { self }
@@ -234,7 +234,7 @@ pub c0nst trait Unsigned: [c0nst] Num {}
 macro_rules! empty_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
         c0nst::c0nst! {
-        impl c0nst $name for $t {}
+        c0nst impl $name for $t {}
         }
     )*)
 }
