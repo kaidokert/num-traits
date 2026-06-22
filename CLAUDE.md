@@ -48,6 +48,17 @@ Fork-added (the "complete nightly std coverage" pass, ~45 traits — see *New op
 - `ops/parity.rs`: `Parity` (`is_odd`/`is_even`) — no std counterpart (lives in num-integer's `Integer` bundle upstream); per-type const trait so implementors avoid the `BitAnd + One + PartialEq + Clone` blanket-impl bounds modmath uses today (PartialEq is the CT-hostile one) and bigints can answer from the lowest limb.
 - `ops/convert.rs`: `AbsDiff` (assoc `type Output` — unsigned counterpart for signed types), `UnsignedAbs`, `ClampMagnitude`, `CastSigned`/`CastUnsigned` (one-method bit reinterpretation only — the checked/saturating/strict variants were deliberately dropped: they are exactly the generic casts at the counterpart type), `Widen<T>`/`Truncate<T>` (one-method each, generic target, exact std pair tables — same signedness, usize/isize conservative), and the four one-method generic casts `CheckedCast<T>`/`StrictCast<T>`/`WrappingCast<T>`/`SaturatingCast<T>` for all 144 int-type pairs.
 
+### Typestate proofs (`src/ops/typestate.rs`)
+
+Zero-runtime-cost newtypes that carry a structural invariant constructed once (checked `new`/`new_unchecked`/`from_ref`, const where the predicate allows) and *spent* by a consuming op that deletes a branch/`Option`/division. **Pure-`core`, no feature gate, always available** (the old `typestate` cargo feature was removed — it was a no-op once `ct` got its own gate). Each secret-derivable predicate also gets a `CtOption` `new_ct` under the `ct` feature; `BitIndex` (public shift amount) and `Finite` (floats are outside the CT model) deliberately have none. Wrapper *types* are root re-exports but stay OUT of `prelude::*` (generic names); the *ops traits* (`PowerOfTwoOps`/`BitIndexOps`/`HasNonZero`/`DivNonZero`, + ct `CtNonZero`) are in the prelude. Residents:
+  - `PowerOfTwo<T>` (unsigned, **exponent rep** not value, `Copy`, no `Deref`) + `PowerOfTwoOps` (c0nst): `div_pow2`/`rem_pow2`/`is_multiple_of_pow2`/`next_multiple_of_pow2`(+checked) as shifts/masks.
+  - `BitIndex<T>` (all 12 ints, **u32 rep**, `Copy`) + `BitIndexOps` (c0nst): `shl_index`/`shr_index` by an amount proven `< BITS` — no overflow-check branch, no `unbounded_*` masking.
+  - `HasNonZero` (c0nst) bridges to `core::num::NonZero<Self>` (`nonzero_get` accessor, no `Into<Self>` bound — `From<NonZero>` isn't const) + `DivNonZero` (c0nst, **unsigned**): infallible `div_nonzero`/`rem_nonzero`.
+  - `NonNegative<T>`/`Positive<T>` (signed, repr(transparent)): `to_unsigned`/`abs`/`isqrt` + const refinement narrowings (`into_nonnegative`/`into_nonzero`/`into_nonmin`).
+  - `NonMin<T>` (signed, repr(transparent)): proof `!= MIN`. Total `neg`/`abs` and — as the dividend — total signed `div_nonzero`/`rem_nonzero` (the only signed-div overflow is `MIN / -1`). This is the co-proof unsigned `DivNonZero` doesn't need.
+  - `Odd<T>`/`Even<T>` (repr(transparent), via `Parity`): bare proofs, consumer lives in modmath.
+  - `Finite<T>` (f32/f64, repr(transparent)): const `new` via exponent-bit test (not the non-const `is_finite`); spent by a total `Ord`/`Eq` (NaN excluded ⇒ `partial_cmp().unwrap()` can't panic) so finite floats become sortable/`BTreeMap`-keyable.
+
 ### New ops coverage policy (decided 2026-06)
 
 - **Scope**: every inherent integer numeric op in current nightly std, stable or unstable, EXCEPT the `unsafe unchecked_*` family (deliberately skipped — codegen-hint methods make no sense behind trait indirection).

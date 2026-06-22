@@ -45,6 +45,28 @@ fn power_of_two_typestate_in_const() {
 }
 
 #[test]
+fn typestate_ops_in_const() {
+    use const_num_traits::{BitIndex, Finite, NonMin};
+    use const_num_traits::BitIndexOps;
+
+    // BitIndexOps is a const trait on nightly; the shifts run in `const`.
+    const I: BitIndex<u8> = BitIndex::<u8>::new(3).unwrap();
+    const SHL: u8 = 1u8.shl_index(I);
+    const SHR: u8 = 0x80u8.shr_index(I);
+    assert_eq!((SHL, SHR), (8, 0x10));
+
+    // NonMin's total ops are plain `const fn` (const on both toolchains).
+    const A: NonMin<i32> = NonMin::<i32>::new(-7).unwrap();
+    const ABS: i32 = A.abs();
+    const D: i32 = A.div_nonzero(core::num::NonZero::new(2).unwrap());
+    assert_eq!((ABS, D), (7, -3));
+
+    // Finite constructed in `const` via the bit test.
+    const F: Option<Finite<f64>> = Finite::<f64>::new(1.5);
+    assert!(F.is_some());
+}
+
+#[test]
 fn variant_matrix_in_const() {
     const POW: Option<u32> = CheckedPow::checked_pow(3u32, 9);
     const WPOW: i8 = WrappingPow::wrapping_pow(3i8, 5);
