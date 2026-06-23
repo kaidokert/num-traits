@@ -1,4 +1,4 @@
-//! Proof of the `PrimBits` capability cut (DESIGN.md, P1): a type with **no
+//! Proof of the `PrimBits` capability cut: a type with **no
 //! `PartialEq`, no `Ord`, no `Div`/`Rem` and no panicking checked ops** can
 //! implement `PrimBits` and use all of its bit-level machinery, including
 //! the `leading_ones`/`trailing_ones`/`reverse_bits` defaults.

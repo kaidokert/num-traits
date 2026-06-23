@@ -5,8 +5,8 @@
 //! `{checked,wrapping,saturating,strict}_cast` / `clamp_magnitude` on the
 //! primitive integer types.
 //!
-//! Per DESIGN.md, the checked/saturating/strict *sign-cast* and *truncate*
-//! variants found in std are NOT mirrored as methods here: they are exactly
+//! The checked/saturating/strict *sign-cast* and *truncate* variants found
+//! in std are NOT mirrored as methods here: they are exactly
 //! the generic cast traits ([`CheckedCast`], [`SaturatingCast`],
 //! [`StrictCast`]) applied to the counterpart type, so the sign-cast and
 //! truncate traits stay one-method (the Tier-A bit-pattern operations) and

@@ -1,7 +1,7 @@
 //! Integer square root, mirroring the `isqrt` / `checked_isqrt` inherent
 //! methods (stable in std since Rust 1.84).
 //!
-//! Split per DESIGN.md: `checked_isqrt` exists in std only on signed types
+//! Split: `checked_isqrt` exists in std only on signed types
 //! (it can't fail for unsigned ones), so it lives in its own signed-only
 //! trait rather than forcing an artificial always-`Some` method onto the
 //! unsigned impls.

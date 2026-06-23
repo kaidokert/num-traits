@@ -3,7 +3,7 @@
 //! (stable since Rust 1.0) and the still-unstable
 //! `wrapping_next_power_of_two`.
 //!
-//! Split per DESIGN.md: the predicate (`is_power_of_two`, a branchless
+//! Split: the predicate (`is_power_of_two`, a branchless
 //! `count_ones == 1` check) is separate from the constructors (the three
 //! `next_power_of_two` flavors, which share the `one_less` shift trick).
 //!

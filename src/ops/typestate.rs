@@ -1,41 +1,50 @@
 //! Zero-cost typestate proofs.
 //!
 //! A *typestate* is a zero-runtime-cost proof that a value satisfies a
-//! structural property, constructed once with a checked constructor and then
-//! consumed by operations that exploit the invariant to delete a branch, an
-//! `Option`, or a division. A proof with no consuming op would be dead weight,
-//! so every type here ships with at least one op that *spends* it.
-//!
-//! This module is **purely additive**: it is pure-`core` and costs nothing
-//! unless its types are named, so it is always available (no feature gate).
+//! structural property, built once by a checked constructor and *spent* by an
+//! op that exploits it to delete a branch, an `Option`, or a division. Every
+//! type here ships at least one such consuming op. Pure-`core` and always
+//! available — it costs nothing unless its types are named.
 //!
 //! Resident families:
-//! - [`PowerOfTwo`] + [`PowerOfTwoOps`] (unsigned): `div`/`rem`/`is_multiple`/
-//!   `next_multiple` as shifts and masks.
-//! - [`BitIndex`] + [`BitIndexOps`] (all integers): `shl`/`shr` by an amount
-//!   proven `< BITS`, with no overflow-check branch.
-//! - The [`HasNonZero`] bridge to [`core::num::NonZero`] + [`DivNonZero`]
-//!   (unsigned): infallible division / remainder.
-//! - [`NonNegative`] / [`Positive`] (signed): infallible unsigned cast,
-//!   branch-free `abs`, total `isqrt`, plus `const fn` refinement narrowings
-//!   (`Positive ⊂ NonNegative`, `Positive ⊂ NonZero`, `… ⊂ NonMin`).
-//! - [`NonMin`] (signed): total `neg`/`abs` and — as the dividend — total
-//!   signed division (the `MIN / -1` overflow is excluded by construction).
-//! - [`Odd`] (and its sibling [`Even`]) — *bare* proofs (no consuming op here;
-//!   `Odd`'s consumer lives in the modular-arithmetic layer).
-//! - [`Finite`] (floats): spent by a **total order** (`Ord`/`Eq`), which bare
-//!   `f32`/`f64` lack because `NaN` breaks reflexivity and trichotomy.
+//! - [`PowerOfTwo`] + [`PowerOfTwoOps`] (unsigned): div/rem/align as shifts/masks.
+//! - [`BitIndex`] + [`BitIndexOps`] (all ints): shift by an amount proven `< BITS`.
+//! - [`HasNonZero`] bridge to [`core::num::NonZero`] + [`DivNonZero`] (unsigned):
+//!   infallible division.
+//! - [`NonNegative`] / [`Positive`] (signed): unsigned cast, `abs`, `isqrt`, plus
+//!   `const` narrowings into each other / `NonZero` / `NonMin`.
+//! - [`NonMin`] (signed): total `neg`/`abs` and total signed division.
+//! - [`Odd`] / [`Even`]: bare proofs (consumer lives in the modmath layer).
+//! - [`Finite`] (floats): a total order (`Ord`/`Eq`) that bare floats lack.
 //!
-//! With the `ct` feature each family whose predicate is *secret-derived* also
-//! gets a `CtOption`-returning masked constructor (`new_ct` /
-//! `CtNonZero::into_nonzero_ct`). [`BitIndex`] has none — shift amounts are
-//! public parameters (see the crate-root CT convention) — and floats are
-//! outside the constant-time model, so [`Finite`] has none either.
+//! With the `ct` feature, families with a *secret-derived* predicate also gain a
+//! masked `new_ct`. [`BitIndex`] (public shift amounts) and [`Finite`] (floats
+//! are outside the CT model) have none.
 
 use crate::int::PrimBits;
 use crate::ops::parity::Parity;
 use crate::ops::pow2::IsPowerOfTwo;
 use core::marker::PhantomData;
+
+/// Error returned by the `TryFrom` constructors of the typestate proofs when
+/// the value fails the proof's predicate (e.g. a non-odd value into [`Odd`]).
+///
+/// A single shared, zero-sized error: the target type at the call site already
+/// names which predicate failed. The fallible *reference* narrowing keeps using
+/// the lighter inherent `from_ref` (returning `Option`) — `core` has no trait
+/// for fallible reference conversion, so there is nothing to mirror there.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct TypestateError;
+
+impl core::fmt::Display for TypestateError {
+    #[inline]
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str("value does not satisfy the typestate's predicate")
+    }
+}
+
+// `core::error::Error` is available in `no_std` since Rust 1.81 (< our MSRV).
+impl core::error::Error for TypestateError {}
 
 /// Proof that a value is a power of two (`2^k`, `k ≥ 0`), for an unsigned
 /// integer type `T`.
@@ -102,15 +111,9 @@ impl<T> PowerOfTwo<T> {
 
 c0nst::c0nst! {
 impl<T> PowerOfTwo<T> {
-    /// Safe constructor for **any** carrier — not just the six primitives.
-    ///
-    /// `Some` iff `value` is a power of two; the exponent is recovered as
-    /// `BITS - 1 - leading_zeros` (width read as `T::ZERO.count_zeros()`). This
-    /// is the constructor a non-primitive carrier (a fixed big-integer, a CT
-    /// word) uses — the `unsafe` stays inside the crate, where the invariant is
-    /// local, so **no `unsafe` crosses the boundary**. The per-primitive
-    /// [`new`](Self::new) stays as the `const`-fast path for the 12 ints; this
-    /// blanket is `const`-callable on nightly for const-capable carriers.
+    /// Safe constructor for any carrier, not just the primitives: `Some` iff
+    /// `value` is a power of two. Keeps the `unsafe` crate-internal; the
+    /// per-primitive [`new`](Self::new) stays the `const` fast path.
     #[inline]
     pub c0nst fn new_checked(value: T) -> Option<Self>
     where
@@ -223,6 +226,16 @@ macro_rules! pow2_typestate_impl {
             }
         }
         }
+
+        /// Checked construction by value; mirrors [`PowerOfTwo::new`]. (The
+        /// generic carrier path stays [`PowerOfTwo::new_checked`].)
+        impl TryFrom<$t> for PowerOfTwo<$t> {
+            type Error = TypestateError;
+            #[inline]
+            fn try_from(value: $t) -> Result<Self, TypestateError> {
+                Self::new(value).ok_or(TypestateError)
+            }
+        }
     )+};
 }
 
@@ -230,18 +243,12 @@ pow2_typestate_impl!(u8, u16, u32, u64, u128, usize);
 
 // ─────────────────────────────── BitIndex (shift amount) ──────────────────
 
-/// Proof that a value is a valid bit index / shift amount for `T`
-/// (`0 <= index < T::BITS`), so a shift by it can never overflow, panic in
-/// debug, or hit the platform-undefined "shift by `>= BITS`" case.
+/// Proof that a value is a valid bit index for `T` (`0 <= index < T::BITS`), so
+/// a shift by it can't overflow, panic, or hit the "shift `>= BITS`" UB.
 ///
-/// Like [`PowerOfTwo`], the representation is the `u32` index, **never `T`** —
-/// so the proof is `Copy` regardless of `T`, and a big-integer backend carries
-/// a small `u32` rather than a wide value. The consuming ops live in
-/// [`BitIndexOps`]; valid for both signed and unsigned `T`.
-///
-/// There is deliberately **no** constant-time constructor: shift amounts are
-/// public parameters (see the crate-root CT convention), so branching on the
-/// index never demotes a CT trait.
+/// Like [`PowerOfTwo`], the rep is the `u32` index (never `T`), so the proof is
+/// `Copy` regardless of `T`; consuming ops live in [`BitIndexOps`] (signed and
+/// unsigned). No constant-time constructor — shift amounts are public.
 ///
 /// ```
 /// use const_num_traits::{BitIndex, BitIndexOps};
@@ -289,10 +296,9 @@ impl<T> BitIndex<T> {
 
 c0nst::c0nst! {
 impl<T> BitIndex<T> {
-    /// Safe constructor for **any** [`PrimBits`] carrier — not just the six
-    /// primitives. `Some` iff `index < T::BITS`, with the width read as
-    /// `T::ZERO.count_zeros()`; needs no `unsafe`. The per-primitive
-    /// [`new`](Self::new) stays as the `const`-fast path.
+    /// Safe constructor for any [`PrimBits`] carrier, not just the primitives:
+    /// `Some` iff `index < T::BITS`. The per-primitive [`new`](Self::new) stays
+    /// the `const` fast path.
     #[inline]
     pub c0nst fn new_checked(index: u32) -> Option<Self>
     where
@@ -354,6 +360,16 @@ macro_rules! bit_index_impl {
                 self >> index.index
             }
         }
+        }
+
+        /// Checked construction from an index (`< BITS`); mirrors
+        /// [`BitIndex::new`]. The source is the `u32` index, not the carrier `$t`.
+        impl TryFrom<u32> for BitIndex<$t> {
+            type Error = TypestateError;
+            #[inline]
+            fn try_from(index: u32) -> Result<Self, TypestateError> {
+                Self::new(index).ok_or(TypestateError)
+            }
         }
     )+};
 }
@@ -546,6 +562,24 @@ macro_rules! sign_typestate_impl {
             #[inline]
             pub const fn into_nonmin(self) -> NonMin<$t> { NonMin(self.0) }
         }
+
+        /// Checked construction by value; mirrors [`NonNegative::new`].
+        impl TryFrom<$t> for NonNegative<$t> {
+            type Error = TypestateError;
+            #[inline]
+            fn try_from(value: $t) -> Result<Self, TypestateError> {
+                Self::new(value).ok_or(TypestateError)
+            }
+        }
+
+        /// Checked construction by value; mirrors [`Positive::new`].
+        impl TryFrom<$t> for Positive<$t> {
+            type Error = TypestateError;
+            #[inline]
+            fn try_from(value: $t) -> Result<Self, TypestateError> {
+                Self::new(value).ok_or(TypestateError)
+            }
+        }
     )+};
 }
 
@@ -557,14 +591,12 @@ sign_typestate_impl!(
 
 /// Proof that a signed value is **not** `T::MIN`.
 ///
-/// Two overflow hazards vanish at the type level: `neg` and `abs` overflow only
-/// at `MIN`, and the *only* signed-division overflow is `MIN / -1`. So with the
-/// dividend proven `!= MIN`, [`neg`](Self::neg) / [`abs`](Self::abs) are total
-/// and [`div_nonzero`](Self::div_nonzero) / [`rem_nonzero`](Self::rem_nonzero)
-/// by any non-zero divisor are total — this is the co-proof the unsigned
-/// [`DivNonZero`] can do without (unsigned division has no overflow case).
-///
-/// A [`Positive`] or [`NonNegative`] narrows here for free (`into_nonmin`).
+/// `neg`/`abs` overflow only at `MIN`, and the only signed-division overflow is
+/// `MIN / -1`. So with the dividend proven `!= MIN`, [`neg`](Self::neg) /
+/// [`abs`](Self::abs) and [`div_nonzero`](Self::div_nonzero) /
+/// [`rem_nonzero`](Self::rem_nonzero) by any non-zero divisor are total — the
+/// co-proof the unsigned [`DivNonZero`] doesn't need. [`Positive`] /
+/// [`NonNegative`] narrow here for free (`into_nonmin`).
 ///
 /// ```
 /// use const_num_traits::NonMin;
@@ -624,6 +656,15 @@ macro_rules! nonmin_impl {
                 self.0 % d.get()
             }
         }
+
+        /// Checked construction by value; mirrors [`NonMin::new`].
+        impl TryFrom<$t> for NonMin<$t> {
+            type Error = TypestateError;
+            #[inline]
+            fn try_from(value: $t) -> Result<Self, TypestateError> {
+                Self::new(value).ok_or(TypestateError)
+            }
+        }
     )+};
 }
 
@@ -654,15 +695,18 @@ impl<T> Odd<T> {
     pub fn get(self) -> T { self.0 }
 }
 
+/// Borrows the proven-odd value without consuming the proof.
+impl<T> AsRef<T> for Odd<T> {
+    #[inline]
+    fn as_ref(&self) -> &T { &self.0 }
+}
+
+
 c0nst::c0nst! {
 impl<T: Parity + Copy> Odd<T> {
-    /// `Some` iff `value` is odd.
-    ///
-    /// `const`-callable on nightly when `T: [const] Parity` — so a
-    /// compile-time-constant modulus can be proven odd inside a `const` block,
-    /// turning a downstream `Field::new(p).unwrap()` into a *compile error*
-    /// rather than a runtime `panic_fmt` symbol. Plain (non-const) on stable,
-    /// where the signature is unchanged.
+    /// `Some` iff `value` is odd. `const`-callable on nightly when
+    /// `T: [const] Parity`, so a const modulus can be proven odd in a `const`
+    /// block (no runtime panic path); plain on stable.
     #[inline]
     pub c0nst fn new(value: T) -> Option<Self>
     where
@@ -710,12 +754,40 @@ impl<T> Even<T> {
     pub fn get(self) -> T { self.0 }
 }
 
+/// Borrows the proven-even value without consuming the proof.
+impl<T> AsRef<T> for Even<T> {
+    #[inline]
+    fn as_ref(&self) -> &T { &self.0 }
+}
+
+// Checked construction by value — the `core`-idiomatic fallible inverse of
+// `From`, mirroring `Odd::new` / `Even::new`. Per-primitive (not generic over
+// `Parity`): a generic `impl<T> TryFrom<T> for Odd<T>` collides with `core`'s
+// reflexive `TryFrom` blanket. Bignum carriers use the generic `new`/`from_ref`.
+macro_rules! parity_try_from {
+    ($($t:ty),+) => {$(
+        impl TryFrom<$t> for Odd<$t> {
+            type Error = TypestateError;
+            #[inline]
+            fn try_from(value: $t) -> Result<Self, TypestateError> {
+                Self::new(value).ok_or(TypestateError)
+            }
+        }
+        impl TryFrom<$t> for Even<$t> {
+            type Error = TypestateError;
+            #[inline]
+            fn try_from(value: $t) -> Result<Self, TypestateError> {
+                Self::new(value).ok_or(TypestateError)
+            }
+        }
+    )+};
+}
+parity_try_from!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize);
+
 c0nst::c0nst! {
 impl<T: Parity + Copy> Even<T> {
-    /// `Some` iff `value` is even.
-    ///
-    /// `const`-callable on nightly when `T: [const] Parity` (the parity sibling
-    /// of [`Odd::new`]); plain on stable.
+    /// `Some` iff `value` is even. `const`-callable on nightly when
+    /// `T: [const] Parity` (sibling of [`Odd::new`]); plain on stable.
     #[inline]
     pub c0nst fn new(value: T) -> Option<Self>
     where
@@ -745,16 +817,10 @@ where
 
 /// Proof that a float is finite (neither `NaN` nor `±∞`).
 ///
-/// Spent by a **total order**: `Finite<T>` implements [`Ord`] and [`Eq`], which
-/// bare `f32`/`f64` cannot, because `NaN` breaks both reflexivity (`NaN != NaN`)
-/// and trichotomy. With `NaN` excluded, `partial_cmp` is always `Some`, so the
-/// derived `min`/`max`/`clamp`, `BTreeMap` keys, and slice sorting are total —
-/// that infallibility is the proof being cashed in. (`-0.0` and `0.0` compare
-/// equal, a valid `Ord`.)
-///
-/// `repr(transparent)`, so [`from_ref`](Self::from_ref) is a zero-cost
-/// reinterpret. Floats are outside the constant-time model, so there is no
-/// `new_ct`.
+/// Spent by a **total order**: `Finite<T>` implements [`Ord`]/[`Eq`], which bare
+/// `f32`/`f64` can't (`NaN` breaks reflexivity and trichotomy). With `NaN` gone,
+/// `partial_cmp` is always `Some`, so sorting / `min`/`max` / `BTreeMap` keys are
+/// total. `repr(transparent)`; no `new_ct` (floats are outside the CT model).
 ///
 /// ```
 /// use const_num_traits::Finite;
@@ -800,6 +866,16 @@ macro_rules! finite_impl {
                 } else {
                     None
                 }
+            }
+        }
+
+        /// Checked construction by value; mirrors [`Finite::new`]. The natural
+        /// boundary for rejecting `NaN`/`±∞` from external float input with `?`.
+        impl TryFrom<$t> for Finite<$t> {
+            type Error = TypestateError;
+            #[inline]
+            fn try_from(value: $t) -> Result<Self, TypestateError> {
+                Self::new(value).ok_or(TypestateError)
             }
         }
 
@@ -1072,6 +1148,38 @@ mod tests {
         assert!(Even::<u32>::new(7).is_none());
         assert_eq!(Even::<u32>::new(8).unwrap().get(), 8);
         assert!(Even::from_ref(&8u32).is_some());
+        // borrow the proven value without consuming the proof
+        let o = Odd::<u32>::new(7).unwrap();
+        assert_eq!(*o.as_ref(), 7);
+        let ev = Even::<u32>::new(8).unwrap();
+        assert_eq!(*ev.as_ref(), 8);
+    }
+
+    #[test]
+    fn try_from_checked_constructors() {
+        // Odd / Even (generic over Parity)
+        assert_eq!(Odd::<u32>::try_from(7).map(|o| o.get()), Ok(7));
+        assert_eq!(Odd::<u32>::try_from(8), Err(TypestateError));
+        assert_eq!(Even::<u32>::try_from(8).map(|e| e.get()), Ok(8));
+        // via the TryInto sugar (the point of using the std trait)
+        let o: Odd<i32> = (-3i32).try_into().unwrap();
+        assert_eq!(o.get(), -3);
+        // sign types + NonMin (per-primitive)
+        assert_eq!(NonNegative::<i32>::try_from(0).map(|n| n.get()), Ok(0));
+        assert_eq!(NonNegative::<i32>::try_from(-1), Err(TypestateError));
+        assert_eq!(Positive::<i32>::try_from(0), Err(TypestateError));
+        assert_eq!(Positive::<i32>::try_from(5).map(|p| p.get()), Ok(5));
+        assert_eq!(NonMin::<i8>::try_from(i8::MIN), Err(TypestateError));
+        assert_eq!(NonMin::<i8>::try_from(5).map(|n| n.get()), Ok(5));
+        // PowerOfTwo / BitIndex (no Debug/PartialEq on the proof — project first)
+        assert_eq!(PowerOfTwo::<u32>::try_from(64).map(|p| p.exp()), Ok(6));
+        assert!(PowerOfTwo::<u32>::try_from(63).is_err());
+        assert_eq!(BitIndex::<u64>::try_from(40u32).map(|i| i.get()), Ok(40));
+        assert!(BitIndex::<u8>::try_from(8u32).is_err());
+        // Finite (derives Debug; manual PartialEq)
+        let x: Finite<f64> = 1.5f64.try_into().unwrap();
+        assert_eq!(x.get(), 1.5);
+        assert_eq!(Finite::<f64>::try_from(f64::NAN), Err(TypestateError));
     }
 
     #[test]

@@ -9,7 +9,7 @@ c0nst::c0nst! {
 ///
 /// This is the standalone atom for the `signum` capability; [`Signed`]
 /// inherits it as a supertrait (the same extraction pattern as
-/// `PrimBits`/`PrimInt` — see `DESIGN.md`).
+/// `PrimBits`/`PrimInt`).
 pub c0nst trait Signum: Sized {
     /// Returns the sign of the number.
     ///

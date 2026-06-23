@@ -3,8 +3,8 @@
 //! round-half-to-even, the `algebraic_*` fast-math family and the
 //! libm-backed special functions.
 //!
-//! This is the first slice of the planned `Float` decomposition (DESIGN.md
-//! P5): everything here that touches only bits and comparisons is a
+//! This is the first slice of the planned `Float` decomposition:
+//! everything here that touches only bits and comparisons is a
 //! `c0nst` trait with const impls on nightly — unlike the transcendental
 //! bundle, which waits on std/libm.
 //!

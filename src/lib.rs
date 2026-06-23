@@ -120,7 +120,7 @@ pub use crate::ops::parity::Parity;
 pub use crate::ops::pow2::{IsPowerOfTwo, NextPowerOfTwo};
 pub use crate::ops::typestate::{
     BitIndex, BitIndexOps, DivNonZero, Even, Finite, HasNonZero, NonMin, NonNegative, Odd,
-    Positive, PowerOfTwo, PowerOfTwoOps,
+    Positive, PowerOfTwo, PowerOfTwoOps, TypestateError,
 };
 #[cfg(feature = "ct")]
 pub use crate::ops::typestate::CtNonZero;
@@ -162,7 +162,7 @@ pub mod sign;
 ///
 /// Brings every trait in the crate into scope — both the num-traits-compatible
 /// bundles and the fine-grained modern atoms. This matters after the
-/// bundle-to-supertrait extractions (see `DESIGN.md`): with only a bundle
+/// bundle-to-supertrait extractions: with only a bundle
 /// imported (e.g. `PrimInt`), method-syntax calls to methods that moved to a
 /// supertrait (e.g. `count_ones` on `PrimBits`) don't resolve on concrete
 /// non-primitive types. Importing the prelude makes that a non-issue.
@@ -365,7 +365,7 @@ c0nst impl<T> NumAssignRef for T where T: [c0nst] NumAssign + for<'r> [c0nst] Nu
 /// This is the standalone atom for the parsing capability that [`Num`]
 /// bundles; implement both for full compatibility. (`Num` keeps its own
 /// `FromStrRadixErr` associated type and method because associated types
-/// can't be re-exported through supertraits — see `DESIGN.md`.)
+/// can't be re-exported through supertraits.)
 ///
 /// This is a plain (never-const) trait: string parsing is not
 /// const-evaluable for any of the primitive types today.

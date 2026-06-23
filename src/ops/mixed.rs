@@ -3,7 +3,7 @@
 //! values. Mirrors the `*_add_signed` / `*_sub_signed` / `*_add_unsigned` /
 //! `*_sub_unsigned` / `checked_signed_diff` inherent methods.
 //!
-//! Per DESIGN.md these follow the crate-wide flavor-per-trait convention
+//! These follow the crate-wide flavor-per-trait convention
 //! (`CheckedAddSigned`, `WrappingAddSigned`, …): one method per trait, so a
 //! type can implement exactly the flavors it supports — e.g. a
 //! constant-time type implements only the `Wrapping*` (Tier A) and

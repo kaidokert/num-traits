@@ -11,9 +11,7 @@
 //! upgrades *const-ness* and never changes which items exist — this is a
 //! deliberately additive item with no stable counterpart: there is no
 //! stable signature to diverge from, so the cleanest choice is to mirror
-//! std exactly rather than invent a crate-owned parallel buffer API. See
-//! CLAUDE.md ("Invariant: `nightly` never changes a stable item's
-//! signature").
+//! std exactly rather than invent a crate-owned parallel buffer API.
 //!
 //! It is a plain (non-`const`) trait, because the inherent `format_into` is
 //! not `const fn` even on nightly. For compile-time decimal emission, use

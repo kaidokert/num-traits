@@ -1,7 +1,7 @@
 //! Integer logarithms, mirroring the `ilog2` / `ilog10` / `ilog` inherent
 //! methods (stable in std since Rust 1.67) and their checked variants.
 //!
-//! Split per base (DESIGN.md): `ilog2` only needs `leading_zeros` — cheap
+//! Split per base: `ilog2` only needs `leading_zeros` — cheap
 //! and constant-time-implementable — while `ilog10` and `ilog` require
 //! data-dependent division loops. Bundling them would force the expensive
 //! capability onto types that can only offer the cheap one. The panicking
