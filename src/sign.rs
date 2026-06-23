@@ -1,8 +1,8 @@
 use core::num::Wrapping;
 use core::ops::Neg;
 
-use crate::float::FloatCore;
 use crate::Num;
+use crate::float::FloatCore;
 
 c0nst::c0nst! {
 /// Returns the sign of a number.
@@ -158,11 +158,7 @@ macro_rules! signed_float_impl {
             /// and `other` is returned.
             #[inline]
             fn abs_sub(self, other: $t) -> $t {
-                if self <= other {
-                    0.
-                } else {
-                    self - other
-                }
+                if self <= other { 0. } else { self - other }
             }
 
             /// Returns `true` if the number is positive, including `+0.0` and `INFINITY`

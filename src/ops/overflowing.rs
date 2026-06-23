@@ -5,8 +5,6 @@
 //! to a mask rather than branching on it in constant-time code.
 
 use core::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};
-use core::{i128, i16, i32, i64, i8, isize};
-use core::{u128, u16, u32, u64, u8, usize};
 
 macro_rules! overflowing_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
@@ -302,7 +300,10 @@ overflowing_u32_rhs_impl!(OverflowingPow, overflowing_pow, i128);
 
 #[test]
 fn test_overflowing_extended_traits() {
-    assert_eq!(OverflowingDiv::overflowing_div(i8::MIN, -1), (i8::MIN, true));
+    assert_eq!(
+        OverflowingDiv::overflowing_div(i8::MIN, -1),
+        (i8::MIN, true)
+    );
     assert_eq!(OverflowingDiv::overflowing_div(100u8, 7), (14, false));
     assert_eq!(OverflowingRem::overflowing_rem(i8::MIN, -1), (0, true));
     assert_eq!(OverflowingNeg::overflowing_neg(1u8), (255, true));

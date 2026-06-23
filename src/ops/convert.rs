@@ -472,7 +472,9 @@ macro_rules! cast_all_impl {
     )*};
 }
 
-cast_all_impl!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize);
+cast_all_impl!(
+    u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+);
 
 #[cfg(test)]
 mod tests {

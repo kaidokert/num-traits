@@ -525,7 +525,10 @@ mod tests {
         assert_eq!(FunnelShr::funnel_shr(0x01u8, 0x80, 1), 0xC0);
         assert_eq!(FunnelShr::funnel_shr(0xABu8, 0xCD, 0), 0xCD);
         // rotation is a funnel shift with both words equal
-        assert_eq!(FunnelShl::funnel_shl(0x81u8, 0x81, 1), 0x81u8.rotate_left(1));
+        assert_eq!(
+            FunnelShl::funnel_shl(0x81u8, 0x81, 1),
+            0x81u8.rotate_left(1)
+        );
     }
 
     #[test]
@@ -556,8 +559,14 @@ mod tests {
         assert_eq!(HighestOne::highest_one(0u8), None);
         assert_eq!(LowestOne::lowest_one(0b0101_0000u8), Some(4));
         assert_eq!(LowestOne::lowest_one(0i64), None);
-        assert_eq!(IsolateHighestOne::isolate_highest_one(0b0101_0000u8), 0b0100_0000);
-        assert_eq!(IsolateLowestOne::isolate_lowest_one(0b0101_0000u8), 0b0001_0000);
+        assert_eq!(
+            IsolateHighestOne::isolate_highest_one(0b0101_0000u8),
+            0b0100_0000
+        );
+        assert_eq!(
+            IsolateLowestOne::isolate_lowest_one(0b0101_0000u8),
+            0b0001_0000
+        );
         assert_eq!(IsolateHighestOne::isolate_highest_one(0u8), 0);
         assert_eq!(IsolateLowestOne::isolate_lowest_one(0u8), 0);
         // signed: operates on the bit pattern

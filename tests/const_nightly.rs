@@ -7,15 +7,15 @@
 #![feature(const_trait_impl)]
 
 use const_num_traits::ops::overflowing::{OverflowingAdd, OverflowingShl};
-use const_num_traits::{Algebraic, FloatBits, FromAscii, FromBytes, Maximum, NextUp, ToBytes};
 use const_num_traits::{
-    AbsDiff, BorrowingSub, CarrylessMul, CarryingAdd, CarryingMul, CastSigned, CastUnsigned,
+    AbsDiff, BorrowingSub, CarryingAdd, CarryingMul, CarrylessMul, CastSigned, CastUnsigned,
     CheckedAddSigned, CheckedCast, CheckedPow, CheckedSignedDiff, ClampMagnitude, DepositBits,
     DivCeil, DivExact, DivFloor, FunnelShl, HighestOne, Ilog2, Isqrt, Midpoint, MultipleOf,
     NextMultipleOf, NextPowerOfTwo, OverflowingSubUnsigned, Parity, SaturatingAbs, SaturatingCast,
     ShlExact, StrictAdd, StrictEuclid, Truncate, UnboundedShr, UnsignedAbs, Widen, WideningMul,
     WrappingPow,
 };
+use const_num_traits::{Algebraic, FloatBits, FromAscii, FromBytes, Maximum, NextUp, ToBytes};
 
 #[test]
 fn bytes_in_const() {
@@ -46,8 +46,8 @@ fn power_of_two_typestate_in_const() {
 
 #[test]
 fn typestate_ops_in_const() {
-    use const_num_traits::{BitIndex, Finite, NonMin, Odd};
     use const_num_traits::BitIndexOps;
+    use const_num_traits::{BitIndex, Finite, NonMin, Odd};
 
     // BitIndexOps is a const trait on nightly; the shifts run in `const`.
     const I: BitIndex<u8> = BitIndex::<u8>::new(3).unwrap();

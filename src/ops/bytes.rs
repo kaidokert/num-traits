@@ -316,7 +316,7 @@ mod tests {
     fn convert_between_float_and_bytes() {
         macro_rules! check_to_from_bytes {
             ($( $ty:ty )+) => {$(
-                let n: $ty = 3.14;
+                let n: $ty = 3.5;
 
                 let be = <$ty as ToBytes>::to_be_bytes(n);
                 let le = <$ty as ToBytes>::to_le_bytes(n);

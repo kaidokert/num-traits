@@ -374,7 +374,9 @@ macro_rules! bit_index_impl {
     )+};
 }
 
-bit_index_impl!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize);
+bit_index_impl!(
+    u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+);
 
 // ─────────────────────────────── NonZero bridge ───────────────────────────
 
@@ -688,19 +690,24 @@ impl<T> Odd<T> {
     /// # Safety
     /// `value` must be odd.
     #[inline]
-    pub const unsafe fn new_unchecked(value: T) -> Self { Odd(value) }
+    pub const unsafe fn new_unchecked(value: T) -> Self {
+        Odd(value)
+    }
 
     /// The proven-odd value.
     #[inline]
-    pub fn get(self) -> T { self.0 }
+    pub fn get(self) -> T {
+        self.0
+    }
 }
 
 /// Borrows the proven-odd value without consuming the proof.
 impl<T> AsRef<T> for Odd<T> {
     #[inline]
-    fn as_ref(&self) -> &T { &self.0 }
+    fn as_ref(&self) -> &T {
+        &self.0
+    }
 }
-
 
 c0nst::c0nst! {
 impl<T: Parity + Copy> Odd<T> {
@@ -747,17 +754,23 @@ impl<T> Even<T> {
     /// # Safety
     /// `value` must be even.
     #[inline]
-    pub const unsafe fn new_unchecked(value: T) -> Self { Even(value) }
+    pub const unsafe fn new_unchecked(value: T) -> Self {
+        Even(value)
+    }
 
     /// The proven-even value.
     #[inline]
-    pub fn get(self) -> T { self.0 }
+    pub fn get(self) -> T {
+        self.0
+    }
 }
 
 /// Borrows the proven-even value without consuming the proof.
 impl<T> AsRef<T> for Even<T> {
     #[inline]
-    fn as_ref(&self) -> &T { &self.0 }
+    fn as_ref(&self) -> &T {
+        &self.0
+    }
 }
 
 // Checked construction by value — the `core`-idiomatic fallible inverse of
@@ -782,7 +795,9 @@ macro_rules! parity_try_from {
         }
     )+};
 }
-parity_try_from!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize);
+parity_try_from!(
+    u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+);
 
 c0nst::c0nst! {
 impl<T: Parity + Copy> Even<T> {

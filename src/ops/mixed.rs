@@ -592,10 +592,7 @@ mod tests {
             (0, true)
         );
         assert_eq!(SaturatingAddSigned::saturating_add_signed(1u8, -2), 0);
-        assert_eq!(
-            SaturatingAddSigned::saturating_add_signed(250u8, 100),
-            255
-        );
+        assert_eq!(SaturatingAddSigned::saturating_add_signed(250u8, 100), 255);
         assert_eq!(StrictAddSigned::strict_add_signed(250u8, 5), 255);
     }
 
@@ -618,10 +615,7 @@ mod tests {
             (15, false)
         );
         assert_eq!(SaturatingSubSigned::saturating_sub_signed(0u8, 1), 0);
-        assert_eq!(
-            SaturatingSubSigned::saturating_sub_signed(255u8, -1),
-            255
-        );
+        assert_eq!(SaturatingSubSigned::saturating_sub_signed(255u8, -1), 255);
         assert_eq!(StrictSubSigned::strict_sub_signed(10u8, -5), 15);
     }
 
@@ -633,10 +627,7 @@ mod tests {
 
     #[test]
     fn add_sub_unsigned() {
-        assert_eq!(
-            CheckedAddUnsigned::checked_add_unsigned(i8::MAX, 1),
-            None
-        );
+        assert_eq!(CheckedAddUnsigned::checked_add_unsigned(i8::MAX, 1), None);
         assert_eq!(
             WrappingAddUnsigned::wrapping_add_unsigned(i8::MAX, 1),
             i8::MIN
@@ -650,10 +641,7 @@ mod tests {
             i8::MAX
         );
         assert_eq!(StrictAddUnsigned::strict_add_unsigned(-1i8, 128), 127);
-        assert_eq!(
-            CheckedSubUnsigned::checked_sub_unsigned(i8::MIN, 1),
-            None
-        );
+        assert_eq!(CheckedSubUnsigned::checked_sub_unsigned(i8::MIN, 1), None);
         assert_eq!(
             WrappingSubUnsigned::wrapping_sub_unsigned(i8::MIN, 1),
             i8::MAX
@@ -666,18 +654,12 @@ mod tests {
             SaturatingSubUnsigned::saturating_sub_unsigned(-100i8, 100),
             i8::MIN
         );
-        assert_eq!(
-            StrictSubUnsigned::strict_sub_unsigned(0i8, 128),
-            i8::MIN
-        );
+        assert_eq!(StrictSubUnsigned::strict_sub_unsigned(0i8, 128), i8::MIN);
     }
 
     #[test]
     fn signed_diff() {
-        assert_eq!(
-            CheckedSignedDiff::checked_signed_diff(10u8, 14),
-            Some(-4)
-        );
+        assert_eq!(CheckedSignedDiff::checked_signed_diff(10u8, 14), Some(-4));
         assert_eq!(CheckedSignedDiff::checked_signed_diff(14u8, 10), Some(4));
         assert_eq!(CheckedSignedDiff::checked_signed_diff(u8::MAX, 0), None);
         assert_eq!(CheckedSignedDiff::checked_signed_diff(0u8, u8::MAX), None);

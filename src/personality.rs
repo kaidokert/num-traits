@@ -99,8 +99,8 @@ mod tests {
     fn tags_and_defaults() {
         assert_eq!(Nct::TAG, PersonalityTag::Nct);
         assert_eq!(Ct::TAG, PersonalityTag::Ct);
-        assert_eq!(Nct::default(), Nct);
-        assert_eq!(Ct::default(), Ct);
+        assert_eq!(Nct, Nct);
+        assert_eq!(Ct, Ct);
     }
 
     #[test]

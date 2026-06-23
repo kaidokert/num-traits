@@ -48,6 +48,12 @@
 
 #![doc(html_root_url = "https://docs.rs/const-num-traits/0.1")]
 #![deny(unconditional_recursion)]
+// By-value receivers mirror core's inherent methods, so `is_*` predicates take
+// `self` by value — intentional, though clippy's `wrong_self_convention` flags it.
+#![allow(clippy::wrong_self_convention)]
+// The const parsers (`from_ascii`, the float `from_str_radix`) can't call the
+// non-const `RangeInclusive::contains`, so they spell range checks out longhand.
+#![allow(clippy::manual_range_contains)]
 #![no_std]
 #![cfg_attr(
     feature = "nightly",
@@ -71,28 +77,28 @@ pub use crate::bounds::Bounded;
 pub use crate::float::Float;
 pub use crate::float::FloatConst;
 // pub use real::{FloatCore, Real}; // NOTE: Don't do this, it breaks `use const_num_traits::*;`.
-pub use crate::cast::{cast, AsPrimitive, FromPrimitive, NumCast, ToPrimitive};
-pub use crate::identities::{one, zero, ConstOne, ConstZero, One, Zero};
+pub use crate::cast::{AsPrimitive, FromPrimitive, NumCast, ToPrimitive, cast};
+pub use crate::identities::{ConstOne, ConstZero, One, Zero, one, zero};
 pub use crate::int::{PrimBits, PrimInt};
-pub use crate::ops::carrying::{BorrowingSub, CarryingAdd, CarryingMul, WideningMul};
-pub use crate::ops::clmul::{CarryingCarrylessMul, CarrylessMul, WideningCarrylessMul};
 pub use crate::ops::bits::{
     BitWidth, DepositBits, ExtractBits, FunnelShl, FunnelShr, HighestOne, IsolateHighestOne,
     IsolateLowestOne, LowestOne, ShlExact, ShrExact, UnboundedShl, UnboundedShr,
 };
 pub use crate::ops::bytes::{FromBytes, ToBytes};
+pub use crate::ops::carrying::{BorrowingSub, CarryingAdd, CarryingMul, WideningMul};
 pub use crate::ops::checked::{
-    CheckedAbs, CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedPow, CheckedRem,
-    CheckedShl, CheckedShr, CheckedSub,
+    CheckedAbs, CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedPow, CheckedRem, CheckedShl,
+    CheckedShr, CheckedSub,
 };
+pub use crate::ops::clmul::{CarryingCarrylessMul, CarrylessMul, WideningCarrylessMul};
 pub use crate::ops::convert::{
     AbsDiff, CastSigned, CastUnsigned, CheckedCast, ClampMagnitude, SaturatingCast, StrictCast,
     Truncate, UnsignedAbs, Widen, WrappingCast,
 };
 #[cfg(feature = "ct")]
 pub use crate::ops::ct::{
-    CtCheckedAdd, CtCheckedMul, CtCheckedNeg, CtCheckedSignedDiff, CtCheckedSub,
-    CtIsPowerOfTwo, CtIsZero, CtParity,
+    CtCheckedAdd, CtCheckedMul, CtCheckedNeg, CtCheckedSignedDiff, CtCheckedSub, CtIsPowerOfTwo,
+    CtIsZero, CtParity,
 };
 pub use crate::ops::euclid::{CheckedEuclid, Euclid, OverflowingEuclid, WrappingEuclid};
 pub use crate::ops::float_ops::{
@@ -102,31 +108,22 @@ pub use crate::ops::float_ops::{
 pub use crate::ops::format_into::{FormatInto, NumBuffer, NumBufferTrait};
 pub use crate::ops::from_ascii::{AsciiErrorKind, AsciiParseError, FromAscii};
 pub use crate::ops::inv::Inv;
-pub use crate::ops::log::{Ilog, Ilog10, Ilog2};
+pub use crate::ops::log::{Ilog, Ilog2, Ilog10};
 pub use crate::ops::mixed::{
-    CheckedAddSigned, CheckedAddUnsigned, CheckedSignedDiff, CheckedSubSigned,
-    CheckedSubUnsigned, OverflowingAddSigned, OverflowingAddUnsigned, OverflowingSubSigned,
-    OverflowingSubUnsigned, SaturatingAddSigned, SaturatingAddUnsigned, SaturatingSubSigned,
-    SaturatingSubUnsigned, StrictAddSigned, StrictAddUnsigned, StrictSubSigned,
-    StrictSubUnsigned, WrappingAddSigned, WrappingAddUnsigned, WrappingSubSigned,
-    WrappingSubUnsigned,
+    CheckedAddSigned, CheckedAddUnsigned, CheckedSignedDiff, CheckedSubSigned, CheckedSubUnsigned,
+    OverflowingAddSigned, OverflowingAddUnsigned, OverflowingSubSigned, OverflowingSubUnsigned,
+    SaturatingAddSigned, SaturatingAddUnsigned, SaturatingSubSigned, SaturatingSubUnsigned,
+    StrictAddSigned, StrictAddUnsigned, StrictSubSigned, StrictSubUnsigned, WrappingAddSigned,
+    WrappingAddUnsigned, WrappingSubSigned, WrappingSubUnsigned,
 };
 pub use crate::ops::mul_add::{MulAdd, MulAddAssign};
 pub use crate::ops::overflowing::{
-    OverflowingAbs, OverflowingAdd, OverflowingDiv, OverflowingMul, OverflowingNeg,
-    OverflowingPow, OverflowingRem, OverflowingShl, OverflowingShr, OverflowingSub,
+    OverflowingAbs, OverflowingAdd, OverflowingDiv, OverflowingMul, OverflowingNeg, OverflowingPow,
+    OverflowingRem, OverflowingShl, OverflowingShr, OverflowingSub,
 };
 pub use crate::ops::parity::Parity;
 pub use crate::ops::pow2::{IsPowerOfTwo, NextPowerOfTwo};
-pub use crate::ops::typestate::{
-    BitIndex, BitIndexOps, DivNonZero, Even, Finite, HasNonZero, NonMin, NonNegative, Odd,
-    Positive, PowerOfTwo, PowerOfTwoOps, TypestateError,
-};
-#[cfg(feature = "ct")]
-pub use crate::ops::typestate::CtNonZero;
-pub use crate::ops::rounding::{
-    DivCeil, DivExact, DivFloor, Midpoint, MultipleOf, NextMultipleOf,
-};
+pub use crate::ops::rounding::{DivCeil, DivExact, DivFloor, Midpoint, MultipleOf, NextMultipleOf};
 pub use crate::ops::saturating::{
     Saturating, SaturatingAbs, SaturatingAdd, SaturatingDiv, SaturatingMul, SaturatingNeg,
     SaturatingPow, SaturatingSub,
@@ -136,13 +133,19 @@ pub use crate::ops::strict::{
     StrictAbs, StrictAdd, StrictDiv, StrictEuclid, StrictMul, StrictNeg, StrictPow, StrictRem,
     StrictShl, StrictShr, StrictSub,
 };
+#[cfg(feature = "ct")]
+pub use crate::ops::typestate::CtNonZero;
+pub use crate::ops::typestate::{
+    BitIndex, BitIndexOps, DivNonZero, Even, Finite, HasNonZero, NonMin, NonNegative, Odd,
+    Positive, PowerOfTwo, PowerOfTwoOps, TypestateError,
+};
 pub use crate::ops::wrapping::{
     WrappingAbs, WrappingAdd, WrappingDiv, WrappingMul, WrappingNeg, WrappingPow, WrappingRem,
     WrappingShl, WrappingShr, WrappingSub,
 };
-pub use crate::pow::{checked_pow, pow, Pow};
-pub use crate::sign::{abs, abs_sub, signum, Signed, Signum, Unsigned};
 pub use crate::personality::{Ct, Nct, Personality, PersonalityMarker, PersonalityTag};
+pub use crate::pow::{Pow, checked_pow, pow};
+pub use crate::sign::{Signed, Signum, Unsigned, abs, abs_sub, signum};
 
 #[macro_use]
 mod macros;
@@ -172,11 +175,11 @@ pub mod prelude {
     pub use crate::float::*;
     pub use crate::identities::*;
     pub use crate::int::*;
-    pub use crate::ops::carrying::*;
-    pub use crate::ops::clmul::*;
     pub use crate::ops::bits::*;
     pub use crate::ops::bytes::*;
+    pub use crate::ops::carrying::*;
     pub use crate::ops::checked::*;
+    pub use crate::ops::clmul::*;
     pub use crate::ops::convert::*;
     #[cfg(feature = "ct")]
     pub use crate::ops::ct::*;
@@ -191,26 +194,25 @@ pub mod prelude {
     pub use crate::ops::mul_add::*;
     pub use crate::ops::overflowing::*;
     pub use crate::ops::parity::*;
-    pub use crate::personality::*;
     pub use crate::ops::pow2::*;
     pub use crate::ops::rounding::*;
+    pub use crate::personality::*;
     // typestate *traits* only (for method resolution); the wrapper *types*
     // (`PowerOfTwo`/`Odd`/`Even`/`Positive`/`NonNegative`) stay crate-root-only,
     // so the glob doesn't inject those generic names into consumers.
-    pub use crate::ops::typestate::{BitIndexOps, DivNonZero, HasNonZero, PowerOfTwoOps};
-    #[cfg(feature = "ct")]
-    pub use crate::ops::typestate::CtNonZero;
     pub use crate::ops::saturating::*;
     pub use crate::ops::sqrt::*;
     pub use crate::ops::strict::*;
+    #[cfg(feature = "ct")]
+    pub use crate::ops::typestate::CtNonZero;
+    pub use crate::ops::typestate::{BitIndexOps, DivNonZero, HasNonZero, PowerOfTwoOps};
     pub use crate::ops::wrapping::*;
     pub use crate::pow::*;
     #[cfg(any(feature = "std", feature = "libm"))]
     pub use crate::real::*;
     pub use crate::sign::*;
     pub use crate::{
-        FromStrRadix, Num, NumAssign, NumAssignOps, NumAssignRef, NumOps, NumRef, RefNum,
-        RingOps,
+        FromStrRadix, Num, NumAssign, NumAssignOps, NumAssignRef, NumOps, NumRef, RefNum, RingOps,
     };
 }
 
@@ -489,7 +491,7 @@ impl fmt::Display for ParseFloatError {
 fn str_to_ascii_lower_eq_str(a: &str, b: &str) -> bool {
     a.len() == b.len()
         && a.bytes().zip(b.bytes()).all(|(a, b)| {
-            let a_to_ascii_lower = a | (((b'A' <= a && a <= b'Z') as u8) << 5);
+            let a_to_ascii_lower = a | ((a.is_ascii_uppercase() as u8) << 5);
             a_to_ascii_lower == b
         })
 }
@@ -522,15 +524,15 @@ macro_rules! float_trait_impl {
                 if str_to_ascii_lower_eq_str(src, "inf")
                     || str_to_ascii_lower_eq_str(src, "infinity")
                 {
-                    return Ok(core::$t::INFINITY);
+                    return Ok($t::INFINITY);
                 } else if str_to_ascii_lower_eq_str(src, "-inf")
                     || str_to_ascii_lower_eq_str(src, "-infinity")
                 {
-                    return Ok(core::$t::NEG_INFINITY);
+                    return Ok($t::NEG_INFINITY);
                 } else if str_to_ascii_lower_eq_str(src, "nan") {
-                    return Ok(core::$t::NAN);
+                    return Ok($t::NAN);
                 } else if str_to_ascii_lower_eq_str(src, "-nan") {
-                    return Ok(-core::$t::NAN);
+                    return Ok(-$t::NAN);
                 }
 
                 fn slice_shift_char(src: &str) -> Option<(char, &str)> {
@@ -571,15 +573,15 @@ macro_rules! float_trait_impl {
                             // if we've not seen any non-zero digits.
                             if prev_sig != 0.0 {
                                 if is_positive && sig <= prev_sig
-                                    { return Ok(core::$t::INFINITY); }
+                                    { return Ok($t::INFINITY); }
                                 if !is_positive && sig >= prev_sig
-                                    { return Ok(core::$t::NEG_INFINITY); }
+                                    { return Ok($t::NEG_INFINITY); }
 
                                 // Detect overflow by reversing the shift-and-add process
                                 if is_positive && (prev_sig != (sig - digit as $t) / radix as $t)
-                                    { return Ok(core::$t::INFINITY); }
+                                    { return Ok($t::INFINITY); }
                                 if !is_positive && (prev_sig != (sig + digit as $t) / radix as $t)
-                                    { return Ok(core::$t::NEG_INFINITY); }
+                                    { return Ok($t::NEG_INFINITY); }
                             }
                             prev_sig = sig;
                         },
@@ -615,9 +617,9 @@ macro_rules! float_trait_impl {
                                 };
                                 // Detect overflow by comparing to last value
                                 if is_positive && sig < prev_sig
-                                    { return Ok(core::$t::INFINITY); }
+                                    { return Ok($t::INFINITY); }
                                 if !is_positive && sig > prev_sig
-                                    { return Ok(core::$t::NEG_INFINITY); }
+                                    { return Ok($t::NEG_INFINITY); }
                                 prev_sig = sig;
                             },
                             None => match c {
@@ -754,44 +756,44 @@ fn clamp_test() {
     assert_eq!(-1.0, clamp_min(-2.0, -1.0));
     assert_eq!(-1.0, clamp_max(1.0, -1.0));
     assert_eq!(-2.0, clamp_max(-2.0, -1.0));
-    assert!(clamp(::core::f32::NAN, -1.0, 1.0).is_nan());
-    assert!(clamp_min(::core::f32::NAN, 1.0).is_nan());
-    assert!(clamp_max(::core::f32::NAN, 1.0).is_nan());
+    assert!(clamp(f32::NAN, -1.0, 1.0).is_nan());
+    assert!(clamp_min(f32::NAN, 1.0).is_nan());
+    assert!(clamp_max(f32::NAN, 1.0).is_nan());
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_nan_min() {
-    clamp(0., ::core::f32::NAN, 1.);
+    clamp(0., f32::NAN, 1.);
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_nan_max() {
-    clamp(0., -1., ::core::f32::NAN);
+    clamp(0., -1., f32::NAN);
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_nan_min_max() {
-    clamp(0., ::core::f32::NAN, ::core::f32::NAN);
+    clamp(0., f32::NAN, f32::NAN);
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_min_nan_min() {
-    clamp_min(0., ::core::f32::NAN);
+    clamp_min(0., f32::NAN);
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_max_nan_max() {
-    clamp_max(0., ::core::f32::NAN);
+    clamp_max(0., f32::NAN);
 }
 
 #[test]
@@ -818,19 +820,19 @@ fn from_str_radix_multi_byte_fail() {
 fn from_str_radix_ignore_case() {
     assert_eq!(
         <f32 as Num>::from_str_radix("InF", 16).unwrap(),
-        ::core::f32::INFINITY
+        f32::INFINITY
     );
     assert_eq!(
         <f32 as Num>::from_str_radix("InfinitY", 16).unwrap(),
-        ::core::f32::INFINITY
+        f32::INFINITY
     );
     assert_eq!(
         <f32 as Num>::from_str_radix("-InF", 8).unwrap(),
-        ::core::f32::NEG_INFINITY
+        f32::NEG_INFINITY
     );
     assert_eq!(
         <f32 as Num>::from_str_radix("-InfinitY", 8).unwrap(),
-        ::core::f32::NEG_INFINITY
+        f32::NEG_INFINITY
     );
     assert!(<f32 as Num>::from_str_radix("nAn", 4).unwrap().is_nan());
     assert!(<f32 as Num>::from_str_radix("-nAn", 4).unwrap().is_nan());

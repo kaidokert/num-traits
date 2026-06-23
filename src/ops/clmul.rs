@@ -247,8 +247,7 @@ mod tests {
         }
         // carry is XOR'd into the low word only
         let (lo0, hi0) = CarryingCarrylessMul::carrying_carryless_mul(u128::MAX, u128::MAX, 0);
-        let (lo1, hi1) =
-            CarryingCarrylessMul::carrying_carryless_mul(u128::MAX, u128::MAX, 0xFF);
+        let (lo1, hi1) = CarryingCarrylessMul::carrying_carryless_mul(u128::MAX, u128::MAX, 0xFF);
         assert_eq!((lo0 ^ 0xFF, hi0), (lo1, hi1));
     }
 

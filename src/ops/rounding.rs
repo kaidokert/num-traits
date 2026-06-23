@@ -438,10 +438,7 @@ mod tests {
         assert_eq!(NextMultipleOf::next_multiple_of(-16i8, -8), -16);
         assert_eq!(NextMultipleOf::next_multiple_of(-23i8, -8), -24);
         assert_eq!(NextMultipleOf::next_multiple_of(i8::MIN, -1), i8::MIN);
-        assert_eq!(
-            NextMultipleOf::checked_next_multiple_of(i8::MAX, 2),
-            None
-        );
+        assert_eq!(NextMultipleOf::checked_next_multiple_of(i8::MAX, 2), None);
     }
 
     #[test]

@@ -338,13 +338,22 @@ mod tests {
 
     #[test]
     fn carrying_add_borrowing_sub() {
-        assert_eq!(CarryingAdd::carrying_add(u8::MAX, u8::MAX, true), (255, true));
-        assert_eq!(CarryingAdd::carrying_add(0xFFFF_FFFF_FFFF_FFFFu64, 0, true), (0, true));
+        assert_eq!(
+            CarryingAdd::carrying_add(u8::MAX, u8::MAX, true),
+            (255, true)
+        );
+        assert_eq!(
+            CarryingAdd::carrying_add(0xFFFF_FFFF_FFFF_FFFFu64, 0, true),
+            (0, true)
+        );
         assert_eq!(CarryingAdd::carrying_add(i8::MAX, 0, true), (i8::MIN, true));
         assert_eq!(CarryingAdd::carrying_add(-1i8, 1, false), (0, false));
         assert_eq!(BorrowingSub::borrowing_sub(0u8, u8::MAX, true), (0, true));
         assert_eq!(BorrowingSub::borrowing_sub(10u8, 3, true), (6, false));
-        assert_eq!(BorrowingSub::borrowing_sub(i8::MIN, 0, true), (i8::MAX, true));
+        assert_eq!(
+            BorrowingSub::borrowing_sub(i8::MIN, 0, true),
+            (i8::MAX, true)
+        );
     }
 
     #[test]
@@ -363,10 +372,7 @@ mod tests {
     #[test]
     fn carrying_mul_128() {
         // (2^127) * 2 = 2^128 -> low 0, high 1
-        assert_eq!(
-            CarryingMul::carrying_mul(1u128 << 127, 2, 0),
-            (0, 1)
-        );
+        assert_eq!(CarryingMul::carrying_mul(1u128 << 127, 2, 0), (0, 1));
         assert_eq!(
             CarryingMul::carrying_mul(u128::MAX, u128::MAX, u128::MAX),
             (0, u128::MAX)
@@ -400,6 +406,9 @@ mod tests {
             u64::MAX as u128 * u64::MAX as u128
         );
         assert_eq!(WideningMul::widening_mul(i8::MIN, i8::MIN), 16384i16);
-        assert_eq!(WideningMul::widening_mul(-1i32, i32::MAX), -(i32::MAX as i64));
+        assert_eq!(
+            WideningMul::widening_mul(-1i32, i32::MAX),
+            -(i32::MAX as i64)
+        );
     }
 }

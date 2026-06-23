@@ -1,11 +1,8 @@
 use core::num::Wrapping;
 use core::num::{
-    NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
-    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+    NonZeroI8, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI128, NonZeroIsize, NonZeroU8,
+    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize,
 };
-use core::{f32, f64};
-use core::{i128, i16, i32, i64, i8, isize};
-use core::{u128, u16, u32, u64, u8, usize};
 
 c0nst::c0nst! {
 /// Numbers which have upper and lower bounds
@@ -161,11 +158,14 @@ macro_rules! bounded_tuple {
     ( $($name:ident)* ) => (
         c0nst::c0nst! {
         c0nst impl<$($name: [c0nst] Bounded,)*> Bounded for ($($name,)*) {
+            // The empty-tuple expansion yields the unit value `()` as the body.
             #[inline]
+            #[allow(clippy::unused_unit)]
             fn min_value() -> Self {
                 ($($name::min_value(),)*)
             }
             #[inline]
+            #[allow(clippy::unused_unit)]
             fn max_value() -> Self {
                 ($($name::max_value(),)*)
             }

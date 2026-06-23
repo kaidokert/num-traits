@@ -380,7 +380,10 @@ mod tests {
         assert!(Minimum::minimum(f32::NAN, 1.0f32).is_nan());
         // signed zeros are ordered
         assert_eq!(Maximum::maximum(0.0f32, -0.0).to_bits(), 0.0f32.to_bits());
-        assert_eq!(Minimum::minimum(0.0f32, -0.0).to_bits(), (-0.0f32).to_bits());
+        assert_eq!(
+            Minimum::minimum(0.0f32, -0.0).to_bits(),
+            (-0.0f32).to_bits()
+        );
     }
 
     #[test]

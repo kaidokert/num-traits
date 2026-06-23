@@ -1,12 +1,9 @@
 use core::mem::size_of;
 use core::num::Wrapping;
 use core::num::{
-    NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
-    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+    NonZeroI8, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI128, NonZeroIsize, NonZeroU8,
+    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize,
 };
-use core::{f32, f64};
-use core::{i128, i16, i32, i64, i8, isize};
-use core::{u128, u16, u32, u64, u8, usize};
 
 c0nst::c0nst! {
 /// A generic trait for converting a value to a number.
@@ -981,9 +978,7 @@ macro_rules! impl_to_primitive_minimal {
             fn to_f32(&self) -> Option<f32> {
                 match self.to_f64() {
                     Some(v) => {
-                        if v.is_finite()
-                            && (v < f32::MIN as f64 || v > f32::MAX as f64)
-                        {
+                        if v.is_finite() && (v < f32::MIN as f64 || v > f32::MAX as f64) {
                             None
                         } else {
                             Some(v as f32)

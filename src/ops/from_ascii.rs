@@ -186,12 +186,18 @@ mod tests {
         assert_eq!(kind(<u8 as FromAscii>::from_ascii(b"12x")), InvalidDigit);
         assert_eq!(kind(<u8 as FromAscii>::from_ascii(b"1 2")), InvalidDigit);
         assert_eq!(kind(<u8 as FromAscii>::from_ascii(b"256")), PosOverflow);
-        assert_eq!(kind(<u8 as FromAscii>::from_ascii_radix(b"9", 8)), InvalidDigit);
+        assert_eq!(
+            kind(<u8 as FromAscii>::from_ascii_radix(b"9", 8)),
+            InvalidDigit
+        );
         assert_eq!(
             <i8 as FromAscii>::from_ascii(b"-129").unwrap_err().kind,
             NegOverflow
         );
-        assert_eq!(<i8 as FromAscii>::from_ascii(b"--1").unwrap_err().kind, InvalidDigit);
+        assert_eq!(
+            <i8 as FromAscii>::from_ascii(b"--1").unwrap_err().kind,
+            InvalidDigit
+        );
     }
 
     #[test]
@@ -205,8 +211,8 @@ mod tests {
         // for valid UTF-8 inputs the two parsers must agree on Ok values
         // and on whether an error occurred
         let inputs: &[&str] = &[
-            "0", "1", "127", "128", "255", "256", "-1", "-128", "-129",
-            "+5", "ff", "FF", "7f", "deadbeef", "", "+", "-", "12_3", "0x10",
+            "0", "1", "127", "128", "255", "256", "-1", "-128", "-129", "+5", "ff", "FF", "7f",
+            "deadbeef", "", "+", "-", "12_3", "0x10",
         ];
         for radix in [2u32, 8, 10, 16, 36] {
             for s in inputs {
