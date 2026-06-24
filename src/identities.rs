@@ -7,13 +7,20 @@ use core::num::Saturating;
 c0nst::c0nst! {
 /// Defines an additive identity element for `Self`.
 ///
+/// This is a pure identity-*value* trait: it provides the `0` and a zero-test,
+/// but does **not** require [`Add`](core::ops::Add). The bundling of `Add` is
+/// upstream convention, not a law — `0` is equally the identity under
+/// subtraction (`a - 0 = a`) — so consumers state the operators they actually
+/// use explicitly (`T: Zero + Add`, `T: Zero + Sub`, …). Numeric code that
+/// needs the full operator set takes [`Num`](crate::Num).
+///
 /// # Laws
 ///
 /// ```text
 /// a + 0 = a       ∀ a ∈ Self
 /// 0 + a = a       ∀ a ∈ Self
 /// ```
-pub c0nst trait Zero: Sized + [c0nst] Add<Self, Output = Self> {
+pub c0nst trait Zero: Sized {
     /// Returns the additive identity element of `Self`, `0`.
     /// # Purity
     ///
@@ -144,13 +151,19 @@ where
 c0nst::c0nst! {
 /// Defines a multiplicative identity element for `Self`.
 ///
+/// A pure identity-*value* trait, decoupled from [`Mul`](core::ops::Mul) for the
+/// same reason as [`Zero`]: `1` is equally the identity under division
+/// (`a / 1 = a`), so privileging `Mul` is arbitrary. Consumers state what they
+/// need (`T: One + Mul`, `T: One + Div`, …); full numeric code takes
+/// [`Num`](crate::Num).
+///
 /// # Laws
 ///
 /// ```text
 /// a * 1 = a       ∀ a ∈ Self
 /// 1 * a = a       ∀ a ∈ Self
 /// ```
-pub c0nst trait One: Sized + [c0nst] Mul<Self, Output = Self> {
+pub c0nst trait One: Sized {
     /// Returns the multiplicative identity element of `Self`, `1`.
     ///
     /// # Purity
