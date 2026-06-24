@@ -86,7 +86,7 @@ pub c0nst trait ToPrimitive {
     }
 
     /// Converts the value of `self` to an `f32`. Overflows may map to positive
-    /// or negative inifinity, otherwise `None` is returned if the value cannot
+    /// or negative infinity, otherwise `None` is returned if the value cannot
     /// be represented by an `f32`.
     fn to_f32(&self) -> Option<f32> {
         match self.to_f64() {
@@ -96,7 +96,7 @@ pub c0nst trait ToPrimitive {
     }
 
     /// Converts the value of `self` to an `f64`. Overflows may map to positive
-    /// or negative inifinity, otherwise `None` is returned if the value cannot
+    /// or negative infinity, otherwise `None` is returned if the value cannot
     /// be represented by an `f64`.
     fn to_f64(&self) -> Option<f64> {
         match self.to_i64() {

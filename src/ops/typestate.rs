@@ -947,13 +947,13 @@ mod ct_constructors {
                 #[inline]
                 pub fn new_ct(value: $t) -> CtOption<PowerOfTwo<$t>> {
                     let choice = value.ct_is_power_of_two();
-                    // exp is unused when masked; checked_ilog2 dodges ilog2(0).
-                    let exp = match value.checked_ilog2() {
-                        Some(e) => e,
-                        None => 0,
-                    };
-                    // SAFETY: meaningful only when `choice` is set (value is a
-                    // power of two, so `exp < BITS`); masked out otherwise.
+                    // Branchless exponent: for a power of two `trailing_zeros`
+                    // IS the exponent. For `0` it returns BITS, and `BITS % BITS`
+                    // wraps to 0 (still `< BITS`), so the unchecked invariant
+                    // holds even though that value is masked out below.
+                    let exp = value.trailing_zeros() % <$t>::BITS;
+                    // SAFETY: `exp < BITS` always; meaningful only when `choice`
+                    // is set (value is a power of two), masked out otherwise.
                     let proof = unsafe { PowerOfTwo::from_exp_unchecked(exp) };
                     CtOption::new(proof, choice)
                 }

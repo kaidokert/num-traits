@@ -44,9 +44,9 @@ macro_rules! carryless_mul_impl {
                 let mut result: $t = 0;
                 let mut i = 0u32;
                 while i < <$t>::BITS {
-                    if (rhs >> i) & 1 == 1 {
-                        result ^= self << i;
-                    }
+                    // branchless: mask is all-ones iff bit i of rhs is set
+                    let mask = ((rhs >> i) & 1).wrapping_neg();
+                    result ^= (self << i) & mask;
                     i += 1;
                 }
                 result
@@ -90,9 +90,9 @@ macro_rules! widening_carryless_mul_impl {
                 let mut result: $w = 0;
                 let mut i = 0u32;
                 while i < <$t>::BITS {
-                    if (rhs >> i) & 1 == 1 {
-                        result ^= wide << i;
-                    }
+                    // branchless: mask is all-ones iff bit i of rhs is set
+                    let mask = (((rhs >> i) & 1) as $w).wrapping_neg();
+                    result ^= (wide << i) & mask;
                     i += 1;
                 }
                 result
@@ -145,9 +145,9 @@ macro_rules! carrying_carryless_mul_impl {
                 let mut p: $w = 0;
                 let mut i = 0u32;
                 while i < <$t>::BITS {
-                    if (rhs >> i) & 1 == 1 {
-                        p ^= a << i;
-                    }
+                    // branchless: mask is all-ones iff bit i of rhs is set
+                    let mask = (((rhs >> i) & 1) as $w).wrapping_neg();
+                    p ^= (a << i) & mask;
                     i += 1;
                 }
                 ((p as $t) ^ carry, (p >> <$t>::BITS) as $t)
@@ -172,9 +172,9 @@ const fn wide_clmul_u64(a: u64, b: u64) -> u128 {
     let mut p: u128 = 0;
     let mut i = 0u32;
     while i < 64 {
-        if (b >> i) & 1 == 1 {
-            p ^= a << i;
-        }
+        // branchless: mask is all-ones iff bit i of b is set
+        let mask = (((b >> i) & 1) as u128).wrapping_neg();
+        p ^= (a << i) & mask;
         i += 1;
     }
     p

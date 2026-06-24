@@ -1,8 +1,10 @@
 //! Overflowing arithmetic: the wrapped value plus an overflow flag.
 //!
-//! **CT tier A (CT-implementable)**: the flag is designed to be consumed
-//! arithmetically (`carry as T`), as in multi-word arithmetic; convert it
-//! to a mask rather than branching on it in constant-time code.
+//! **CT tier A (CT-implementable)** for add/sub/mul/neg/shifts/abs: the flag is
+//! designed to be consumed arithmetically (`carry as T`), as in multi-word
+//! arithmetic; convert it to a mask rather than branching on it in constant-time
+//! code. `OverflowingDiv`/`OverflowingRem` are CT-hostile (data-dependent
+//! division) and `OverflowingPow` is exponent-dependent — Tier C for secrets.
 
 use core::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 

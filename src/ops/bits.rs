@@ -9,11 +9,13 @@
 //! and `deposit_bits`/`extract_bits` are still nightly-only. Everything
 //! newer than the crate's MSRV is hand-rolled with the same semantics.
 //!
-//! **CT tiers**: [`IsolateHighestOne`]/[`IsolateLowestOne`], [`BitWidth`],
-//! [`DepositBits`]/[`ExtractBits`] and the funnel/unbounded shifts (under
-//! the public-parameter convention for shift amounts) are Tier A;
-//! [`HighestOne`]/[`LowestOne`] and [`ShlExact`]/[`ShrExact`] are Tier B
-//! (`Option` returns).
+//! **CT tiers**: [`IsolateHighestOne`]/[`IsolateLowestOne`], [`BitWidth`] and
+//! the funnel/unbounded shifts (under the public-parameter convention for shift
+//! amounts) are Tier A. [`DepositBits`]/[`ExtractBits`] are branchless on the
+//! *operand* but this portable fallback's loop count is `popcount(mask)`, so
+//! they are Tier A only when the **mask is public** (it is the analogue of a
+//! shift amount); for a secret mask they are Tier C. [`HighestOne`]/[`LowestOne`]
+//! and [`ShlExact`]/[`ShrExact`] are Tier B (`Option` returns).
 
 use core::ops::{Shl, Shr};
 
@@ -467,9 +469,9 @@ macro_rules! deposit_extract_impl {
                 let mut bb: $t = 1;
                 while remaining != 0 {
                     let lowest = remaining & <$t>::wrapping_neg(remaining);
-                    if self & bb != 0 {
-                        result |= lowest;
-                    }
+                    // branchless on the operand: mask is all-ones iff bit `bb` of self is set
+                    let bit_mask = (((self & bb) != 0) as $t).wrapping_neg();
+                    result |= lowest & bit_mask;
                     remaining &= remaining - 1;
                     bb = <$t>::wrapping_shl(bb, 1);
                 }
@@ -488,9 +490,9 @@ macro_rules! deposit_extract_impl {
                 let mut bb: $t = 1;
                 while remaining != 0 {
                     let lowest = remaining & <$t>::wrapping_neg(remaining);
-                    if self & lowest != 0 {
-                        result |= bb;
-                    }
+                    // branchless on the operand: mask is all-ones iff bit `lowest` of self is set
+                    let bit_mask = (((self & lowest) != 0) as $t).wrapping_neg();
+                    result |= bb & bit_mask;
                     remaining &= remaining - 1;
                     bb = <$t>::wrapping_shl(bb, 1);
                 }

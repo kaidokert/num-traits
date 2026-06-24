@@ -1,7 +1,9 @@
 //! Wrapping (modular) arithmetic.
 //!
-//! **CT tier A (CT-implementable)**: branchless on the data for all the
-//! builtin integers.
+//! **CT tier A (CT-implementable)** for modular add/sub/mul/neg/shifts/abs on
+//! the builtin integers: branchless on the data. `WrappingDiv`/`WrappingRem`
+//! are CT-hostile (data-dependent division) and `WrappingPow` is
+//! exponent-dependent — Tier C for secret inputs.
 
 use core::num::Wrapping;
 use core::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};

@@ -394,13 +394,15 @@ mod tests {
                         let x: $t = 12.1;
                         let y: $t = 3.2;
                         // Uses inherent `EPSILON` const now that `FloatCore` is gone.
-                        assert!(Euclid::div_euclid(x, y) * y + Euclid::rem_euclid(x, y) - x
+                        // Absolute reconstruction error, so a large *negative*
+                        // residual can't slip past the `<= eps` bound.
+                        assert!((Euclid::div_euclid(x, y) * y + Euclid::rem_euclid(x, y) - x).abs()
                         <= 46.4 * <$t>::EPSILON);
-                        assert!(Euclid::div_euclid(x, -y) * -y + Euclid::rem_euclid(x, -y) - x
+                        assert!((Euclid::div_euclid(x, -y) * -y + Euclid::rem_euclid(x, -y) - x).abs()
                         <= 46.4 * <$t>::EPSILON);
-                        assert!(Euclid::div_euclid(-x, y) * y + Euclid::rem_euclid(-x, y) + x
+                        assert!((Euclid::div_euclid(-x, y) * y + Euclid::rem_euclid(-x, y) + x).abs()
                         <= 46.4 * <$t>::EPSILON);
-                        assert!(Euclid::div_euclid(-x, -y) * -y + Euclid::rem_euclid(-x, -y) + x
+                        assert!((Euclid::div_euclid(-x, -y) * -y + Euclid::rem_euclid(-x, -y) + x).abs()
                         <= 46.4 * <$t>::EPSILON);
                         assert_eq!((Euclid::div_euclid(x, y), Euclid::rem_euclid(x, y)), Euclid::div_rem_euclid(x, y));
                     }

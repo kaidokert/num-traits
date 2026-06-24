@@ -1,8 +1,10 @@
 //! Checked arithmetic: `None` on overflow.
 //!
-//! **CT tier B (caller-leaky)**: the operations are branchless, but the
-//! `Option` return invites branching on secret-derived data at the call
-//! site. Masked counterparts live in `ops::ct` (cargo feature `ct`).
+//! **CT tier B (caller-leaky)** for the branchless checked atoms
+//! (add/sub/mul/neg/shifts/abs): the `Option` return invites branching on
+//! secret-derived data at the call site. Masked counterparts live in `ops::ct`
+//! (cargo feature `ct`). `CheckedDiv`/`CheckedRem` are CT-hostile (data-dependent
+//! division) and `CheckedPow` is exponent-dependent — Tier C for secret inputs.
 
 use core::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 

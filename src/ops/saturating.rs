@@ -1,7 +1,9 @@
 //! Saturating arithmetic.
 //!
-//! **CT tier A (CT-implementable)**: saturation is expressible as a
-//! branchless select on the overflow mask.
+//! **CT tier A (CT-implementable)** for add/sub/mul/neg/abs/pow-style
+//! saturation: it is expressible as a branchless select on an overflow mask.
+//! `SaturatingDiv` is CT-hostile — it performs data-dependent division and
+//! panics on a zero divisor — so it is Tier C for secret inputs.
 
 use core::ops::{Add, Div, Mul, Neg, Sub};
 
