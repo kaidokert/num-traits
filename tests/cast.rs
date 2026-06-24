@@ -2,16 +2,13 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use const_num_traits::cast::*;
 use const_num_traits::Bounded;
+use const_num_traits::cast::*;
 
 use core::num::{
-    NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
-    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+    NonZeroI8, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI128, NonZeroIsize, NonZeroU8,
+    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize,
 };
-use core::{f32, f64};
-use core::{i128, i16, i32, i64, i8, isize};
-use core::{u128, u16, u32, u64, u8, usize};
 
 use core::fmt::Debug;
 use core::mem;
@@ -26,7 +23,7 @@ fn to_primitive_float() {
     assert_eq!((-f32::MAX as f64).to_f32(), Some(-f32::MAX));
     assert_eq!(f64::INFINITY.to_f32(), Some(f32::INFINITY));
     assert_eq!((f64::NEG_INFINITY).to_f32(), Some(f32::NEG_INFINITY));
-    assert!((f64::NAN).to_f32().map_or(false, |f| f.is_nan()));
+    assert!((f64::NAN).to_f32().is_some_and(|f| f.is_nan()));
 }
 
 #[test]
@@ -78,8 +75,8 @@ fn as_primitive() {
     let x: f32 = (1.625f64).as_();
     assert_eq!(x, 1.625f32);
 
-    let x: f32 = (3.14159265358979323846f64).as_();
-    assert_eq!(x, 3.1415927f32);
+    let x: f32 = core::f64::consts::PI.as_();
+    assert_eq!(x, core::f32::consts::PI);
 
     let x: u8 = (768i16).as_();
     assert_eq!(x, 0);

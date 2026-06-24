@@ -389,11 +389,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
         if f.is_nan() || f.is_zero() {
             self
         } else if self > Self::zero() {
-            if f < h {
-                self - f
-            } else {
-                self - f + one
-            }
+            if f < h { self - f } else { self - f + one }
         } else if -f < h {
             self - f
         } else {
@@ -426,11 +422,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     #[inline]
     fn trunc(self) -> Self {
         let f = self.fract();
-        if f.is_nan() {
-            self
-        } else {
-            self - f
-        }
+        if f.is_nan() { self } else { self - f }
     }
 
     /// Returns the fractional part of a number.
@@ -611,11 +603,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
         if other.is_nan() {
             return self;
         }
-        if self < other {
-            self
-        } else {
-            other
-        }
+        if self < other { self } else { other }
     }
 
     /// Returns the maximum of the two numbers.
@@ -645,11 +633,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
         if other.is_nan() {
             return self;
         }
-        if self > other {
-            self
-        } else {
-            other
-        }
+        if self > other { self } else { other }
     }
 
     /// A value bounded by a minimum and a maximum
@@ -2199,9 +2183,9 @@ macro_rules! float_const_impl {
         impl FloatConst for $T {
             constant! {
                 $( $constant() -> $T::consts::$constant; )+
-                TAU() -> 6.28318530717958647692528676655900577;
-                LOG10_2() -> 0.301029995663981195213738894724493027;
-                LOG2_10() -> 3.32192809488736234787031942948939018;
+                TAU() -> $T::consts::TAU;
+                LOG10_2() -> $T::consts::LOG10_2;
+                LOG2_10() -> $T::consts::LOG2_10;
             }
         }
     );
@@ -2372,10 +2356,7 @@ mod tests {
     fn to_degrees_rounding() {
         use crate::float::FloatCore;
 
-        assert_eq!(
-            FloatCore::to_degrees(1_f32),
-            57.2957795130823208767981548141051703
-        );
+        assert_eq!(FloatCore::to_degrees(1_f32), 57.295_78);
     }
 
     #[test]
@@ -2384,12 +2365,12 @@ mod tests {
         use crate::float::{Float, FloatConst};
 
         fn check<F: Float + FloatConst>(diff: F) {
-            let _2 = F::from(2.0).unwrap();
-            assert!((F::LOG10_2() - F::log10(_2)).abs() < diff);
+            let two = F::from(2.0).unwrap();
+            assert!((F::LOG10_2() - F::log10(two)).abs() < diff);
             assert!((F::LOG10_2() - F::LN_2() / F::LN_10()).abs() < diff);
 
-            let _10 = F::from(10.0).unwrap();
-            assert!((F::LOG2_10() - F::log2(_10)).abs() < diff);
+            let ten = F::from(10.0).unwrap();
+            assert!((F::LOG2_10() - F::log2(ten)).abs() < diff);
             assert!((F::LOG2_10() - F::LN_10() / F::LN_2()).abs() < diff);
         }
 

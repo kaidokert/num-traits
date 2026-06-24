@@ -1,64 +1,48 @@
 use core::ops::{BitAnd, BitOr, BitXor, Not, Shl, Shr};
 
 use crate::bounds::Bounded;
+use crate::identities::{ConstOne, ConstZero};
 use crate::ops::checked::*;
 use crate::ops::saturating::Saturating;
 use crate::{Num, NumCast};
 
 c0nst::c0nst! {
-/// Generic trait for primitive integers.
+/// Bit-level operations on fixed-width binary integers.
 ///
-/// The `PrimInt` trait is an abstraction over the builtin primitive integer types (e.g., `u8`,
-/// `u32`, `isize`, `i128`, ...). It inherits the basic numeric traits and extends them with
-/// bitwise operators and non-wrapping arithmetic.
+/// This is the capability-pure core extracted from [`PrimInt`]: bit
+/// counting, rotations, shifts, byte/bit reversal and endianness
+/// conversions. It deliberately requires **no comparison** (`Ord`,
+/// `PartialEq`) and **no arithmetic** (`Add`/`Mul`/`Div`), so it is
+/// implementable by constant-time integer types that expose only bit
+/// operations (every method here is branchless on the operand for the
+/// builtin integers).
 ///
-/// The trait explicitly inherits `Copy`, `Eq`, `Ord`, and `Sized`. The intention is that all
-/// types implementing this trait behave like primitive types that are passed by value by default
-/// and behave like builtin integers. Furthermore, the types are expected to expose the integer
-/// value in binary representation and support bitwise operators. The standard bitwise operations
-/// (e.g., bitwise-and, bitwise-or, right-shift, left-shift) are inherited and the trait extends
-/// these with introspective queries (e.g., `PrimInt::count_ones()`, `PrimInt::leading_zeros()`),
-/// bitwise combinators (e.g., `PrimInt::rotate_left()`), and endianness converters (e.g.,
-/// `PrimInt::to_be()`).
+/// The only non-bit requirement is the `ZERO`/`ONE` *constants* that the
+/// bit-twiddling defaults need. These come from [`ConstZero`]/[`ConstOne`],
+/// which are deliberately decoupled from [`Zero`](crate::Zero)/[`One`](crate::One)
+/// — they carry the compile-time constant **without** pulling in `Add`/`Mul`.
+/// So a type can implement `PrimBits` with bit ops and two constants alone.
 ///
-/// All `PrimInt` types are expected to be fixed-width binary integers. The width can be queried
-/// via `T::zero().count_zeros()`. The trait currently lacks a way to query the width at
-/// compile-time.
-///
-/// While a default implementation for all builtin primitive integers is provided, the trait is in
-/// no way restricted to these. Other integer types that fulfil the requirements are free to
-/// implement the trait was well.
-///
-/// This trait and many of the method names originate in the unstable `core::num::Int` trait from
-/// the rust standard library. The original trait was never stabilized and thus removed from the
-/// standard library.
-pub c0nst trait PrimInt:
+/// [`ConstZero`]: crate::ConstZero
+/// [`ConstOne`]: crate::ConstOne
+pub c0nst trait PrimBits:
     Sized
     + Copy
-    + [c0nst] Num
-    + [c0nst] NumCast
-    + [c0nst] Bounded
-    + [c0nst] PartialOrd
-    + [c0nst] Ord
-    + [c0nst] Eq
+    + ConstZero
+    + ConstOne
     + [c0nst] Not<Output = Self>
     + [c0nst] BitAnd<Output = Self>
     + [c0nst] BitOr<Output = Self>
     + [c0nst] BitXor<Output = Self>
     + [c0nst] Shl<usize, Output = Self>
     + [c0nst] Shr<usize, Output = Self>
-    + [c0nst] CheckedAdd<Output = Self>
-    + [c0nst] CheckedSub<Output = Self>
-    + [c0nst] CheckedMul<Output = Self>
-    + [c0nst] CheckedDiv<Output = Self>
-    + [c0nst] Saturating
 {
     /// Returns the number of ones in the binary representation of `self`.
     ///
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0b01001100u8;
     ///
@@ -71,7 +55,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0b01001100u8;
     ///
@@ -85,7 +69,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0xF00Du16;
     ///
@@ -101,7 +85,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0b0101000u16;
     ///
@@ -115,7 +99,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0xBEEFu16;
     ///
@@ -131,7 +115,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0b0101000u16;
     ///
@@ -145,7 +129,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0x3456789ABCDEF012u64;
@@ -160,7 +144,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0xDEF0123456789ABCu64;
@@ -177,7 +161,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0x3456789ABCDEF000u64;
@@ -194,7 +178,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0xFEDCBA9876543210u64;
     /// let m = 0xFFFFEDCBA9876543u64;
@@ -211,7 +195,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x0123456789ABCDEFi64;
     /// let m = 0x3456789ABCDEF000i64;
@@ -228,7 +212,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = -8i8; // 0b11111000
     /// let m = 62i8; // 0b00111110
@@ -242,7 +226,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     /// let m = 0xEFCDAB8967452301u64;
@@ -259,7 +243,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x12345678u32;
     /// let m = 0x1e6a2c48u32;
@@ -278,7 +262,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -297,7 +281,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -316,7 +300,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -335,7 +319,7 @@ pub c0nst trait PrimInt:
     /// # Examples
     ///
     /// ```
-    /// use const_num_traits::PrimInt;
+    /// use const_num_traits::PrimBits;
     ///
     /// let n = 0x0123456789ABCDEFu64;
     ///
@@ -346,7 +330,56 @@ pub c0nst trait PrimInt:
     /// }
     /// ```
     fn to_le(self) -> Self;
+}
+}
 
+c0nst::c0nst! {
+/// Generic trait for primitive integers.
+///
+/// The `PrimInt` trait is an abstraction over the builtin primitive integer types (e.g., `u8`,
+/// `u32`, `isize`, `i128`, ...). It inherits the basic numeric traits and extends them with
+/// bitwise operators and non-wrapping arithmetic.
+///
+/// The trait explicitly inherits `Copy`, `Eq`, `Ord`, and `Sized`. The intention is that all
+/// types implementing this trait behave like primitive types that are passed by value by default
+/// and behave like builtin integers. Furthermore, the types are expected to expose the integer
+/// value in binary representation and support bitwise operators. The standard bitwise operations
+/// (e.g., bitwise-and, bitwise-or, right-shift, left-shift) are inherited, and the bit-level
+/// introspection methods (e.g., `count_ones()`, `leading_zeros()`), bitwise combinators (e.g.,
+/// `rotate_left()`), and endianness converters (e.g., `to_be()`) come from the [`PrimBits`]
+/// supertrait.
+///
+/// All `PrimInt` types are expected to be fixed-width binary integers. The width can be queried
+/// via `T::zero().count_zeros()`. The trait currently lacks a way to query the width at
+/// compile-time.
+///
+/// While a default implementation for all builtin primitive integers is provided, the trait is in
+/// no way restricted to these. Other integer types that fulfil the requirements are free to
+/// implement the trait was well.
+///
+/// Types that cannot expose comparison or division (e.g. constant-time
+/// integers) should implement only [`PrimBits`]; `PrimInt` adds the
+/// `Ord`/`Num`/checked-arithmetic capabilities on top.
+///
+/// This trait and many of the method names originate in the unstable `core::num::Int` trait from
+/// the rust standard library. The original trait was never stabilized and thus removed from the
+/// standard library.
+pub c0nst trait PrimInt:
+    Sized
+    + Copy
+    + [c0nst] PrimBits
+    + [c0nst] Num
+    + [c0nst] NumCast
+    + [c0nst] Bounded
+    + [c0nst] PartialOrd
+    + [c0nst] Ord
+    + [c0nst] Eq
+    + [c0nst] CheckedAdd<Output = Self>
+    + [c0nst] CheckedSub<Output = Self>
+    + [c0nst] CheckedMul<Output = Self>
+    + [c0nst] CheckedDiv<Output = Self>
+    + [c0nst] Saturating
+{
     /// Raises self to the power of `exp`, using exponentiation by squaring.
     ///
     /// # Examples
@@ -361,12 +394,12 @@ pub c0nst trait PrimInt:
 }
 
 c0nst::c0nst! {
-c0nst fn one_per_byte<P: [c0nst] PrimInt>() -> P {
+c0nst fn one_per_byte<P: [c0nst] PrimBits>() -> P {
     // i8, u8: return 0x01
     // i16, u16: return 0x0101 = (0x01 << 8) | 0x01
     // i32, u32: return 0x01010101 = (0x0101 << 16) | 0x0101
     // ...
-    let mut ret = P::one();
+    let mut ret = P::ONE;
     let mut shift = 8;
     let mut b = ret.count_zeros() >> 3;
     while b != 0 {
@@ -379,7 +412,7 @@ c0nst fn one_per_byte<P: [c0nst] PrimInt>() -> P {
 }
 
 c0nst::c0nst! {
-c0nst fn reverse_bits_fallback<P: [c0nst] PrimInt>(i: P) -> P {
+c0nst fn reverse_bits_fallback<P: [c0nst] PrimBits>(i: P) -> P {
     let rep_01: P = one_per_byte();
     let rep_03 = (rep_01 << 1) | rep_01;
     let rep_05 = (rep_01 << 2) | rep_01;
@@ -400,7 +433,7 @@ c0nst fn reverse_bits_fallback<P: [c0nst] PrimInt>(i: P) -> P {
 macro_rules! prim_int_impl {
     ($T:ty, $S:ty, $U:ty) => {
         c0nst::c0nst! {
-        impl c0nst PrimInt for $T {
+        c0nst impl PrimBits for $T {
             #[inline]
             fn count_ones(self) -> u32 {
                 <$T>::count_ones(self)
@@ -490,7 +523,11 @@ macro_rules! prim_int_impl {
             fn to_le(self) -> Self {
                 <$T>::to_le(self)
             }
+        }
+        }
 
+        c0nst::c0nst! {
+        c0nst impl PrimInt for $T {
             #[inline]
             fn pow(self, exp: u32) -> Self {
                 <$T>::pow(self, exp)
@@ -516,55 +553,51 @@ prim_int_impl!(isize, isize, usize);
 
 #[cfg(test)]
 mod tests {
-    use crate::int::PrimInt;
+    use crate::int::PrimBits;
 
     #[test]
     pub fn reverse_bits() {
-        use core::{i16, i32, i64, i8};
-
         assert_eq!(
-            PrimInt::reverse_bits(0x0123_4567_89ab_cdefu64),
+            PrimBits::reverse_bits(0x0123_4567_89ab_cdefu64),
             0xf7b3_d591_e6a2_c480
         );
 
-        assert_eq!(PrimInt::reverse_bits(0i8), 0);
-        assert_eq!(PrimInt::reverse_bits(-1i8), -1);
-        assert_eq!(PrimInt::reverse_bits(1i8), i8::MIN);
-        assert_eq!(PrimInt::reverse_bits(i8::MIN), 1);
-        assert_eq!(PrimInt::reverse_bits(-2i8), i8::MAX);
-        assert_eq!(PrimInt::reverse_bits(i8::MAX), -2);
+        assert_eq!(PrimBits::reverse_bits(0i8), 0);
+        assert_eq!(PrimBits::reverse_bits(-1i8), -1);
+        assert_eq!(PrimBits::reverse_bits(1i8), i8::MIN);
+        assert_eq!(PrimBits::reverse_bits(i8::MIN), 1);
+        assert_eq!(PrimBits::reverse_bits(-2i8), i8::MAX);
+        assert_eq!(PrimBits::reverse_bits(i8::MAX), -2);
 
-        assert_eq!(PrimInt::reverse_bits(0i16), 0);
-        assert_eq!(PrimInt::reverse_bits(-1i16), -1);
-        assert_eq!(PrimInt::reverse_bits(1i16), i16::MIN);
-        assert_eq!(PrimInt::reverse_bits(i16::MIN), 1);
-        assert_eq!(PrimInt::reverse_bits(-2i16), i16::MAX);
-        assert_eq!(PrimInt::reverse_bits(i16::MAX), -2);
+        assert_eq!(PrimBits::reverse_bits(0i16), 0);
+        assert_eq!(PrimBits::reverse_bits(-1i16), -1);
+        assert_eq!(PrimBits::reverse_bits(1i16), i16::MIN);
+        assert_eq!(PrimBits::reverse_bits(i16::MIN), 1);
+        assert_eq!(PrimBits::reverse_bits(-2i16), i16::MAX);
+        assert_eq!(PrimBits::reverse_bits(i16::MAX), -2);
 
-        assert_eq!(PrimInt::reverse_bits(0i32), 0);
-        assert_eq!(PrimInt::reverse_bits(-1i32), -1);
-        assert_eq!(PrimInt::reverse_bits(1i32), i32::MIN);
-        assert_eq!(PrimInt::reverse_bits(i32::MIN), 1);
-        assert_eq!(PrimInt::reverse_bits(-2i32), i32::MAX);
-        assert_eq!(PrimInt::reverse_bits(i32::MAX), -2);
+        assert_eq!(PrimBits::reverse_bits(0i32), 0);
+        assert_eq!(PrimBits::reverse_bits(-1i32), -1);
+        assert_eq!(PrimBits::reverse_bits(1i32), i32::MIN);
+        assert_eq!(PrimBits::reverse_bits(i32::MIN), 1);
+        assert_eq!(PrimBits::reverse_bits(-2i32), i32::MAX);
+        assert_eq!(PrimBits::reverse_bits(i32::MAX), -2);
 
-        assert_eq!(PrimInt::reverse_bits(0i64), 0);
-        assert_eq!(PrimInt::reverse_bits(-1i64), -1);
-        assert_eq!(PrimInt::reverse_bits(1i64), i64::MIN);
-        assert_eq!(PrimInt::reverse_bits(i64::MIN), 1);
-        assert_eq!(PrimInt::reverse_bits(-2i64), i64::MAX);
-        assert_eq!(PrimInt::reverse_bits(i64::MAX), -2);
+        assert_eq!(PrimBits::reverse_bits(0i64), 0);
+        assert_eq!(PrimBits::reverse_bits(-1i64), -1);
+        assert_eq!(PrimBits::reverse_bits(1i64), i64::MIN);
+        assert_eq!(PrimBits::reverse_bits(i64::MIN), 1);
+        assert_eq!(PrimBits::reverse_bits(-2i64), i64::MAX);
+        assert_eq!(PrimBits::reverse_bits(i64::MAX), -2);
     }
 
     #[test]
     pub fn reverse_bits_i128() {
-        use core::i128;
-
-        assert_eq!(PrimInt::reverse_bits(0i128), 0);
-        assert_eq!(PrimInt::reverse_bits(-1i128), -1);
-        assert_eq!(PrimInt::reverse_bits(1i128), i128::MIN);
-        assert_eq!(PrimInt::reverse_bits(i128::MIN), 1);
-        assert_eq!(PrimInt::reverse_bits(-2i128), i128::MAX);
-        assert_eq!(PrimInt::reverse_bits(i128::MAX), -2);
+        assert_eq!(PrimBits::reverse_bits(0i128), 0);
+        assert_eq!(PrimBits::reverse_bits(-1i128), -1);
+        assert_eq!(PrimBits::reverse_bits(1i128), i128::MIN);
+        assert_eq!(PrimBits::reverse_bits(i128::MIN), 1);
+        assert_eq!(PrimBits::reverse_bits(-2i128), i128::MAX);
+        assert_eq!(PrimBits::reverse_bits(i128::MAX), -2);
     }
 }

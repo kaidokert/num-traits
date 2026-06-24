@@ -27,7 +27,8 @@ jobs:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - uses: dtolnay/rust-toolchain@1.62.0
+      # `stable` (not the old 1.62 pin): edition 2024 needs a cargo >= 1.85.
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
       - uses: actions/checkout@v4

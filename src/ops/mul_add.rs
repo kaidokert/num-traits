@@ -62,7 +62,7 @@ impl MulAdd<f64, f64> for f64 {
 macro_rules! mul_add_impl {
     ($trait_name:ident for $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             type Output = Self;
 
             #[inline]
@@ -96,7 +96,7 @@ impl MulAddAssign<f64, f64> for f64 {
 macro_rules! mul_add_assign_impl {
     ($trait_name:ident for $($t:ty)*) => {$(
         c0nst::c0nst! {
-        impl c0nst $trait_name for $t {
+        c0nst impl $trait_name for $t {
             #[inline]
             fn mul_add_assign(&mut self, a: Self, b: Self) {
                 *self = (*self * a) + b

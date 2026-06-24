@@ -7,13 +7,20 @@ use core::num::Saturating;
 c0nst::c0nst! {
 /// Defines an additive identity element for `Self`.
 ///
+/// This is a pure identity-*value* trait: it provides the `0` and a zero-test,
+/// but does **not** require [`Add`](core::ops::Add). The bundling of `Add` is
+/// upstream convention, not a law — `0` is equally the identity under
+/// subtraction (`a - 0 = a`) — so consumers state the operators they actually
+/// use explicitly (`T: Zero + Add`, `T: Zero + Sub`, …). Numeric code that
+/// needs the full operator set takes [`Num`](crate::Num).
+///
 /// # Laws
 ///
 /// ```text
 /// a + 0 = a       ∀ a ∈ Self
 /// 0 + a = a       ∀ a ∈ Self
 /// ```
-pub c0nst trait Zero: Sized + [c0nst] Add<Self, Output = Self> {
+pub c0nst trait Zero: Sized {
     /// Returns the additive identity element of `Self`, `0`.
     /// # Purity
     ///
@@ -33,7 +40,14 @@ pub c0nst trait Zero: Sized + [c0nst] Add<Self, Output = Self> {
 
 /// Defines an associated constant representing the additive identity element
 /// for `Self`.
-pub trait ConstZero: Zero {
+///
+/// This is a pure constant-carrier: it requires only that `Self` *has* a
+/// compile-time `0`, **not** that it implements [`Zero`] (and hence not
+/// [`Add`](core::ops::Add)). Keeping it decoupled lets capability-restricted
+/// types — e.g. a constant-time integer with bit ops but no arithmetic — supply
+/// the `0` constant that [`PrimBits`](crate::PrimBits) needs without being
+/// forced to implement addition. Numeric types still implement both.
+pub trait ConstZero: Sized {
     /// The additive identity element of `Self`, `0`.
     const ZERO: Self;
 }
@@ -41,7 +55,7 @@ pub trait ConstZero: Zero {
 macro_rules! zero_impl {
     ($t:ty, $v:expr) => {
         c0nst::c0nst! {
-        impl c0nst Zero for $t {
+        c0nst impl Zero for $t {
             #[inline]
             fn zero() -> $t {
                 $v
@@ -81,7 +95,7 @@ zero_impl!(f32, 0.0);
 zero_impl!(f64, 0.0);
 
 c0nst::c0nst! {
-impl<T: [c0nst] Zero> c0nst Zero for Wrapping<T>
+c0nst impl<T: [c0nst] Zero> Zero for Wrapping<T>
 where
     Wrapping<T>: [c0nst] Add<Output = Wrapping<T>>,
 {
@@ -108,7 +122,7 @@ where
 
 #[cfg(has_num_saturating)]
 c0nst::c0nst! {
-impl<T: [c0nst] Zero> c0nst Zero for Saturating<T>
+c0nst impl<T: [c0nst] Zero> Zero for Saturating<T>
 where
     Saturating<T>: [c0nst] Add<Output = Saturating<T>>,
 {
@@ -137,13 +151,19 @@ where
 c0nst::c0nst! {
 /// Defines a multiplicative identity element for `Self`.
 ///
+/// A pure identity-*value* trait, decoupled from [`Mul`](core::ops::Mul) for the
+/// same reason as [`Zero`]: `1` is equally the identity under division
+/// (`a / 1 = a`), so privileging `Mul` is arbitrary. Consumers state what they
+/// need (`T: One + Mul`, `T: One + Div`, …); full numeric code takes
+/// [`Num`](crate::Num).
+///
 /// # Laws
 ///
 /// ```text
 /// a * 1 = a       ∀ a ∈ Self
 /// 1 * a = a       ∀ a ∈ Self
 /// ```
-pub c0nst trait One: Sized + [c0nst] Mul<Self, Output = Self> {
+pub c0nst trait One: Sized {
     /// Returns the multiplicative identity element of `Self`, `1`.
     ///
     /// # Purity
@@ -164,7 +184,12 @@ pub c0nst trait One: Sized + [c0nst] Mul<Self, Output = Self> {
 
 /// Defines an associated constant representing the multiplicative identity
 /// element for `Self`.
-pub trait ConstOne: One {
+///
+/// A pure constant-carrier, decoupled from [`One`] (and hence
+/// [`Mul`](core::ops::Mul)) for the same reason as [`ConstZero`]: a type can
+/// supply the compile-time `1` that [`PrimBits`](crate::PrimBits) needs without
+/// implementing multiplication. Numeric types still implement both.
+pub trait ConstOne: Sized {
     /// The multiplicative identity element of `Self`, `1`.
     const ONE: Self;
 }
@@ -172,7 +197,7 @@ pub trait ConstOne: One {
 macro_rules! one_impl {
     ($t:ty, $v:expr) => {
         c0nst::c0nst! {
-        impl c0nst One for $t {
+        c0nst impl One for $t {
             #[inline]
             fn one() -> $t {
                 $v
@@ -212,7 +237,7 @@ one_impl!(f32, 1.0);
 one_impl!(f64, 1.0);
 
 c0nst::c0nst! {
-impl<T: [c0nst] One> c0nst One for Wrapping<T>
+c0nst impl<T: [c0nst] One> One for Wrapping<T>
 where
     Wrapping<T>: [c0nst] Mul<Output = Wrapping<T>>,
 {
@@ -239,7 +264,7 @@ where
 
 #[cfg(has_num_saturating)]
 c0nst::c0nst! {
-impl<T: [c0nst] One> c0nst One for Saturating<T>
+c0nst impl<T: [c0nst] One> One for Saturating<T>
 where
     Saturating<T>: [c0nst] Mul<Output = Saturating<T>>,
 {

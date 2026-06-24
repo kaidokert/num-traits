@@ -217,13 +217,16 @@ pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> 
 /// assert_eq!(checked_pow(0u32, 0), Some(1)); // Be aware if this case affect you
 /// ```
 #[inline]
-pub fn checked_pow<T: Clone + One + CheckedMul>(mut base: T, mut exp: usize) -> Option<T> {
+pub fn checked_pow<T: Clone + One + CheckedMul + core::ops::Mul<Output = T>>(
+    mut base: T,
+    mut exp: usize,
+) -> Option<T> {
     if exp == 0 {
         return Some(T::one());
     }
 
     while exp & 1 == 0 {
-        base = base.checked_mul(&base)?;
+        base = base.clone().checked_mul(base)?;
         exp >>= 1;
     }
     if exp == 1 {
@@ -233,9 +236,9 @@ pub fn checked_pow<T: Clone + One + CheckedMul>(mut base: T, mut exp: usize) -> 
     let mut acc = base.clone();
     while exp > 1 {
         exp >>= 1;
-        base = base.checked_mul(&base)?;
+        base = base.clone().checked_mul(base)?;
         if exp & 1 == 1 {
-            acc = acc.checked_mul(&base)?;
+            acc = acc.checked_mul(base.clone())?;
         }
     }
     Some(acc)
