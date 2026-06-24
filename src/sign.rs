@@ -38,7 +38,14 @@ pub c0nst trait Signed: Sized + [c0nst] Num + [c0nst] Neg + [c0nst] Signum {
     ///
     /// For `f32` and `f64`, `NaN` will be returned if the number is `NaN`.
     ///
-    /// For signed integers, `::MIN` will be returned if the number is `::MIN`.
+    /// For signed integers the result is always non-negative and **total**:
+    /// `-::MIN` is unrepresentable, so `abs(::MIN)` saturates to `::MAX` (the
+    /// nearest representable magnitude) rather than overflowing. This is
+    /// deliberately consistent across const evaluation, debug and release —
+    /// unlike the inherent `i32::abs`, which panics/overflows on `::MIN`. For a
+    /// different overflow policy use [`WrappingAbs`](crate::WrappingAbs),
+    /// [`CheckedAbs`](crate::CheckedAbs) or [`StrictAbs`](crate::StrictAbs); for
+    /// a statically-proven total `abs`, use [`NonMin`](crate::NonMin).
     fn abs(self) -> <Self as Neg>::Output;
 
     /// The positive difference of two numbers.
@@ -75,12 +82,19 @@ macro_rules! signed_impl {
         c0nst impl Signed for $t {
             #[inline]
             fn abs(self) -> $t {
-                if self.is_negative() { -self } else { self }
+                // Total and identical in const / debug / release: an absolute
+                // value is non-negative, so `MIN` saturates to `MAX` (the
+                // nearest representable magnitude) rather than overflowing.
+                // Use `WrappingAbs`/`CheckedAbs`/`StrictAbs` for other policies.
+                self.saturating_abs()
             }
 
             #[inline]
             fn abs_sub(self, other: $t) -> $t {
-                if self <= other { 0 } else { self - other }
+                // Saturating subtraction keeps the positive difference total
+                // and const/runtime-consistent when `self - other` would
+                // overflow (e.g. `MAX - MIN`).
+                if self <= other { 0 } else { self.saturating_sub(other) }
             }
 
             #[inline]
@@ -250,4 +264,20 @@ fn unsigned_wrapping_is_unsigned() {
 fn signed_wrapping_is_signed() {
     fn require_signed<T: Signed>(_: &T) {}
     require_signed(&Wrapping(-42));
+}
+
+#[test]
+fn abs_is_total_and_non_negative() {
+    // ordinary cases
+    assert_eq!(Signed::abs(-7i32), 7);
+    assert_eq!(Signed::abs(7i32), 7);
+    assert_eq!(Signed::abs(0i32), 0);
+    // the MIN case: saturates to MAX (non-negative, total — never panics)
+    assert_eq!(Signed::abs(i8::MIN), i8::MAX);
+    assert_eq!(Signed::abs(i32::MIN), i32::MAX);
+    assert_eq!(Signed::abs(i64::MIN), i64::MAX);
+    // abs_sub stays total when the difference would overflow
+    assert_eq!(Signed::abs_sub(i32::MAX, i32::MIN), i32::MAX);
+    assert_eq!(Signed::abs_sub(5i32, 8), 0);
+    assert_eq!(Signed::abs_sub(8i32, 5), 3);
 }
