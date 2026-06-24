@@ -11,15 +11,17 @@ c0nst::c0nst! {
 ///
 /// This is the capability-pure core extracted from [`PrimInt`]: bit
 /// counting, rotations, shifts, byte/bit reversal and endianness
-/// conversions. It deliberately requires **no** comparison (`Ord`,
-/// `PartialEq`), no division and no panicking arithmetic, so it is
-/// implementable by constant-time integer types that cannot expose those
-/// (every method here is branchless on the operand for the builtin
-/// integers).
+/// conversions. It deliberately requires **no comparison** (`Ord`,
+/// `PartialEq`) and **no arithmetic** (`Add`/`Mul`/`Div`), so it is
+/// implementable by constant-time integer types that expose only bit
+/// operations (every method here is branchless on the operand for the
+/// builtin integers).
 ///
-/// The [`ConstZero`]/[`ConstOne`] supertraits provide the `ZERO`/`ONE`
-/// constants the bit-twiddling defaults need without requiring callable
-/// constructors in `const` context.
+/// The only non-bit requirement is the `ZERO`/`ONE` *constants* that the
+/// bit-twiddling defaults need. These come from [`ConstZero`]/[`ConstOne`],
+/// which are deliberately decoupled from [`Zero`](crate::Zero)/[`One`](crate::One)
+/// — they carry the compile-time constant **without** pulling in `Add`/`Mul`.
+/// So a type can implement `PrimBits` with bit ops and two constants alone.
 ///
 /// [`ConstZero`]: crate::ConstZero
 /// [`ConstOne`]: crate::ConstOne

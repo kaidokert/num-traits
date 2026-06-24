@@ -1,35 +1,22 @@
-//! Proof of the `PrimBits` capability cut: a type with **no
-//! `PartialEq`, no `Ord`, no `Div`/`Rem` and no panicking checked ops** can
-//! implement `PrimBits` and use all of its bit-level machinery, including
-//! the `leading_ones`/`trailing_ones`/`reverse_bits` defaults.
+//! Proof of the `PrimBits` capability cut: a type with **no `PartialEq`, no
+//! `Ord`, no `Div`/`Rem`, and no arithmetic at all (`Add`/`Mul`)** can
+//! implement `PrimBits` and use all of its bit-level machinery, including the
+//! `leading_ones`/`trailing_ones`/`reverse_bits` defaults.
 //!
-//! This models a constant-time integer (like fixed-bigint's
-//! `FixedUInt<_, _, Ct>` personality), which deliberately does not expose
-//! comparison or division. If this file compiles, the extraction holds; if
-//! someone re-bundles a comparison- or division-needing method into
-//! `PrimBits`, it breaks.
+//! `CtWord` below implements **only** bit operations plus the `ZERO`/`ONE`
+//! constants — no `Add`, `Mul`, `Zero`, or `One`. That it satisfies `PrimBits`
+//! is the proof that the `ConstZero`/`ConstOne` constant-carriers are decoupled
+//! from `Zero`/`One` (and therefore from `Add`/`Mul`). Re-couple them, or
+//! re-bundle a comparison/division/arithmetic-needing method into `PrimBits`,
+//! and this file stops compiling.
 
-use const_num_traits::{ConstOne, ConstZero, One, PrimBits, Zero};
-use core::ops::{Add, BitAnd, BitOr, BitXor, Mul, Not, Shl, Shr};
+use const_num_traits::{ConstOne, ConstZero, PrimBits};
+use core::ops::{BitAnd, BitOr, BitXor, Not, Shl, Shr};
 
-/// A deliberately capability-starved wrapper: wrapping arithmetic only,
-/// bit ops, and NO comparison/division.
+/// A deliberately capability-starved wrapper: bit ops and constants only —
+/// NO arithmetic, comparison, or division.
 #[derive(Copy, Clone, Debug)]
 struct CtWord(u32);
-
-impl Add for CtWord {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self {
-        CtWord(self.0.wrapping_add(rhs.0))
-    }
-}
-
-impl Mul for CtWord {
-    type Output = Self;
-    fn mul(self, rhs: Self) -> Self {
-        CtWord(self.0.wrapping_mul(rhs.0))
-    }
-}
 
 impl Not for CtWord {
     type Output = Self;
@@ -70,31 +57,6 @@ impl Shr<usize> for CtWord {
     type Output = Self;
     fn shr(self, n: usize) -> Self {
         CtWord(self.0 >> n)
-    }
-}
-
-impl Zero for CtWord {
-    fn zero() -> Self {
-        CtWord(0)
-    }
-    fn set_zero(&mut self) {
-        self.0 = 0;
-    }
-    // branchless: a mask-style check, no PartialEq involved
-    fn is_zero(&self) -> bool {
-        (self.0 | self.0.wrapping_neg()) >> 31 == 0
-    }
-}
-
-impl One for CtWord {
-    fn one() -> Self {
-        CtWord(1)
-    }
-    fn set_one(&mut self) {
-        self.0 = 1;
-    }
-    fn is_one(&self) -> bool {
-        ((self.0 ^ 1) | (self.0 ^ 1).wrapping_neg()) >> 31 == 0
     }
 }
 

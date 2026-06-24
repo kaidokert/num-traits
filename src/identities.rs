@@ -33,7 +33,14 @@ pub c0nst trait Zero: Sized + [c0nst] Add<Self, Output = Self> {
 
 /// Defines an associated constant representing the additive identity element
 /// for `Self`.
-pub trait ConstZero: Zero {
+///
+/// This is a pure constant-carrier: it requires only that `Self` *has* a
+/// compile-time `0`, **not** that it implements [`Zero`] (and hence not
+/// [`Add`](core::ops::Add)). Keeping it decoupled lets capability-restricted
+/// types — e.g. a constant-time integer with bit ops but no arithmetic — supply
+/// the `0` constant that [`PrimBits`](crate::PrimBits) needs without being
+/// forced to implement addition. Numeric types still implement both.
+pub trait ConstZero: Sized {
     /// The additive identity element of `Self`, `0`.
     const ZERO: Self;
 }
@@ -164,7 +171,12 @@ pub c0nst trait One: Sized + [c0nst] Mul<Self, Output = Self> {
 
 /// Defines an associated constant representing the multiplicative identity
 /// element for `Self`.
-pub trait ConstOne: One {
+///
+/// A pure constant-carrier, decoupled from [`One`] (and hence
+/// [`Mul`](core::ops::Mul)) for the same reason as [`ConstZero`]: a type can
+/// supply the compile-time `1` that [`PrimBits`](crate::PrimBits) needs without
+/// implementing multiplication. Numeric types still implement both.
+pub trait ConstOne: Sized {
     /// The multiplicative identity element of `Self`, `1`.
     const ONE: Self;
 }
