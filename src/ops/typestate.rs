@@ -625,7 +625,8 @@ macro_rules! nonmin_impl {
                 if value != <$t>::MIN { Some(NonMin(value)) } else { None }
             }
             /// # Safety
-            /// `value` must not be `<$t>::MIN`.
+            /// `value` must not equal `<$t>::MIN` (i.e. `value != <$t>::MIN`) —
+            /// the invariant consumed by `neg`/`abs`/`div_nonzero`/`rem_nonzero`.
             #[inline]
             pub const unsafe fn new_unchecked(value: $t) -> Self { NonMin(value) }
             /// The proven value.
