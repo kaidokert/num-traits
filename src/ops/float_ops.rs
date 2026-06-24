@@ -198,7 +198,7 @@ macro_rules! float_bits_impl {
         }
 
         // minimum/maximum are still unstable in std; same comparison ladder
-        // as core, const-compatible (float comparison is const-stable)
+        // as core.
         c0nst::c0nst! {
         c0nst impl Maximum for $t {
             type Output = $t;

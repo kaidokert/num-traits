@@ -133,9 +133,9 @@ impl<T> PowerOfTwo<T> {
 
 c0nst::c0nst! {
 /// Operations that *consume* a [`PowerOfTwo`] proof to replace division and
-/// remainder with a shift and a mask. These are **new** methods, not a
-/// speed-up of the blanket `MultipleOf`/`NextMultipleOf` (those can't be
-/// specialised on a power-of-two divisor on stable Rust).
+/// remainder with a shift and a mask. Distinct from the blanket
+/// `MultipleOf`/`NextMultipleOf`, which can't be specialised on a power-of-two
+/// divisor on stable Rust.
 ///
 /// Owned results carry an associated [`Output`](Self::Output) so non-`Copy`
 /// types can implement the trait for their reference type.
@@ -408,9 +408,9 @@ c0nst::c0nst! {
 /// Infallible division / remainder by a proven-non-zero divisor.
 ///
 /// `div_nonzero` / `rem_nonzero` have no divide-by-zero branch and never return
-/// `Option`. **Honest note:** for the *primitives* the codegen win is ≈ 0 —
-/// LLVM already elides the check via `NonZero`'s niche. The real wins are the
-/// `Option`-free API and big-integer backends' hand-written no-branch division.
+/// `Option`. For the *primitives* the codegen win is ≈ 0 — LLVM already elides
+/// the check via `NonZero`'s niche; the wins are the `Option`-free API and
+/// big-integer backends' hand-written no-branch division.
 ///
 /// **Unsigned only.** Signed `MIN / -1` still overflows, so the total signed
 /// form lives on [`NonMin::div_nonzero`] / [`NonMin::rem_nonzero`] (the dividend
@@ -743,10 +743,8 @@ where
 
 /// Proof that a value is even — the parity sibling of [`Odd`].
 ///
-/// Also a **bare** proof (no consuming op in this crate). The synthesis cut
-/// `Even` for lacking a compelling consumer; it is included here for parity
-/// symmetry and to round out the masked-constructor set (`Even::new_ct`).
-/// Drop it if the scope cut should stand.
+/// A **bare** proof (no consuming op in this crate), provided for symmetry with
+/// [`Odd`] and to complete the masked-constructor set (`Even::new_ct`).
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Even<T>(T);

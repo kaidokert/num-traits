@@ -11,6 +11,9 @@ c0nst::c0nst! {
 /// inherits it as a supertrait (the same extraction pattern as
 /// `PrimBits`/`PrimInt`).
 pub c0nst trait Signum: Sized {
+    /// The (owned) sign result type.
+    type Output;
+
     /// Returns the sign of the number.
     ///
     /// For `f32` and `f64`:
@@ -24,9 +27,6 @@ pub c0nst trait Signum: Sized {
     /// * `0` if the number is zero
     /// * `1` if the number is positive
     /// * `-1` if the number is negative
-    type Output;
-
-    /// The (owned) sign result type.
     fn signum(self) -> Self::Output;
 }
 }

@@ -141,7 +141,7 @@ macro_rules! ct_common_impl {
             #[inline]
             fn ct_checked_add(&self, v: &Self) -> CtOption<Self> {
                 let (val, overflow) = <$t>::overflowing_add(*self, *v);
-                CtOption::new(val, Choice::from((overflow as u8) ^ 1))
+                CtOption::new(val, Choice::from(!overflow as u8))
             }
         }
 
@@ -149,7 +149,7 @@ macro_rules! ct_common_impl {
             #[inline]
             fn ct_checked_sub(&self, v: &Self) -> CtOption<Self> {
                 let (val, overflow) = <$t>::overflowing_sub(*self, *v);
-                CtOption::new(val, Choice::from((overflow as u8) ^ 1))
+                CtOption::new(val, Choice::from(!overflow as u8))
             }
         }
 
@@ -157,7 +157,7 @@ macro_rules! ct_common_impl {
             #[inline]
             fn ct_checked_mul(&self, v: &Self) -> CtOption<Self> {
                 let (val, overflow) = <$t>::overflowing_mul(*self, *v);
-                CtOption::new(val, Choice::from((overflow as u8) ^ 1))
+                CtOption::new(val, Choice::from(!overflow as u8))
             }
         }
 
@@ -165,7 +165,7 @@ macro_rules! ct_common_impl {
             #[inline]
             fn ct_checked_neg(&self) -> CtOption<Self> {
                 let (val, overflow) = <$t>::overflowing_neg(*self);
-                CtOption::new(val, Choice::from((overflow as u8) ^ 1))
+                CtOption::new(val, Choice::from(!overflow as u8))
             }
         }
     )*};
@@ -193,7 +193,7 @@ macro_rules! ct_unsigned_impl {
             fn ct_checked_signed_diff(&self, rhs: &Self) -> CtOption<$s> {
                 let res = <$t>::wrapping_sub(*self, *rhs) as $s;
                 let overflow = (*self >= *rhs) == (res < 0);
-                CtOption::new(res, Choice::from((overflow as u8) ^ 1))
+                CtOption::new(res, Choice::from(!overflow as u8))
             }
         }
     )*};

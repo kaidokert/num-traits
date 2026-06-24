@@ -83,8 +83,7 @@ fn variant_matrix_in_const() {
     const SADD: u8 = StrictAdd::strict_add(250u8, 5);
     const SEUC: i32 = StrictEuclid::strict_div_euclid(-7i32, 4);
     // `Signed::abs` is total: abs(MIN) saturates to MAX and evaluates in const
-    // identically to runtime. The old `-self` impl was a const-eval *error*
-    // here, so this line is the regression guard for const/runtime consistency.
+    // identically to runtime — the guard for const/runtime consistency.
     const ABS_MIN: i32 = Signed::abs(i32::MIN);
     assert_eq!(POW, Some(19683));
     assert_eq!(WPOW, -13);

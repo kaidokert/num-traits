@@ -251,7 +251,6 @@ pub c0nst trait StrictPow: Sized + [c0nst] Mul<Self> {
 }
 }
 
-// checked_pow has the same `(self, u32) -> Option` shape as the checked shifts.
 strict_shift_impl!(
     StrictPow,
     strict_pow,

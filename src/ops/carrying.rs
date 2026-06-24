@@ -200,8 +200,6 @@ carrying_mul_impl! {
 
 // 128-bit types have no wider type to widen through; multiply in 64-bit
 // limbs instead. Ported from core's portable intrinsic fallback.
-// Plain `const fn`: everything in the body is const-stable on the MSRV, so
-// this needs no `c0nst!` treatment to be callable from the const impls.
 pub(crate) const fn wide_mul_u128(a: u128, b: u128) -> (u128, u128) {
     const MASK: u128 = u64::MAX as u128;
     let (a_lo, a_hi) = (a & MASK, a >> 64);

@@ -98,12 +98,9 @@ pub c0nst trait ToBytes: Sized {
 
 c0nst::c0nst! {
 pub c0nst trait FromBytes: Sized {
-    // Borrowed + `?Sized`: `from_*_bytes` *reads* its buffer (it doesn't reuse
-    // it as storage the way a by-value numeric operand would), so the buffer is
-    // borrowed, not consumed. This lets variable-length types use an unsized
-    // `type Bytes = [u8]` and borrow a slice with no allocation — unlike the
-    // by-value `ToBytes`, whose receiver is rescued by `impl ToBytes for &T`
-    // and which must return `Bytes` by value anyway.
+    // Borrowed + `?Sized`: `from_*_bytes` *reads* its buffer, so it is borrowed
+    // rather than consumed. This lets variable-length types use an unsized
+    // `type Bytes = [u8]` and borrow a slice with no allocation.
     type Bytes: NumBytes + ?Sized;
 
     /// Create a number from its representation as a byte array in big endian.

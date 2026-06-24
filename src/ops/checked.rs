@@ -341,7 +341,6 @@ pub c0nst trait CheckedPow: Sized + [c0nst] Mul<Self> {
 }
 }
 
-// Same `(&self, u32) -> Option<Self>` shape as the checked shifts.
 checked_shift_impl!(CheckedPow, checked_pow, u8);
 checked_shift_impl!(CheckedPow, checked_pow, u16);
 checked_shift_impl!(CheckedPow, checked_pow, u32);

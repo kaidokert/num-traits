@@ -125,7 +125,6 @@ macro_rules! unsigned_abs_impl {
             type Unsigned = $u;
             type Output = $t;
 
-            // still unstable in std (and not yet const there)
             #[inline]
             fn clamp_magnitude(self, limit: $u) -> $t {
                 if limit <= <$t>::MAX as $u {

@@ -197,7 +197,7 @@ fn typestates_construct_from_non_primitive_carrier() {
     assert_eq!(bitindex_from_caps::<Carrier>(31).unwrap().get(), 31);
     assert!(bitindex_from_caps::<Carrier>(32).is_none()); // == BITS
 
-    // Odd<Carrier>: already generic over `Parity` (the pattern the above match).
+    // Odd<Carrier>: already generic over `Parity` (the pattern the others follow).
     assert!(odd_from_caps(Carrier(7)).is_some());
     assert!(odd_from_caps(Carrier(8)).is_none());
 }

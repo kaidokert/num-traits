@@ -887,12 +887,9 @@ impl_as_primitive!(bool => {});
 /// conversion, deriving the other twelve methods the way the original
 /// num-traits default methods did.
 ///
-/// The const-trait port had to strip the `ToPrimitive` defaults (their
-/// bodies aren't const-portable), which broke the upstream "minimal impl"
-/// pattern of overriding only `to_i64`/`to_u64`. This macro restores that
-/// pattern for downstream implementors; the generated impl is a plain
-/// (non-const) impl of the const trait, which is exactly what a stable
-/// downstream crate gets anyway.
+/// Lets a downstream type override only `to_i64`/`to_u64` and derive the rest,
+/// the "minimal impl" pattern. The generated impl is a plain (non-const) impl
+/// of the const trait — exactly what a stable downstream crate gets anyway.
 ///
 /// Caveats inherited from the upstream defaults: `to_i128`/`to_u128` route
 /// through the 64-bit methods (types with real 128-bit range should
@@ -1233,7 +1230,7 @@ mod default_tests {
         let big_i = big as i128;
 
         // trait defaults (U): to_i128 falls back to to_u64; from_i128 routes
-        // non-negative through from_u64. Both were `None` before the fix.
+        // non-negative through from_u64.
         assert_eq!(U(big).to_i128(), Some(big_i));
         assert_eq!(U::from_i128(big_i), Some(U(big)));
         // minimal macros (UM): same paths

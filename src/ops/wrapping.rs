@@ -354,7 +354,6 @@ pub c0nst trait WrappingPow: Sized + [c0nst] Mul<Self> {
 }
 }
 
-// Same `(self, u32) -> Self` shape as the wrapping shifts.
 wrapping_shift_impl!(WrappingPow, wrapping_pow, u8);
 wrapping_shift_impl!(WrappingPow, wrapping_pow, u16);
 wrapping_shift_impl!(WrappingPow, wrapping_pow, u32);
