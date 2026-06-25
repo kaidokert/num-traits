@@ -97,8 +97,11 @@ pub c0nst trait ToPrimitive {
     /// or negative infinity, otherwise `None` is returned if the value cannot
     /// be represented by an `f32`.
     fn to_f32(&self) -> Option<f32> {
+        // `f64 as f32` is total: in-range values round, overflow saturates to
+        // ±inf (an admitted conversion, per the doc above), NaN stays NaN. So
+        // this is `None` only when `to_f64` is.
         match self.to_f64() {
-            Some(v) => if v.is_finite() && (v < f32::MIN as f64 || v > f32::MAX as f64) { None } else { Some(v as f32) },
+            Some(v) => Some(v as f32),
             None => None,
         }
     }
@@ -993,16 +996,9 @@ macro_rules! impl_to_primitive_minimal {
 
             #[inline]
             fn to_f32(&self) -> Option<f32> {
-                match self.to_f64() {
-                    Some(v) => {
-                        if v.is_finite() && (v < f32::MIN as f64 || v > f32::MAX as f64) {
-                            None
-                        } else {
-                            Some(v as f32)
-                        }
-                    }
-                    None => None,
-                }
+                // Overflow saturates to ±inf (an admitted conversion); `None`
+                // only when `to_f64` is.
+                self.to_f64().map(|v| v as f32)
             }
 
             #[inline]
@@ -1241,5 +1237,28 @@ mod default_tests {
         assert_eq!(U(5).to_i128(), Some(5));
         assert_eq!(U::from_i128(-1), None); // unsigned-backed
         assert_eq!(UM::from_i128(u64::MAX as i128 + 1), None); // exceeds u64
+    }
+
+    // A type whose `to_f64` overflows the `f32` range, to check the inherited
+    // `to_f32` default saturates rather than returning `None`.
+    #[derive(Debug, PartialEq)]
+    struct HugeF;
+    impl ToPrimitive for HugeF {
+        fn to_i64(&self) -> Option<i64> {
+            None
+        }
+        fn to_u64(&self) -> Option<u64> {
+            None
+        }
+        fn to_f64(&self) -> Option<f64> {
+            Some(f64::MAX)
+        }
+    }
+
+    #[test]
+    fn default_to_f32_saturates_overflow() {
+        // f64::MAX exceeds f32 range; the inherited default must saturate to
+        // +inf (an admitted conversion), not return None.
+        assert_eq!(HugeF.to_f32(), Some(f32::INFINITY));
     }
 }
