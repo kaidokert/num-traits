@@ -1,11 +1,21 @@
-# num-traits
+# const-num-traits
 
-[![crate](https://img.shields.io/crates/v/num-traits.svg)](https://crates.io/crates/num-traits)
-[![documentation](https://docs.rs/num-traits/badge.svg)](https://docs.rs/num-traits)
-[![minimum rustc 1.60](https://img.shields.io/badge/rustc-1.60+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
-[![build status](https://github.com/rust-num/num-traits/workflows/master/badge.svg)](https://github.com/rust-num/num-traits/actions)
+[![crate](https://img.shields.io/crates/v/const-num-traits.svg)](https://crates.io/crates/const-num-traits)
+[![documentation](https://docs.rs/const-num-traits/badge.svg)](https://docs.rs/const-num-traits)
+[![minimum rustc 1.86](https://img.shields.io/badge/rustc-1.86+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
+[![build status](https://github.com/kaidokert/num-traits/actions/workflows/main.yaml/badge.svg)](https://github.com/kaidokert/num-traits/actions)
 
 Numeric traits for generic mathematics in Rust.
+
+A fork of [`num-traits`](https://github.com/rust-num/num-traits). It:
+
+- compiles to ordinary traits on stable Rust — no nightly required — and on a
+  nightly toolchain the same surface becomes `const trait`, usable in `const`
+  (via the [`c0nst`](https://crates.io/crates/c0nst) macro);
+- exposes newer `core` integer and float operations that `num-traits` yet does not,
+  such as `wide_mul`;
+- is intentionally API-breaking with `num-traits`, to keep the `const` and
+  non-`const` views of the API as close as possible.
 
 ## Usage
 
@@ -13,7 +23,14 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-num-traits = "0.2"
+const-num-traits = "0.1"
+```
+
+Enable the `const trait` surface with the `nightly` feature on a nightly compiler:
+
+```toml
+[dependencies]
+const-num-traits = { version = "0.1", features = ["nightly"] }
 ```
 
 ## Features
@@ -22,8 +39,8 @@ This crate can be used without the standard library (`#![no_std]`) by disabling
 the default `std` feature. Use this in `Cargo.toml`:
 
 ```toml
-[dependencies.num-traits]
-version = "0.2"
+[dependencies.const-num-traits]
+version = "0.1"
 default-features = false
 # features = ["libm"]    # <--- Uncomment if you wish to use `Float` and `Real` without `std`
 ```
@@ -34,13 +51,9 @@ The `FloatCore` trait is always available.  `MulAdd` and `MulAddAssign` for `f32
 and `f64` also require `std` or `libm`, as do implementations of signed and floating-
 point exponents in `Pow`.
 
-## Releases
-
-Release notes are available in [RELEASES.md](RELEASES.md).
-
 ## Compatibility
 
-The `num-traits` crate is tested for rustc 1.60 and greater.
+The `const-num-traits` crate is tested for rustc 1.86 and greater.
 
 ## License
 
