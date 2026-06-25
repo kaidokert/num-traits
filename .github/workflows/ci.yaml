@@ -9,9 +9,7 @@ jobs:
     strategy:
       matrix:
         rust: [
-          1.60.0, # MSRV
-          1.62.0, # has_total_cmp
-          1.74.0, # has_num_saturating
+          1.86.0, # MSRV
           stable,
           beta,
           nightly,
@@ -63,7 +61,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.62.0
+      # `stable` (not the old 1.62 pin): edition 2024 needs a cargo >= 1.85.
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
       - run: cargo fmt --all --check

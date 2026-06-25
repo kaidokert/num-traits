@@ -4,7 +4,15 @@ use core::ops::{Add, Mul};
 #[cfg(has_num_saturating)]
 use core::num::Saturating;
 
+c0nst::c0nst! {
 /// Defines an additive identity element for `Self`.
+///
+/// This is a pure identity-*value* trait: it provides the `0` and a zero-test,
+/// but does **not** require [`Add`](core::ops::Add). The bundling of `Add` is
+/// upstream convention, not a law — `0` is equally the identity under
+/// subtraction (`a - 0 = a`) — so consumers state the operators they actually
+/// use explicitly (`T: Zero + Add`, `T: Zero + Sub`, …). Numeric code that
+/// needs the full operator set takes [`Num`](crate::Num).
 ///
 /// # Laws
 ///
@@ -12,7 +20,7 @@ use core::num::Saturating;
 /// a + 0 = a       ∀ a ∈ Self
 /// 0 + a = a       ∀ a ∈ Self
 /// ```
-pub trait Zero: Sized + Add<Self, Output = Self> {
+pub c0nst trait Zero: Sized {
     /// Returns the additive identity element of `Self`, `0`.
     /// # Purity
     ///
@@ -23,32 +31,44 @@ pub trait Zero: Sized + Add<Self, Output = Self> {
     fn zero() -> Self;
 
     /// Sets `self` to the additive identity element of `Self`, `0`.
-    fn set_zero(&mut self) {
-        *self = Zero::zero();
-    }
+    fn set_zero(&mut self);
 
     /// Returns `true` if `self` is equal to the additive identity.
     fn is_zero(&self) -> bool;
 }
+}
 
 /// Defines an associated constant representing the additive identity element
 /// for `Self`.
-pub trait ConstZero: Zero {
+///
+/// This is a pure constant-carrier: it requires only that `Self` *has* a
+/// compile-time `0`, **not** that it implements [`Zero`] (and hence not
+/// [`Add`](core::ops::Add)). Keeping it decoupled lets capability-restricted
+/// types — e.g. a constant-time integer with bit ops but no arithmetic — supply
+/// the `0` constant that [`PrimBits`](crate::PrimBits) needs without being
+/// forced to implement addition. Numeric types still implement both.
+pub trait ConstZero: Sized {
     /// The additive identity element of `Self`, `0`.
     const ZERO: Self;
 }
 
 macro_rules! zero_impl {
     ($t:ty, $v:expr) => {
-        impl Zero for $t {
+        c0nst::c0nst! {
+        c0nst impl Zero for $t {
             #[inline]
             fn zero() -> $t {
                 $v
             }
             #[inline]
+            fn set_zero(&mut self) {
+                *self = $v;
+            }
+            #[inline]
             fn is_zero(&self) -> bool {
                 *self == $v
             }
+        }
         }
 
         impl ConstZero for $t {
@@ -74,9 +94,10 @@ zero_impl!(i128, 0);
 zero_impl!(f32, 0.0);
 zero_impl!(f64, 0.0);
 
-impl<T: Zero> Zero for Wrapping<T>
+c0nst::c0nst! {
+c0nst impl<T: [c0nst] Zero> Zero for Wrapping<T>
 where
-    Wrapping<T>: Add<Output = Wrapping<T>>,
+    Wrapping<T>: [c0nst] Add<Output = Wrapping<T>>,
 {
     fn is_zero(&self) -> bool {
         self.0.is_zero()
@@ -90,6 +111,7 @@ where
         Wrapping(T::zero())
     }
 }
+}
 
 impl<T: ConstZero> ConstZero for Wrapping<T>
 where
@@ -99,9 +121,10 @@ where
 }
 
 #[cfg(has_num_saturating)]
-impl<T: Zero> Zero for Saturating<T>
+c0nst::c0nst! {
+c0nst impl<T: [c0nst] Zero> Zero for Saturating<T>
 where
-    Saturating<T>: Add<Output = Saturating<T>>,
+    Saturating<T>: [c0nst] Add<Output = Saturating<T>>,
 {
     fn is_zero(&self) -> bool {
         self.0.is_zero()
@@ -115,6 +138,7 @@ where
         Saturating(T::zero())
     }
 }
+}
 
 #[cfg(has_num_saturating)]
 impl<T: ConstZero> ConstZero for Saturating<T>
@@ -124,7 +148,14 @@ where
     const ZERO: Self = Saturating(T::ZERO);
 }
 
+c0nst::c0nst! {
 /// Defines a multiplicative identity element for `Self`.
+///
+/// A pure identity-*value* trait, decoupled from [`Mul`](core::ops::Mul) for the
+/// same reason as [`Zero`]: `1` is equally the identity under division
+/// (`a / 1 = a`), so privileging `Mul` is arbitrary. Consumers state what they
+/// need (`T: One + Mul`, `T: One + Div`, …); full numeric code takes
+/// [`Num`](crate::Num).
 ///
 /// # Laws
 ///
@@ -132,7 +163,7 @@ where
 /// a * 1 = a       ∀ a ∈ Self
 /// 1 * a = a       ∀ a ∈ Self
 /// ```
-pub trait One: Sized + Mul<Self, Output = Self> {
+pub c0nst trait One: Sized {
     /// Returns the multiplicative identity element of `Self`, `1`.
     ///
     /// # Purity
@@ -144,42 +175,42 @@ pub trait One: Sized + Mul<Self, Output = Self> {
     fn one() -> Self;
 
     /// Sets `self` to the multiplicative identity element of `Self`, `1`.
-    fn set_one(&mut self) {
-        *self = One::one();
-    }
+    fn set_one(&mut self);
 
     /// Returns `true` if `self` is equal to the multiplicative identity.
-    ///
-    /// For performance reasons, it's best to implement this manually.
-    /// After a semver bump, this method will be required, and the
-    /// `where Self: PartialEq` bound will be removed.
-    #[inline]
-    fn is_one(&self) -> bool
-    where
-        Self: PartialEq,
-    {
-        *self == Self::one()
-    }
+    fn is_one(&self) -> bool;
+}
 }
 
 /// Defines an associated constant representing the multiplicative identity
 /// element for `Self`.
-pub trait ConstOne: One {
+///
+/// A pure constant-carrier, decoupled from [`One`] (and hence
+/// [`Mul`](core::ops::Mul)) for the same reason as [`ConstZero`]: a type can
+/// supply the compile-time `1` that [`PrimBits`](crate::PrimBits) needs without
+/// implementing multiplication. Numeric types still implement both.
+pub trait ConstOne: Sized {
     /// The multiplicative identity element of `Self`, `1`.
     const ONE: Self;
 }
 
 macro_rules! one_impl {
     ($t:ty, $v:expr) => {
-        impl One for $t {
+        c0nst::c0nst! {
+        c0nst impl One for $t {
             #[inline]
             fn one() -> $t {
                 $v
             }
             #[inline]
+            fn set_one(&mut self) {
+                *self = $v;
+            }
+            #[inline]
             fn is_one(&self) -> bool {
                 *self == $v
             }
+        }
         }
 
         impl ConstOne for $t {
@@ -205,9 +236,10 @@ one_impl!(i128, 1);
 one_impl!(f32, 1.0);
 one_impl!(f64, 1.0);
 
-impl<T: One> One for Wrapping<T>
+c0nst::c0nst! {
+c0nst impl<T: [c0nst] One> One for Wrapping<T>
 where
-    Wrapping<T>: Mul<Output = Wrapping<T>>,
+    Wrapping<T>: [c0nst] Mul<Output = Wrapping<T>>,
 {
     fn set_one(&mut self) {
         self.0.set_one();
@@ -216,6 +248,11 @@ where
     fn one() -> Self {
         Wrapping(T::one())
     }
+
+    fn is_one(&self) -> bool {
+        self.0.is_one()
+    }
+}
 }
 
 impl<T: ConstOne> ConstOne for Wrapping<T>
@@ -226,9 +263,10 @@ where
 }
 
 #[cfg(has_num_saturating)]
-impl<T: One> One for Saturating<T>
+c0nst::c0nst! {
+c0nst impl<T: [c0nst] One> One for Saturating<T>
 where
-    Saturating<T>: Mul<Output = Saturating<T>>,
+    Saturating<T>: [c0nst] Mul<Output = Saturating<T>>,
 {
     fn set_one(&mut self) {
         self.0.set_one();
@@ -237,6 +275,11 @@ where
     fn one() -> Self {
         Saturating(T::one())
     }
+
+    fn is_one(&self) -> bool {
+        self.0.is_one()
+    }
+}
 }
 
 #[cfg(has_num_saturating)]
@@ -249,16 +292,20 @@ where
 
 // Some helper functions provided for backwards compatibility.
 
+c0nst::c0nst! {
 /// Returns the additive identity, `0`.
 #[inline(always)]
-pub fn zero<T: Zero>() -> T {
+pub c0nst fn zero<T: [c0nst] Zero>() -> T {
     Zero::zero()
 }
+}
 
+c0nst::c0nst! {
 /// Returns the multiplicative identity, `1`.
 #[inline(always)]
-pub fn one<T: One>() -> T {
+pub c0nst fn one<T: [c0nst] One>() -> T {
     One::one()
+}
 }
 
 #[test]

@@ -1,17 +1,14 @@
-//! Tests of `num_traits::cast`.
+//! Tests of `const_num_traits::cast`.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use num_traits::cast::*;
-use num_traits::Bounded;
+use const_num_traits::Bounded;
+use const_num_traits::cast::*;
 
 use core::num::{
-    NonZeroI128, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI8, NonZeroIsize, NonZeroU128,
-    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU8, NonZeroUsize,
+    NonZeroI8, NonZeroI16, NonZeroI32, NonZeroI64, NonZeroI128, NonZeroIsize, NonZeroU8,
+    NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize,
 };
-use core::{f32, f64};
-use core::{i128, i16, i32, i64, i8, isize};
-use core::{u128, u16, u32, u64, u8, usize};
 
 use core::fmt::Debug;
 use core::mem;
@@ -26,7 +23,7 @@ fn to_primitive_float() {
     assert_eq!((-f32::MAX as f64).to_f32(), Some(-f32::MAX));
     assert_eq!(f64::INFINITY.to_f32(), Some(f32::INFINITY));
     assert_eq!((f64::NEG_INFINITY).to_f32(), Some(f32::NEG_INFINITY));
-    assert!((f64::NAN).to_f32().map_or(false, |f| f.is_nan()));
+    assert!((f64::NAN).to_f32().is_some_and(|f| f.is_nan()));
 }
 
 #[test]
@@ -78,8 +75,8 @@ fn as_primitive() {
     let x: f32 = (1.625f64).as_();
     assert_eq!(x, 1.625f32);
 
-    let x: f32 = (3.14159265358979323846f64).as_();
-    assert_eq!(x, 3.1415927f32);
+    let x: f32 = core::f64::consts::PI.as_();
+    assert_eq!(x, core::f32::consts::PI);
 
     let x: u8 = (768i16).as_();
     assert_eq!(x, 0);
@@ -546,14 +543,51 @@ fn newtype_from_primitive() {
     #[derive(PartialEq, Debug)]
     struct New<T>(T);
 
-    // minimal impl
+    // `FromPrimitive` no longer ships defaults (the const port stripped them
+    // because `Option::and_then` isn't a const fn); each method delegates
+    // directly to the inner conversion.
     impl<T: FromPrimitive> FromPrimitive for New<T> {
+        fn from_isize(n: isize) -> Option<Self> {
+            T::from_isize(n).map(New)
+        }
+        fn from_i8(n: i8) -> Option<Self> {
+            T::from_i8(n).map(New)
+        }
+        fn from_i16(n: i16) -> Option<Self> {
+            T::from_i16(n).map(New)
+        }
+        fn from_i32(n: i32) -> Option<Self> {
+            T::from_i32(n).map(New)
+        }
         fn from_i64(n: i64) -> Option<Self> {
             T::from_i64(n).map(New)
         }
-
+        fn from_i128(n: i128) -> Option<Self> {
+            T::from_i128(n).map(New)
+        }
+        fn from_usize(n: usize) -> Option<Self> {
+            T::from_usize(n).map(New)
+        }
+        fn from_u8(n: u8) -> Option<Self> {
+            T::from_u8(n).map(New)
+        }
+        fn from_u16(n: u16) -> Option<Self> {
+            T::from_u16(n).map(New)
+        }
+        fn from_u32(n: u32) -> Option<Self> {
+            T::from_u32(n).map(New)
+        }
         fn from_u64(n: u64) -> Option<Self> {
             T::from_u64(n).map(New)
+        }
+        fn from_u128(n: u128) -> Option<Self> {
+            T::from_u128(n).map(New)
+        }
+        fn from_f32(n: f32) -> Option<Self> {
+            T::from_f32(n).map(New)
+        }
+        fn from_f64(n: f64) -> Option<Self> {
+            T::from_f64(n).map(New)
         }
     }
 
@@ -587,14 +621,50 @@ fn newtype_to_primitive() {
     #[derive(PartialEq, Debug)]
     struct New<T>(T);
 
-    // minimal impl
+    // `ToPrimitive` no longer ships defaults (the const port stripped them);
+    // each method delegates directly to the inner conversion.
     impl<T: ToPrimitive> ToPrimitive for New<T> {
+        fn to_isize(&self) -> Option<isize> {
+            self.0.to_isize()
+        }
+        fn to_i8(&self) -> Option<i8> {
+            self.0.to_i8()
+        }
+        fn to_i16(&self) -> Option<i16> {
+            self.0.to_i16()
+        }
+        fn to_i32(&self) -> Option<i32> {
+            self.0.to_i32()
+        }
         fn to_i64(&self) -> Option<i64> {
             self.0.to_i64()
         }
-
+        fn to_i128(&self) -> Option<i128> {
+            self.0.to_i128()
+        }
+        fn to_usize(&self) -> Option<usize> {
+            self.0.to_usize()
+        }
+        fn to_u8(&self) -> Option<u8> {
+            self.0.to_u8()
+        }
+        fn to_u16(&self) -> Option<u16> {
+            self.0.to_u16()
+        }
+        fn to_u32(&self) -> Option<u32> {
+            self.0.to_u32()
+        }
         fn to_u64(&self) -> Option<u64> {
             self.0.to_u64()
+        }
+        fn to_u128(&self) -> Option<u128> {
+            self.0.to_u128()
+        }
+        fn to_f32(&self) -> Option<f32> {
+            self.0.to_f32()
+        }
+        fn to_f64(&self) -> Option<f64> {
+            self.0.to_f64()
         }
     }
 

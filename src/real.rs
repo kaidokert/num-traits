@@ -18,7 +18,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the smallest finite value that this type can represent.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x: f64 = Real::min_value();
@@ -30,7 +30,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the smallest positive, normalized value that this type can represent.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x: f64 = Real::min_positive_value();
@@ -42,7 +42,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns epsilon, a small positive value.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x: f64 = Real::epsilon();
@@ -59,7 +59,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the largest finite value that this type can represent.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x: f64 = Real::max_value();
@@ -70,7 +70,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the largest integer less than or equal to a number.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let f = 3.99;
     /// let g = 3.0;
@@ -83,7 +83,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the smallest integer greater than or equal to a number.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let f = 3.01;
     /// let g = 4.0;
@@ -97,7 +97,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// `0.0`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let f = 3.3;
     /// let g = -3.3;
@@ -110,7 +110,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Return the integer part of a number.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let f = 3.3;
     /// let g = -3.7;
@@ -123,7 +123,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the fractional part of a number.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 3.5;
     /// let y = -3.5;
@@ -139,7 +139,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// number is `Float::nan()`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x = 3.5;
@@ -151,7 +151,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// assert!(abs_difference_x < 1e-10);
     /// assert!(abs_difference_y < 1e-10);
     ///
-    /// assert!(::num_traits::Float::is_nan(f64::NAN.abs()));
+    /// assert!(::const_num_traits::Float::is_nan(f64::NAN.abs()));
     /// ```
     fn abs(self) -> Self;
 
@@ -162,7 +162,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// - `Float::nan()` if the number is `Float::nan()`
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let f = 3.5;
@@ -178,7 +178,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// `Float::infinity()`, and with newer versions of Rust `f64::NAN`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let neg_nan: f64 = -f64::NAN;
@@ -196,7 +196,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// `Float::neg_infinity()`, and with newer versions of Rust `-f64::NAN`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let nan: f64 = f64::NAN;
@@ -217,7 +217,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// the target architecture has a dedicated `fma` CPU instruction.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let m = 10.0;
     /// let x = 4.0;
@@ -233,7 +233,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Take the reciprocal (inverse) of a number, `1/x`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 2.0;
     /// let abs_difference = (x.recip() - (1.0/x)).abs();
@@ -247,7 +247,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Using this function is generally faster than using `powf`
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 2.0;
     /// let abs_difference = (x.powi(2) - x*x).abs();
@@ -259,7 +259,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Raise a number to a real number power.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 2.0;
     /// let abs_difference = (x.powf(2.0) - x*x).abs();
@@ -277,7 +277,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// If the implementing type doesn't support NaN, this method should panic if `self < 0`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let positive = 4.0;
     /// let negative = -4.0;
@@ -285,14 +285,14 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// let abs_difference = (positive.sqrt() - 2.0).abs();
     ///
     /// assert!(abs_difference < 1e-10);
-    /// assert!(::num_traits::Float::is_nan(negative.sqrt()));
+    /// assert!(::const_num_traits::Float::is_nan(negative.sqrt()));
     /// ```
     fn sqrt(self) -> Self;
 
     /// Returns `e^(self)`, (the exponential function).
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let one = 1.0;
     /// // e^1
@@ -308,7 +308,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns `2^(self)`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let f = 2.0;
     ///
@@ -326,7 +326,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// If `self <= 0` and this type does not support a NaN representation, this function should panic.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let one = 1.0;
     /// // e^1
@@ -346,7 +346,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// If `self <= 0` and this type does not support a NaN representation, this function should panic.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let ten = 10.0;
     /// let two = 2.0;
@@ -369,7 +369,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// If `self <= 0` and this type does not support a NaN representation, this function should panic.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let two = 2.0;
     ///
@@ -388,7 +388,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     ///
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let ten = 10.0;
     ///
@@ -428,7 +428,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the maximum of the two numbers.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 1.0;
     /// let y = 2.0;
@@ -440,7 +440,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the minimum of the two numbers.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 1.0;
     /// let y = 2.0;
@@ -455,7 +455,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// * Else: `self - other`
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 3.0;
     /// let y = -3.0;
@@ -471,7 +471,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Take the cubic root of a number.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 8.0;
     ///
@@ -486,7 +486,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// legs of length `x` and `y`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 2.0;
     /// let y = 3.0;
@@ -501,7 +501,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Computes the sine of a number (in radians).
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x = f64::consts::PI/2.0;
@@ -515,7 +515,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Computes the cosine of a number (in radians).
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x = 2.0*f64::consts::PI;
@@ -529,7 +529,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Computes the tangent of a number (in radians).
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x = f64::consts::PI/4.0;
@@ -549,7 +549,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// if the number is outside the range [-1, 1].
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let f = f64::consts::PI / 2.0;
@@ -571,7 +571,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// if the number is outside the range [-1, 1].
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let f = f64::consts::PI / 4.0;
@@ -587,7 +587,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// range [-pi/2, pi/2];
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let f = 1.0;
     ///
@@ -606,7 +606,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// * `y < 0`: `arctan(y/x) - pi` -> `(-pi, -pi/2)`
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let pi = f64::consts::PI;
@@ -631,7 +631,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// `(sin(x), cos(x))`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x = f64::consts::PI/4.0;
@@ -649,7 +649,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// number is close to zero.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 7.0;
     ///
@@ -669,7 +669,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// if `self-1 <= 0`.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let x = f64::consts::E - 1.0;
@@ -684,7 +684,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Hyperbolic sine function.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -702,7 +702,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Hyperbolic cosine function.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -720,7 +720,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Hyperbolic tangent function.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -738,7 +738,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Inverse hyperbolic sine function.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 1.0;
     /// let f = x.sinh().asinh();
@@ -752,7 +752,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Inverse hyperbolic cosine function.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     ///
     /// let x = 1.0;
     /// let f = x.cosh().acosh();
@@ -766,7 +766,7 @@ pub trait Real: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Inverse hyperbolic tangent function.
     ///
     /// ```
-    /// use num_traits::real::Real;
+    /// use const_num_traits::real::Real;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;

@@ -10,13 +10,58 @@
 
 //! Numeric traits for generic mathematics
 //!
+//! ## Constant-time (CT) tiers
+//!
+//! Every operation trait in this crate is classified by how implementable it
+//! is for constant-time integer types (types whose execution time must not
+//! depend on operand *values*):
+//!
+//! - **Tier A — CT-implementable**: branchless on the data; secret values
+//!   flow only through arithmetic/bitwise instructions. Examples: the
+//!   `Wrapping*`/`Overflowing*`/`Carrying*` families, [`PrimBits`],
+//!   [`Midpoint`], [`AbsDiff`], [`CastSigned`], lossy [`Truncate`].
+//! - **Tier B — caller-leaky**: the operation itself can be implemented
+//!   branchlessly, but the `bool`/`Option` return type invites branching on
+//!   secret-derived data at the call site. Examples: the `Checked*` family,
+//!   [`Parity`], [`IsPowerOfTwo`], [`HighestOne`]. With the `ct` cargo
+//!   feature, masked counterparts returning `subtle::Choice`/`CtOption`
+//!   are available in `ops::ct`.
+//! - **Tier C — CT-hostile**: data-dependent control flow, division, or
+//!   data-dependent panics. Examples: everything `Div`/`Rem`-based
+//!   ([`Euclid`], [`DivCeil`], [`Ilog10`], [`NextMultipleOf`]), the
+//!   `Strict*` family (panics on a data-dependent condition),
+//!   [`Num::from_str_radix`].
+//!
+//! **Public-parameter convention**: shift amounts, rotation counts,
+//! exponents and logarithm bases are treated as *public* values — branching
+//! on them does not demote a trait from Tier A/B. If your shift amount is
+//! itself a secret, none of these traits are appropriate as-is.
+//!
+//! The tier of each trait family is noted in its module documentation
+//! under [`ops`]. Rule of thumb maintained by this crate: a Tier-A trait
+//! never has a Tier-C supertrait, and never requires
+//! `PartialEq`/`Ord`/`Div`/`Rem`.
+//!
 //! ## Compatibility
 //!
-//! The `num-traits` crate is tested for rustc 1.60 and greater.
+//! The `const-num-traits` crate is tested for rustc 1.86 and greater.
 
-#![doc(html_root_url = "https://docs.rs/num-traits/0.2")]
+#![doc(html_root_url = "https://docs.rs/const-num-traits/0.1")]
 #![deny(unconditional_recursion)]
+// By-value receivers mirror core's inherent methods, so `is_*` predicates take
+// `self` by value — intentional, though clippy's `wrong_self_convention` flags it.
+#![allow(clippy::wrong_self_convention)]
+// The const parsers (`from_ascii`, the float `from_str_radix`) can't call the
+// non-const `RangeInclusive::contains`, so they spell range checks out longhand.
+#![allow(clippy::manual_range_contains)]
 #![no_std]
+#![cfg_attr(
+    feature = "nightly",
+    feature(const_trait_impl, const_ops, const_cmp, const_destruct)
+)]
+// `int_format_into` is split out under its own feature so a const-traits-only
+// `nightly` build doesn't depend on this unrelated unstable lang feature.
+#![cfg_attr(feature = "nightly-std", feature(int_format_into))]
 
 // Need to explicitly bring the crate in for inherent float methods
 #[cfg(feature = "std")]
@@ -31,23 +76,76 @@ pub use crate::bounds::Bounded;
 #[cfg(any(feature = "std", feature = "libm"))]
 pub use crate::float::Float;
 pub use crate::float::FloatConst;
-// pub use real::{FloatCore, Real}; // NOTE: Don't do this, it breaks `use num_traits::*;`.
-pub use crate::cast::{cast, AsPrimitive, FromPrimitive, NumCast, ToPrimitive};
-pub use crate::identities::{one, zero, ConstOne, ConstZero, One, Zero};
-pub use crate::int::PrimInt;
+// pub use real::{FloatCore, Real}; // NOTE: Don't do this, it breaks `use const_num_traits::*;`.
+pub use crate::cast::{AsPrimitive, FromPrimitive, NumCast, ToPrimitive, cast};
+pub use crate::identities::{ConstOne, ConstZero, One, Zero, one, zero};
+pub use crate::int::{PrimBits, PrimInt};
+pub use crate::ops::bits::{
+    BitWidth, DepositBits, ExtractBits, FunnelShl, FunnelShr, HighestOne, IsolateHighestOne,
+    IsolateLowestOne, LowestOne, ShlExact, ShrExact, UnboundedShl, UnboundedShr,
+};
 pub use crate::ops::bytes::{FromBytes, ToBytes};
+pub use crate::ops::carrying::{BorrowingSub, CarryingAdd, CarryingMul, WideningMul};
 pub use crate::ops::checked::{
-    CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedRem, CheckedShl, CheckedShr, CheckedSub,
+    CheckedAbs, CheckedAdd, CheckedDiv, CheckedMul, CheckedNeg, CheckedPow, CheckedRem, CheckedShl,
+    CheckedShr, CheckedSub,
 };
-pub use crate::ops::euclid::{CheckedEuclid, Euclid};
+pub use crate::ops::clmul::{CarryingCarrylessMul, CarrylessMul, WideningCarrylessMul};
+pub use crate::ops::convert::{
+    AbsDiff, CastSigned, CastUnsigned, CheckedCast, ClampMagnitude, SaturatingCast, StrictCast,
+    Truncate, UnsignedAbs, Widen, WrappingCast,
+};
+#[cfg(feature = "ct")]
+pub use crate::ops::ct::{
+    CtCheckedAdd, CtCheckedMul, CtCheckedNeg, CtCheckedSignedDiff, CtCheckedSub, CtIsPowerOfTwo,
+    CtIsZero, CtParity,
+};
+pub use crate::ops::euclid::{CheckedEuclid, Euclid, OverflowingEuclid, WrappingEuclid};
+pub use crate::ops::float_ops::{
+    Algebraic, Erf, FloatBits, Gamma, Maximum, Minimum, NextDown, NextUp, RoundTiesEven,
+};
+#[cfg(feature = "nightly-std")]
+pub use crate::ops::format_into::{FormatInto, NumBuffer, NumBufferTrait};
+pub use crate::ops::from_ascii::{AsciiErrorKind, AsciiParseError, FromAscii};
 pub use crate::ops::inv::Inv;
-pub use crate::ops::mul_add::{MulAdd, MulAddAssign};
-pub use crate::ops::saturating::{Saturating, SaturatingAdd, SaturatingMul, SaturatingSub};
-pub use crate::ops::wrapping::{
-    WrappingAdd, WrappingMul, WrappingNeg, WrappingShl, WrappingShr, WrappingSub,
+pub use crate::ops::log::{Ilog, Ilog2, Ilog10};
+pub use crate::ops::mixed::{
+    CheckedAddSigned, CheckedAddUnsigned, CheckedSignedDiff, CheckedSubSigned, CheckedSubUnsigned,
+    OverflowingAddSigned, OverflowingAddUnsigned, OverflowingSubSigned, OverflowingSubUnsigned,
+    SaturatingAddSigned, SaturatingAddUnsigned, SaturatingSubSigned, SaturatingSubUnsigned,
+    StrictAddSigned, StrictAddUnsigned, StrictSubSigned, StrictSubUnsigned, WrappingAddSigned,
+    WrappingAddUnsigned, WrappingSubSigned, WrappingSubUnsigned,
 };
-pub use crate::pow::{checked_pow, pow, Pow};
-pub use crate::sign::{abs, abs_sub, signum, Signed, Unsigned};
+pub use crate::ops::mul_add::{MulAdd, MulAddAssign};
+pub use crate::ops::overflowing::{
+    OverflowingAbs, OverflowingAdd, OverflowingDiv, OverflowingMul, OverflowingNeg, OverflowingPow,
+    OverflowingRem, OverflowingShl, OverflowingShr, OverflowingSub,
+};
+pub use crate::ops::parity::Parity;
+pub use crate::ops::pow2::{IsPowerOfTwo, NextPowerOfTwo};
+pub use crate::ops::rounding::{DivCeil, DivExact, DivFloor, Midpoint, MultipleOf, NextMultipleOf};
+pub use crate::ops::saturating::{
+    Saturating, SaturatingAbs, SaturatingAdd, SaturatingDiv, SaturatingMul, SaturatingNeg,
+    SaturatingPow, SaturatingSub,
+};
+pub use crate::ops::sqrt::{CheckedIsqrt, Isqrt};
+pub use crate::ops::strict::{
+    StrictAbs, StrictAdd, StrictDiv, StrictEuclid, StrictMul, StrictNeg, StrictPow, StrictRem,
+    StrictShl, StrictShr, StrictSub,
+};
+#[cfg(feature = "ct")]
+pub use crate::ops::typestate::CtNonZero;
+pub use crate::ops::typestate::{
+    BitIndex, BitIndexOps, DivNonZero, Even, Finite, HasNonZero, NonMin, NonNegative, Odd,
+    Positive, PowerOfTwo, PowerOfTwoOps, TypestateError,
+};
+pub use crate::ops::wrapping::{
+    WrappingAbs, WrappingAdd, WrappingDiv, WrappingMul, WrappingNeg, WrappingPow, WrappingRem,
+    WrappingShl, WrappingShr, WrappingSub,
+};
+pub use crate::personality::{Ct, Nct, Personality, PersonalityMarker, PersonalityTag};
+pub use crate::pow::{Pow, checked_pow, pow};
+pub use crate::sign::{Signed, Signum, Unsigned, abs, abs_sub, signum};
 
 #[macro_use]
 mod macros;
@@ -58,13 +156,70 @@ pub mod float;
 pub mod identities;
 pub mod int;
 pub mod ops;
+pub mod personality;
 pub mod pow;
 pub mod real;
 pub mod sign;
 
+/// One-stop trait import: `use const_num_traits::prelude::*;`
+///
+/// Brings every trait in the crate into scope — both the num-traits-compatible
+/// bundles and the fine-grained modern atoms. This matters after the
+/// bundle-to-supertrait extractions: with only a bundle
+/// imported (e.g. `PrimInt`), method-syntax calls to methods that moved to a
+/// supertrait (e.g. `count_ones` on `PrimBits`) don't resolve on concrete
+/// non-primitive types. Importing the prelude makes that a non-issue.
+pub mod prelude {
+    pub use crate::bounds::*;
+    pub use crate::cast::*;
+    pub use crate::float::*;
+    pub use crate::identities::*;
+    pub use crate::int::*;
+    pub use crate::ops::bits::*;
+    pub use crate::ops::bytes::*;
+    pub use crate::ops::carrying::*;
+    pub use crate::ops::checked::*;
+    pub use crate::ops::clmul::*;
+    pub use crate::ops::convert::*;
+    #[cfg(feature = "ct")]
+    pub use crate::ops::ct::*;
+    pub use crate::ops::euclid::*;
+    pub use crate::ops::float_ops::*;
+    #[cfg(feature = "nightly-std")]
+    pub use crate::ops::format_into::*;
+    pub use crate::ops::from_ascii::*;
+    pub use crate::ops::inv::*;
+    pub use crate::ops::log::*;
+    pub use crate::ops::mixed::*;
+    pub use crate::ops::mul_add::*;
+    pub use crate::ops::overflowing::*;
+    pub use crate::ops::parity::*;
+    pub use crate::ops::pow2::*;
+    pub use crate::ops::rounding::*;
+    pub use crate::personality::*;
+    // typestate *traits* only (for method resolution); the wrapper *types*
+    // (`PowerOfTwo`/`Odd`/`Even`/`Positive`/`NonNegative`) stay crate-root-only,
+    // so the glob doesn't inject those generic names into consumers.
+    pub use crate::ops::saturating::*;
+    pub use crate::ops::sqrt::*;
+    pub use crate::ops::strict::*;
+    #[cfg(feature = "ct")]
+    pub use crate::ops::typestate::CtNonZero;
+    pub use crate::ops::typestate::{BitIndexOps, DivNonZero, HasNonZero, PowerOfTwoOps};
+    pub use crate::ops::wrapping::*;
+    pub use crate::pow::*;
+    #[cfg(any(feature = "std", feature = "libm"))]
+    pub use crate::real::*;
+    pub use crate::sign::*;
+    pub use crate::{
+        FromStrRadix, Num, NumAssign, NumAssignOps, NumAssignRef, NumOps, NumRef, RefNum, RingOps,
+    };
+}
+
+c0nst::c0nst! {
 /// The base trait for numeric types, covering `0` and `1` values,
 /// comparisons, basic numeric operations, and string conversion.
-pub trait Num: PartialEq + Zero + One + NumOps {
+pub c0nst trait Num: [c0nst] PartialEq + [c0nst] Zero + [c0nst] One + [c0nst] NumOps {
     type FromStrRadixErr;
 
     /// Convert from a string and radix (typically `2..=36`).
@@ -72,7 +227,7 @@ pub trait Num: PartialEq + Zero + One + NumOps {
     /// # Examples
     ///
     /// ```rust
-    /// use num_traits::Num;
+    /// use const_num_traits::Num;
     ///
     /// let result = <i32 as Num>::from_str_radix("27", 10);
     /// assert_eq!(result, Ok(27));
@@ -94,73 +249,184 @@ pub trait Num: PartialEq + Zero + One + NumOps {
     /// parsing doesn't make sense for that type.
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr>;
 }
+}
 
+c0nst::c0nst! {
+/// Generic trait for types implementing the division-free basic numeric
+/// operations: addition, subtraction and multiplication.
+///
+/// This is the aggregation to bound on when the type may not expose
+/// division — e.g. constant-time integers, where division is inherently
+/// data-dependent. [`NumOps`] extends it with `Div` and `Rem`.
+///
+/// This is automatically implemented for types which implement the operators.
+pub c0nst trait RingOps<Rhs = Self, Output = Self>:
+    [c0nst] Add<Rhs, Output = Output>
+    + [c0nst] Sub<Rhs, Output = Output>
+    + [c0nst] Mul<Rhs, Output = Output>
+{
+}
+}
+
+c0nst::c0nst! {
+c0nst impl<T, Rhs, Output> RingOps<Rhs, Output> for T where
+    T: [c0nst] Add<Rhs, Output = Output>
+        + [c0nst] Sub<Rhs, Output = Output>
+        + [c0nst] Mul<Rhs, Output = Output>
+{
+}
+}
+
+c0nst::c0nst! {
 /// Generic trait for types implementing basic numeric operations
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumOps<Rhs = Self, Output = Self>:
-    Add<Rhs, Output = Output>
-    + Sub<Rhs, Output = Output>
-    + Mul<Rhs, Output = Output>
-    + Div<Rhs, Output = Output>
-    + Rem<Rhs, Output = Output>
+pub c0nst trait NumOps<Rhs = Self, Output = Self>:
+    [c0nst] RingOps<Rhs, Output>
+    + [c0nst] Div<Rhs, Output = Output>
+    + [c0nst] Rem<Rhs, Output = Output>
 {
 }
-
-impl<T, Rhs, Output> NumOps<Rhs, Output> for T where
-    T: Add<Rhs, Output = Output>
-        + Sub<Rhs, Output = Output>
-        + Mul<Rhs, Output = Output>
-        + Div<Rhs, Output = Output>
-        + Rem<Rhs, Output = Output>
-{
 }
 
+c0nst::c0nst! {
+c0nst impl<T, Rhs, Output> NumOps<Rhs, Output> for T where
+    T: [c0nst] Add<Rhs, Output = Output>
+        + [c0nst] Sub<Rhs, Output = Output>
+        + [c0nst] Mul<Rhs, Output = Output>
+        + [c0nst] Div<Rhs, Output = Output>
+        + [c0nst] Rem<Rhs, Output = Output>
+{
+}
+}
+
+c0nst::c0nst! {
 /// The trait for `Num` types which also implement numeric operations taking
 /// the second operand by reference.
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumRef: Num + for<'r> NumOps<&'r Self> {}
-impl<T> NumRef for T where T: Num + for<'r> NumOps<&'r T> {}
+pub c0nst trait NumRef: [c0nst] Num + for<'r> [c0nst] NumOps<&'r Self> {}
+}
+c0nst::c0nst! {
+c0nst impl<T> NumRef for T where T: [c0nst] Num + for<'r> [c0nst] NumOps<&'r T> {}
+}
 
+c0nst::c0nst! {
 /// The trait for `Num` references which implement numeric operations, taking the
 /// second operand either by value or by reference.
 ///
 /// This is automatically implemented for all types which implement the operators. It covers
 /// every type implementing the operations though, regardless of it being a reference or
 /// related to `Num`.
-pub trait RefNum<Base>: NumOps<Base, Base> + for<'r> NumOps<&'r Base, Base> {}
-impl<T, Base> RefNum<Base> for T where T: NumOps<Base, Base> + for<'r> NumOps<&'r Base, Base> {}
+pub c0nst trait RefNum<Base>: [c0nst] NumOps<Base, Base> + for<'r> [c0nst] NumOps<&'r Base, Base> {}
+}
+c0nst::c0nst! {
+c0nst impl<T, Base> RefNum<Base> for T where T: [c0nst] NumOps<Base, Base> + for<'r> [c0nst] NumOps<&'r Base, Base> {}
+}
 
+c0nst::c0nst! {
 /// Generic trait for types implementing numeric assignment operators (like `+=`).
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumAssignOps<Rhs = Self>:
-    AddAssign<Rhs> + SubAssign<Rhs> + MulAssign<Rhs> + DivAssign<Rhs> + RemAssign<Rhs>
+pub c0nst trait NumAssignOps<Rhs = Self>:
+    [c0nst] AddAssign<Rhs> + [c0nst] SubAssign<Rhs> + [c0nst] MulAssign<Rhs> + [c0nst] DivAssign<Rhs> + [c0nst] RemAssign<Rhs>
 {
 }
-
-impl<T, Rhs> NumAssignOps<Rhs> for T where
-    T: AddAssign<Rhs> + SubAssign<Rhs> + MulAssign<Rhs> + DivAssign<Rhs> + RemAssign<Rhs>
-{
 }
 
+c0nst::c0nst! {
+c0nst impl<T, Rhs> NumAssignOps<Rhs> for T where
+    T: [c0nst] AddAssign<Rhs> + [c0nst] SubAssign<Rhs> + [c0nst] MulAssign<Rhs> + [c0nst] DivAssign<Rhs> + [c0nst] RemAssign<Rhs>
+{
+}
+}
+
+c0nst::c0nst! {
 /// The trait for `Num` types which also implement assignment operators.
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumAssign: Num + NumAssignOps {}
-impl<T> NumAssign for T where T: Num + NumAssignOps {}
+pub c0nst trait NumAssign: [c0nst] Num + [c0nst] NumAssignOps {}
+}
+c0nst::c0nst! {
+c0nst impl<T> NumAssign for T where T: [c0nst] Num + [c0nst] NumAssignOps {}
+}
 
+c0nst::c0nst! {
 /// The trait for `NumAssign` types which also implement assignment operations
 /// taking the second operand by reference.
 ///
 /// This is automatically implemented for types which implement the operators.
-pub trait NumAssignRef: NumAssign + for<'r> NumAssignOps<&'r Self> {}
-impl<T> NumAssignRef for T where T: NumAssign + for<'r> NumAssignOps<&'r T> {}
+pub c0nst trait NumAssignRef: [c0nst] NumAssign + for<'r> [c0nst] NumAssignOps<&'r Self> {}
+}
+c0nst::c0nst! {
+c0nst impl<T> NumAssignRef for T where T: [c0nst] NumAssign + for<'r> [c0nst] NumAssignOps<&'r T> {}
+}
+
+/// Conversion from a string in a given radix.
+///
+/// This is the standalone atom for the parsing capability that [`Num`]
+/// bundles; implement both for full compatibility. (`Num` keeps its own
+/// `FromStrRadixErr` associated type and method because associated types
+/// can't be re-exported through supertraits.)
+///
+/// This is a plain (never-const) trait: string parsing is not
+/// const-evaluable for any of the primitive types today.
+pub trait FromStrRadix: Sized {
+    /// The parse error type.
+    type Err;
+
+    /// Convert from a string and radix (typically `2..=36`); see
+    /// [`Num::from_str_radix`] for the conventions around supported
+    /// radices.
+    fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::Err>;
+}
+
+macro_rules! from_str_radix_atom_impl {
+    ($($t:ty)*) => ($(
+        impl FromStrRadix for $t {
+            type Err = ::core::num::ParseIntError;
+            #[inline]
+            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
+                <$t>::from_str_radix(s, radix)
+            }
+        }
+    )*)
+}
+from_str_radix_atom_impl!(usize u8 u16 u32 u64 u128);
+from_str_radix_atom_impl!(isize i8 i16 i32 i64 i128);
+
+macro_rules! from_str_radix_atom_float_impl {
+    ($($t:ty)*) => ($(
+        impl FromStrRadix for $t {
+            type Err = ParseFloatError;
+            #[inline]
+            fn from_str_radix(s: &str, radix: u32) -> Result<Self, Self::Err> {
+                // reuse the crate's float radix parser through the Num impl
+                <$t as Num>::from_str_radix(s, radix)
+            }
+        }
+    )*)
+}
+
+impl<T: FromStrRadix> FromStrRadix for Wrapping<T> {
+    type Err = T::Err;
+    fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::Err> {
+        T::from_str_radix(str, radix).map(Wrapping)
+    }
+}
+
+#[cfg(has_num_saturating)]
+impl<T: FromStrRadix> FromStrRadix for core::num::Saturating<T> {
+    type Err = T::Err;
+    fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::Err> {
+        T::from_str_radix(str, radix).map(core::num::Saturating)
+    }
+}
 
 macro_rules! int_trait_impl {
     ($name:ident for $($t:ty)*) => ($(
-        impl $name for $t {
+        c0nst::c0nst! {
+        c0nst impl $name for $t {
             type FromStrRadixErr = ::core::num::ParseIntError;
             #[inline]
             fn from_str_radix(s: &str, radix: u32)
@@ -169,11 +435,14 @@ macro_rules! int_trait_impl {
                 <$t>::from_str_radix(s, radix)
             }
         }
+        }
     )*)
 }
 int_trait_impl!(Num for usize u8 u16 u32 u64 u128);
 int_trait_impl!(Num for isize i8 i16 i32 i64 i128);
 
+// Wrapping<T>'s `PartialEq` impl in std isn't const yet, so this stays a
+// non-const impl of the (otherwise const) `Num` trait.
 impl<T: Num> Num for Wrapping<T>
 where
     Wrapping<T>: NumOps,
@@ -184,6 +453,7 @@ where
     }
 }
 
+// Same caveat as Wrapping<T>: no const PartialEq impl in std.
 #[cfg(has_num_saturating)]
 impl<T: Num> Num for core::num::Saturating<T>
 where
@@ -221,7 +491,7 @@ impl fmt::Display for ParseFloatError {
 fn str_to_ascii_lower_eq_str(a: &str, b: &str) -> bool {
     a.len() == b.len()
         && a.bytes().zip(b.bytes()).all(|(a, b)| {
-            let a_to_ascii_lower = a | (((b'A' <= a && a <= b'Z') as u8) << 5);
+            let a_to_ascii_lower = a | ((a.is_ascii_uppercase() as u8) << 5);
             a_to_ascii_lower == b
         })
 }
@@ -229,6 +499,9 @@ fn str_to_ascii_lower_eq_str(a: &str, b: &str) -> bool {
 // FIXME: The standard library from_str_radix on floats was deprecated, so we're stuck
 // with this implementation ourselves until we want to make a breaking change.
 // (would have to drop it from `Num` though)
+//
+// Non-const impl of the const `Num` trait: this parser uses iterators,
+// `Result::map_err`, `?`, and `str::parse`, none of which are const.
 macro_rules! float_trait_impl {
     ($name:ident for $($t:ident)*) => ($(
         impl $name for $t {
@@ -251,15 +524,15 @@ macro_rules! float_trait_impl {
                 if str_to_ascii_lower_eq_str(src, "inf")
                     || str_to_ascii_lower_eq_str(src, "infinity")
                 {
-                    return Ok(core::$t::INFINITY);
+                    return Ok($t::INFINITY);
                 } else if str_to_ascii_lower_eq_str(src, "-inf")
                     || str_to_ascii_lower_eq_str(src, "-infinity")
                 {
-                    return Ok(core::$t::NEG_INFINITY);
+                    return Ok($t::NEG_INFINITY);
                 } else if str_to_ascii_lower_eq_str(src, "nan") {
-                    return Ok(core::$t::NAN);
+                    return Ok($t::NAN);
                 } else if str_to_ascii_lower_eq_str(src, "-nan") {
-                    return Ok(-core::$t::NAN);
+                    return Ok(-$t::NAN);
                 }
 
                 fn slice_shift_char(src: &str) -> Option<(char, &str)> {
@@ -300,15 +573,15 @@ macro_rules! float_trait_impl {
                             // if we've not seen any non-zero digits.
                             if prev_sig != 0.0 {
                                 if is_positive && sig <= prev_sig
-                                    { return Ok(core::$t::INFINITY); }
+                                    { return Ok($t::INFINITY); }
                                 if !is_positive && sig >= prev_sig
-                                    { return Ok(core::$t::NEG_INFINITY); }
+                                    { return Ok($t::NEG_INFINITY); }
 
                                 // Detect overflow by reversing the shift-and-add process
                                 if is_positive && (prev_sig != (sig - digit as $t) / radix as $t)
-                                    { return Ok(core::$t::INFINITY); }
+                                    { return Ok($t::INFINITY); }
                                 if !is_positive && (prev_sig != (sig + digit as $t) / radix as $t)
-                                    { return Ok(core::$t::NEG_INFINITY); }
+                                    { return Ok($t::NEG_INFINITY); }
                             }
                             prev_sig = sig;
                         },
@@ -344,9 +617,9 @@ macro_rules! float_trait_impl {
                                 };
                                 // Detect overflow by comparing to last value
                                 if is_positive && sig < prev_sig
-                                    { return Ok(core::$t::INFINITY); }
+                                    { return Ok($t::INFINITY); }
                                 if !is_positive && sig > prev_sig
-                                    { return Ok(core::$t::NEG_INFINITY); }
+                                    { return Ok($t::NEG_INFINITY); }
                                 prev_sig = sig;
                             },
                             None => match c {
@@ -401,7 +674,9 @@ macro_rules! float_trait_impl {
     )*)
 }
 float_trait_impl!(Num for f32 f64);
+from_str_radix_atom_float_impl!(f32 f64);
 
+c0nst::c0nst! {
 /// A value bounded by a minimum and a maximum
 ///
 ///  If input is less than min then this returns min.
@@ -410,7 +685,7 @@ float_trait_impl!(Num for f32 f64);
 ///
 /// **Panics** in debug mode if `!(min <= max)`.
 #[inline]
-pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
+pub c0nst fn clamp<T: [c0nst] PartialOrd + [c0nst] Destruct>(input: T, min: T, max: T) -> T {
     debug_assert!(min <= max, "min must be less than or equal to max");
     if input < min {
         min
@@ -420,7 +695,9 @@ pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
         input
     }
 }
+}
 
+c0nst::c0nst! {
 /// A value bounded by a minimum value
 ///
 ///  If input is less than min then this returns min.
@@ -430,7 +707,7 @@ pub fn clamp<T: PartialOrd>(input: T, min: T, max: T) -> T {
 /// **Panics** in debug mode if `!(min == min)`. (This occurs if `min` is `NAN`.)
 #[inline]
 #[allow(clippy::eq_op)]
-pub fn clamp_min<T: PartialOrd>(input: T, min: T) -> T {
+pub c0nst fn clamp_min<T: [c0nst] PartialOrd + [c0nst] Destruct>(input: T, min: T) -> T {
     debug_assert!(min == min, "min must not be NAN");
     if input < min {
         min
@@ -438,7 +715,9 @@ pub fn clamp_min<T: PartialOrd>(input: T, min: T) -> T {
         input
     }
 }
+}
 
+c0nst::c0nst! {
 /// A value bounded by a maximum value
 ///
 ///  If input is greater than max then this returns max.
@@ -448,13 +727,14 @@ pub fn clamp_min<T: PartialOrd>(input: T, min: T) -> T {
 /// **Panics** in debug mode if `!(max == max)`. (This occurs if `max` is `NAN`.)
 #[inline]
 #[allow(clippy::eq_op)]
-pub fn clamp_max<T: PartialOrd>(input: T, max: T) -> T {
+pub c0nst fn clamp_max<T: [c0nst] PartialOrd + [c0nst] Destruct>(input: T, max: T) -> T {
     debug_assert!(max == max, "max must not be NAN");
     if input > max {
         max
     } else {
         input
     }
+}
 }
 
 #[test]
@@ -476,44 +756,44 @@ fn clamp_test() {
     assert_eq!(-1.0, clamp_min(-2.0, -1.0));
     assert_eq!(-1.0, clamp_max(1.0, -1.0));
     assert_eq!(-2.0, clamp_max(-2.0, -1.0));
-    assert!(clamp(::core::f32::NAN, -1.0, 1.0).is_nan());
-    assert!(clamp_min(::core::f32::NAN, 1.0).is_nan());
-    assert!(clamp_max(::core::f32::NAN, 1.0).is_nan());
+    assert!(clamp(f32::NAN, -1.0, 1.0).is_nan());
+    assert!(clamp_min(f32::NAN, 1.0).is_nan());
+    assert!(clamp_max(f32::NAN, 1.0).is_nan());
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_nan_min() {
-    clamp(0., ::core::f32::NAN, 1.);
+    clamp(0., f32::NAN, 1.);
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_nan_max() {
-    clamp(0., -1., ::core::f32::NAN);
+    clamp(0., -1., f32::NAN);
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_nan_min_max() {
-    clamp(0., ::core::f32::NAN, ::core::f32::NAN);
+    clamp(0., f32::NAN, f32::NAN);
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_min_nan_min() {
-    clamp_min(0., ::core::f32::NAN);
+    clamp_min(0., f32::NAN);
 }
 
 #[test]
 #[should_panic]
 #[cfg(debug_assertions)]
 fn clamp_max_nan_max() {
-    clamp_max(0., ::core::f32::NAN);
+    clamp_max(0., f32::NAN);
 }
 
 #[test]
@@ -530,32 +810,32 @@ fn from_str_radix_unwrap() {
 #[test]
 fn from_str_radix_multi_byte_fail() {
     // Ensure parsing doesn't panic, even on invalid sign characters
-    assert!(f32::from_str_radix("™0.2", 10).is_err());
+    assert!(<f32 as Num>::from_str_radix("™0.2", 10).is_err());
 
     // Even when parsing the exponent sign
-    assert!(f32::from_str_radix("0.2E™1", 10).is_err());
+    assert!(<f32 as Num>::from_str_radix("0.2E™1", 10).is_err());
 }
 
 #[test]
 fn from_str_radix_ignore_case() {
     assert_eq!(
-        f32::from_str_radix("InF", 16).unwrap(),
-        ::core::f32::INFINITY
+        <f32 as Num>::from_str_radix("InF", 16).unwrap(),
+        f32::INFINITY
     );
     assert_eq!(
-        f32::from_str_radix("InfinitY", 16).unwrap(),
-        ::core::f32::INFINITY
+        <f32 as Num>::from_str_radix("InfinitY", 16).unwrap(),
+        f32::INFINITY
     );
     assert_eq!(
-        f32::from_str_radix("-InF", 8).unwrap(),
-        ::core::f32::NEG_INFINITY
+        <f32 as Num>::from_str_radix("-InF", 8).unwrap(),
+        f32::NEG_INFINITY
     );
     assert_eq!(
-        f32::from_str_radix("-InfinitY", 8).unwrap(),
-        ::core::f32::NEG_INFINITY
+        <f32 as Num>::from_str_radix("-InfinitY", 8).unwrap(),
+        f32::NEG_INFINITY
     );
-    assert!(f32::from_str_radix("nAn", 4).unwrap().is_nan());
-    assert!(f32::from_str_radix("-nAn", 4).unwrap().is_nan());
+    assert!(<f32 as Num>::from_str_radix("nAn", 4).unwrap().is_nan());
+    assert!(<f32 as Num>::from_str_radix("-nAn", 4).unwrap().is_nan());
 }
 
 #[test]
@@ -571,7 +851,7 @@ fn wrapping_from_str_radix() {
         ($($t:ty)+) => {
             $(
                 for &(s, r) in &[("42", 10), ("42", 2), ("-13.0", 10), ("foo", 10)] {
-                    let w = Wrapping::<$t>::from_str_radix(s, r).map(|w| w.0);
+                    let w = <Wrapping<$t> as Num>::from_str_radix(s, r).map(|w| w.0);
                     assert_eq!(w, <$t as Num>::from_str_radix(s, r));
                 }
             )+
@@ -596,7 +876,7 @@ fn saturating_from_str_radix() {
         ($($t:ty)+) => {
             $(
                 for &(s, r) in &[("42", 10), ("42", 2), ("-13.0", 10), ("foo", 10)] {
-                    let w = core::num::Saturating::<$t>::from_str_radix(s, r).map(|w| w.0);
+                    let w = <core::num::Saturating<$t> as Num>::from_str_radix(s, r).map(|w| w.0);
                     assert_eq!(w, <$t as Num>::from_str_radix(s, r));
                 }
             )+

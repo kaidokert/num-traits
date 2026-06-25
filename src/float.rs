@@ -16,7 +16,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T) {
@@ -33,7 +33,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T) {
@@ -50,7 +50,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     ///
     /// fn check<T: FloatCore>() {
     ///     let n = T::nan();
@@ -67,7 +67,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(n: T) {
@@ -86,7 +86,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T) {
@@ -103,7 +103,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T) {
@@ -120,7 +120,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T) {
@@ -137,7 +137,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T) {
@@ -154,7 +154,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, p: bool) {
@@ -177,7 +177,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, p: bool) {
@@ -201,7 +201,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, p: bool) {
@@ -224,7 +224,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, p: bool) {
@@ -245,7 +245,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// Returns `true` if the number is [subnormal].
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::f64;
     ///
     /// let min = f64::MIN_POSITIVE; // 2.2250738585072014e-308_f64
@@ -275,7 +275,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     /// use std::num::FpCategory;
     ///
@@ -297,7 +297,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T) {
@@ -331,7 +331,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T) {
@@ -365,7 +365,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T) {
@@ -389,11 +389,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
         if f.is_nan() || f.is_zero() {
             self
         } else if self > Self::zero() {
-            if f < h {
-                self - f
-            } else {
-                self - f + one
-            }
+            if f < h { self - f } else { self - f + one }
         } else if -f < h {
             self - f
         } else {
@@ -406,7 +402,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T) {
@@ -426,11 +422,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     #[inline]
     fn trunc(self) -> Self {
         let f = self.fract();
-        if f.is_nan() {
-            self
-        } else {
-            self - f
-        }
+        if f.is_nan() { self } else { self - f }
     }
 
     /// Returns the fractional part of a number.
@@ -438,7 +430,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T) {
@@ -470,7 +462,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T) {
@@ -504,7 +496,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T) {
@@ -535,7 +527,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, p: bool) {
@@ -562,7 +554,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, p: bool) {
@@ -591,7 +583,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T, min: T) {
@@ -611,11 +603,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
         if other.is_nan() {
             return self;
         }
-        if self < other {
-            self
-        } else {
-            other
-        }
+        if self < other { self } else { other }
     }
 
     /// Returns the maximum of the two numbers.
@@ -625,7 +613,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T, max: T) {
@@ -645,11 +633,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
         if other.is_nan() {
             return self;
         }
-        if self > other {
-            self
-        } else {
-            other
-        }
+        if self > other { self } else { other }
     }
 
     /// A value bounded by a minimum and a maximum
@@ -663,7 +647,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     ///
     /// fn check<T: FloatCore>(val: T, min: T, max: T, expected: T) {
     ///     assert!(val.clamp(min, max) == expected);
@@ -687,7 +671,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, y: T) {
@@ -712,7 +696,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     ///
     /// fn check<T: FloatCore>(x: T, exp: i32, powi: T) {
     ///     assert!(x.powi(exp) == powi);
@@ -741,7 +725,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(rad: T, deg: T) {
@@ -760,7 +744,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(deg: T, rad: T) {
@@ -780,7 +764,7 @@ pub trait FloatCore: Num + NumCast + Neg<Output = Self> + PartialOrd + Copy {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::float::FloatCore;
+    /// use const_num_traits::float::FloatCore;
     /// use std::{f32, f64};
     ///
     /// fn check<T: FloatCore>(x: T, m: u64, e: i16, s:i8) {
@@ -933,7 +917,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the `NaN` value.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let nan: f32 = Float::nan();
     ///
@@ -943,7 +927,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the infinite value.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f32;
     ///
     /// let infinity: f32 = Float::infinity();
@@ -956,7 +940,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the negative infinite value.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f32;
     ///
     /// let neg_infinity: f32 = Float::neg_infinity();
@@ -969,7 +953,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns `-0.0`.
     ///
     /// ```
-    /// use num_traits::{Zero, Float};
+    /// use const_num_traits::{Zero, Float};
     ///
     /// let inf: f32 = Float::infinity();
     /// let zero: f32 = Zero::zero();
@@ -984,7 +968,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the smallest finite value that this type can represent.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x: f64 = Float::min_value();
@@ -996,7 +980,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the smallest positive, normalized value that this type can represent.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x: f64 = Float::min_positive_value();
@@ -1008,7 +992,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns epsilon, a small positive value.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x: f64 = Float::epsilon();
@@ -1027,7 +1011,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the largest finite value that this type can represent.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x: f64 = Float::max_value();
@@ -1038,7 +1022,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns `true` if this value is `NaN` and false otherwise.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let nan = f64::NAN;
@@ -1053,7 +1037,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// false otherwise.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f32;
     ///
     /// let f = 7.0f32;
@@ -1072,7 +1056,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns `true` if this number is neither infinite nor `NaN`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f32;
     ///
     /// let f = 7.0f32;
@@ -1092,7 +1076,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// [subnormal][subnormal], or `NaN`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f32;
     ///
     /// let min = f32::MIN_POSITIVE; // 1.17549435e-38f32
@@ -1115,7 +1099,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns `true` if the number is [subnormal].
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let min = f64::MIN_POSITIVE; // 2.2250738585072014e-308_f64
@@ -1143,7 +1127,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// predicate instead.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::num::FpCategory;
     /// use std::f32;
     ///
@@ -1158,7 +1142,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the largest integer less than or equal to a number.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let f = 3.99;
     /// let g = 3.0;
@@ -1171,7 +1155,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the smallest integer greater than or equal to a number.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let f = 3.01;
     /// let g = 4.0;
@@ -1185,7 +1169,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// `0.0`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let f = 3.3;
     /// let g = -3.3;
@@ -1198,7 +1182,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Return the integer part of a number.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let f = 3.3;
     /// let g = -3.7;
@@ -1211,7 +1195,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the fractional part of a number.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 3.5;
     /// let y = -3.5;
@@ -1227,7 +1211,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// number is `Float::nan()`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x = 3.5;
@@ -1250,7 +1234,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// - `Float::nan()` if the number is `Float::nan()`
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let f = 3.5;
@@ -1266,7 +1250,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// `Float::infinity()`, and `Float::nan()`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let nan: f64 = f64::NAN;
@@ -1286,7 +1270,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// `Float::neg_infinity()`, and `-Float::nan()`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let nan: f64 = f64::NAN;
@@ -1309,7 +1293,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// the target architecture has a dedicated `fma` CPU instruction.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let m = 10.0;
     /// let x = 4.0;
@@ -1324,7 +1308,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Take the reciprocal (inverse) of a number, `1/x`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 2.0;
     /// let abs_difference = (x.recip() - (1.0/x)).abs();
@@ -1338,7 +1322,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Using this function is generally faster than using `powf`
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 2.0;
     /// let abs_difference = (x.powi(2) - x*x).abs();
@@ -1350,7 +1334,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Raise a number to a floating point power.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 2.0;
     /// let abs_difference = (x.powf(2.0) - x*x).abs();
@@ -1364,7 +1348,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns NaN if `self` is a negative number.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let positive = 4.0;
     /// let negative = -4.0;
@@ -1379,7 +1363,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns `e^(self)`, (the exponential function).
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let one = 1.0;
     /// // e^1
@@ -1395,7 +1379,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns `2^(self)`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let f = 2.0;
     ///
@@ -1409,7 +1393,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the natural logarithm of the number.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let one = 1.0;
     /// // e^1
@@ -1425,7 +1409,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the logarithm of the number with respect to an arbitrary base.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let ten = 10.0;
     /// let two = 2.0;
@@ -1444,7 +1428,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the base 2 logarithm of the number.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let two = 2.0;
     ///
@@ -1458,7 +1442,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the base 10 logarithm of the number.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let ten = 10.0;
     ///
@@ -1508,7 +1492,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the maximum of the two numbers.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 1.0;
     /// let y = 2.0;
@@ -1520,7 +1504,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Returns the minimum of the two numbers.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 1.0;
     /// let y = 2.0;
@@ -1534,7 +1518,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// **Panics** in debug mode if `!(min <= max)`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 1.0;
     /// let y = 2.0;
@@ -1552,7 +1536,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// * Else: `self - other`
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 3.0;
     /// let y = -3.0;
@@ -1568,7 +1552,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Take the cubic root of a number.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 8.0;
     ///
@@ -1583,7 +1567,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// legs of length `x` and `y`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 2.0;
     /// let y = 3.0;
@@ -1598,7 +1582,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Computes the sine of a number (in radians).
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x = f64::consts::PI/2.0;
@@ -1612,7 +1596,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Computes the cosine of a number (in radians).
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x = 2.0*f64::consts::PI;
@@ -1626,7 +1610,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Computes the tangent of a number (in radians).
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x = f64::consts::PI/4.0;
@@ -1641,7 +1625,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// [-1, 1].
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let f = f64::consts::PI / 2.0;
@@ -1658,7 +1642,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// [-1, 1].
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let f = f64::consts::PI / 4.0;
@@ -1674,7 +1658,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// range [-pi/2, pi/2];
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let f = 1.0;
     ///
@@ -1693,7 +1677,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// * `y < 0`: `arctan(y/x) - pi` -> `(-pi, -pi/2)`
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let pi = f64::consts::PI;
@@ -1718,7 +1702,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// `(sin(x), cos(x))`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x = f64::consts::PI/4.0;
@@ -1736,7 +1720,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// number is close to zero.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 7.0;
     ///
@@ -1751,7 +1735,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// the operations were performed separately.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let x = f64::consts::E - 1.0;
@@ -1766,7 +1750,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Hyperbolic sine function.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -1784,7 +1768,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Hyperbolic cosine function.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -1802,7 +1786,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Hyperbolic tangent function.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -1820,7 +1804,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Inverse hyperbolic sine function.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 1.0;
     /// let f = x.sinh().asinh();
@@ -1834,7 +1818,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Inverse hyperbolic cosine function.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let x = 1.0;
     /// let f = x.cosh().acosh();
@@ -1848,7 +1832,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// Inverse hyperbolic tangent function.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     /// use std::f64;
     ///
     /// let e = f64::consts::E;
@@ -1864,7 +1848,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// The original number can be recovered by `sign * mantissa * 2 ^ exponent`.
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let num = 42_f32;
     ///
@@ -1891,7 +1875,7 @@ pub trait Float: Num + Copy + NumCast + PartialOrd + Neg<Output = Self> {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::Float;
+    /// use const_num_traits::Float;
     ///
     /// let f = 3.5_f32;
     ///
@@ -2199,9 +2183,9 @@ macro_rules! float_const_impl {
         impl FloatConst for $T {
             constant! {
                 $( $constant() -> $T::consts::$constant; )+
-                TAU() -> 6.28318530717958647692528676655900577;
-                LOG10_2() -> 0.301029995663981195213738894724493027;
-                LOG2_10() -> 3.32192809488736234787031942948939018;
+                TAU() -> $T::consts::TAU;
+                LOG10_2() -> $T::consts::LOG10_2;
+                LOG2_10() -> $T::consts::LOG2_10;
             }
         }
     );
@@ -2277,7 +2261,7 @@ pub trait TotalOrder {
     ///
     /// # Examples
     /// ```
-    /// use num_traits::float::TotalOrder;
+    /// use const_num_traits::float::TotalOrder;
     /// use std::cmp::Ordering;
     /// use std::{f32, f64};
     ///
@@ -2372,10 +2356,7 @@ mod tests {
     fn to_degrees_rounding() {
         use crate::float::FloatCore;
 
-        assert_eq!(
-            FloatCore::to_degrees(1_f32),
-            57.2957795130823208767981548141051703
-        );
+        assert_eq!(FloatCore::to_degrees(1_f32), 57.295_78);
     }
 
     #[test]
@@ -2384,12 +2365,12 @@ mod tests {
         use crate::float::{Float, FloatConst};
 
         fn check<F: Float + FloatConst>(diff: F) {
-            let _2 = F::from(2.0).unwrap();
-            assert!((F::LOG10_2() - F::log10(_2)).abs() < diff);
+            let two = F::from(2.0).unwrap();
+            assert!((F::LOG10_2() - F::log10(two)).abs() < diff);
             assert!((F::LOG10_2() - F::LN_2() / F::LN_10()).abs() < diff);
 
-            let _10 = F::from(10.0).unwrap();
-            assert!((F::LOG2_10() - F::log2(_10)).abs() < diff);
+            let ten = F::from(10.0).unwrap();
+            assert!((F::LOG2_10() - F::log2(ten)).abs() < diff);
             assert!((F::LOG2_10() - F::LN_10() / F::LN_2()).abs() < diff);
         }
 

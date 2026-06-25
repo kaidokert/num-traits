@@ -12,7 +12,7 @@ pub trait Pow<RHS> {
     /// # Examples
     ///
     /// ```
-    /// use num_traits::Pow;
+    /// use const_num_traits::Pow;
     /// assert_eq!(Pow::pow(10u32, 2u32), 100);
     /// ```
     fn pow(self, rhs: RHS) -> Self::Output;
@@ -169,7 +169,7 @@ mod float_impls {
 /// # Example
 ///
 /// ```rust
-/// use num_traits::pow;
+/// use const_num_traits::pow;
 ///
 /// assert_eq!(pow(2i8, 4), 16);
 /// assert_eq!(pow(6u8, 3), 216);
@@ -209,7 +209,7 @@ pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> 
 /// # Example
 ///
 /// ```rust
-/// use num_traits::checked_pow;
+/// use const_num_traits::checked_pow;
 ///
 /// assert_eq!(checked_pow(2i8, 4), Some(16));
 /// assert_eq!(checked_pow(7i8, 8), None);
@@ -217,13 +217,16 @@ pub fn pow<T: Clone + One + Mul<T, Output = T>>(mut base: T, mut exp: usize) -> 
 /// assert_eq!(checked_pow(0u32, 0), Some(1)); // Be aware if this case affect you
 /// ```
 #[inline]
-pub fn checked_pow<T: Clone + One + CheckedMul>(mut base: T, mut exp: usize) -> Option<T> {
+pub fn checked_pow<T: Clone + One + CheckedMul + core::ops::Mul<Output = T>>(
+    mut base: T,
+    mut exp: usize,
+) -> Option<T> {
     if exp == 0 {
         return Some(T::one());
     }
 
     while exp & 1 == 0 {
-        base = base.checked_mul(&base)?;
+        base = base.clone().checked_mul(base)?;
         exp >>= 1;
     }
     if exp == 1 {
@@ -233,9 +236,9 @@ pub fn checked_pow<T: Clone + One + CheckedMul>(mut base: T, mut exp: usize) -> 
     let mut acc = base.clone();
     while exp > 1 {
         exp >>= 1;
-        base = base.checked_mul(&base)?;
+        base = base.clone().checked_mul(base)?;
         if exp & 1 == 1 {
-            acc = acc.checked_mul(&base)?;
+            acc = acc.checked_mul(base.clone())?;
         }
     }
     Some(acc)
