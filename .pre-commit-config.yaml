@@ -1,3 +1,6 @@
+# Fast checks run on commit and re-run in CI. Cross-compilation, the
+# beta/nightly toolchains, and the const surface are too heavy for a commit
+# hook and live in .github/workflows/ci.yaml instead.
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
@@ -13,9 +16,30 @@ repos:
         args: ["--fix=lf"]
     -   id: fix-byte-order-marker
 
--   repo: https://github.com/doublify/pre-commit-rust
-    rev: v1.0
+# Feature-specific checks against the installed toolchain.
+-   repo: local
     hooks:
-    -   id: fmt
-    -   id: cargo-check
-    -   id: clippy
+    -   id: cargo-fmt
+        name: cargo fmt --check
+        entry: cargo fmt --all --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+    -   id: cargo-clippy
+        name: cargo clippy (std libm ct, -D warnings)
+        entry: cargo clippy --all-targets --no-default-features --features "std libm ct" -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+    -   id: cargo-clippy-no-std
+        name: cargo clippy (no_std libm ct, -D warnings)
+        entry: cargo clippy --no-default-features --features "libm ct" -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+    -   id: cargo-test
+        name: cargo test (std libm ct)
+        entry: cargo test --no-default-features --features "std libm ct"
+        language: system
+        types: [rust]
+        pass_filenames: false

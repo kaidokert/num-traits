@@ -1,83 +1,81 @@
 name: CI
-on: merge_group
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  merge_group:
+  schedule:
+    - cron: '0 0 * * 0' # 00:00 Sunday
 
 jobs:
+
+  gate:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - uses: pre-commit/action@v3.0.1
 
   test:
     name: Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        rust: [
-          1.86.0, # MSRV
-          stable,
-          beta,
-          nightly,
-        ]
+        rust:
+          - 1.86.0 # MSRV
+          - stable
+          - beta
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        if: startsWith(matrix.rust, '1')
-        with:
-          path: ~/.cargo/registry/index
-          key: cargo-${{ matrix.rust }}-git-index
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-      - run: cargo build
-        env:
-          # https://github.com/rust-lang/cargo/issues/10303
-          CARGO_NET_GIT_FETCH_WITH_CLI: true
-      - run: ./ci/test_full.sh
+      - run: cargo test
+      - run: cargo test --no-default-features
+      - run: cargo test --no-default-features --features "std libm ct"
+      - run: cargo test --no-default-features --features "libm ct"
 
-  # i586 presents floating point challenges for lack of SSE/SSE2
-  i586:
-    name: Test (i586)
+  nightly:
+    name: Nightly (const surface)
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          sudo apt-get update
-          sudo apt-get install gcc-multilib
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          target: i586-unknown-linux-gnu
-      - run: cargo test --target i586-unknown-linux-gnu --all-features
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: cargo test --features "nightly"
+      - run: cargo test --features "std libm ct nightly"
 
-  # try a target that doesn't have std at all
-  no_std:
-    name: No Std
+  cross:
+    name: Cross
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          target: thumbv6m-none-eabi
+          targets: i586-unknown-linux-gnu, thumbv6m-none-eabi
+      - run: sudo apt-get update && sudo apt-get install -y gcc-multilib
+      # i586 exercises the soft-float paths that SSE hides. The feature set is
+      # spelled out because `--all-features` enables `nightly`, which needs an
+      # unstable toolchain.
+      - run: cargo test --target i586-unknown-linux-gnu --no-default-features --features "std libm ct"
       - run: cargo build --target thumbv6m-none-eabi --no-default-features
       - run: cargo build --target thumbv6m-none-eabi --no-default-features --features libm
+      - run: cargo build --target thumbv6m-none-eabi --no-default-features --features ct
 
-  fmt:
-    name: Format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      # `stable` (not the old 1.62 pin): edition 2024 needs a cargo >= 1.85.
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-      - run: cargo fmt --all --check
-
-  # One job that "summarizes" the success state of this pipeline. This can then be added to branch
-  # protection, rather than having to add each job separately.
   success:
     name: Success
     runs-on: ubuntu-latest
-    needs: [test, i586, no_std, fmt]
-    # Github branch protection is exceedingly silly and treats "jobs skipped because a dependency
-    # failed" as success. So we have to do some contortions to ensure the job fails if any of its
-    # dependencies fails.
-    if: always() # make sure this is never "skipped"
+    needs: [gate, test, nightly, cross]
+    # A single required check for branch protection. `if: always()` and the
+    # explicit result scan are needed because GitHub counts a job skipped by a
+    # failed dependency as success.
+    if: always()
     steps:
-      # Manually check the status of all dependencies. `if: failure()` does not work.
       - name: check if any dependency failed
         run: jq --exit-status 'all(.result == "success")' <<< '${{ toJson(needs) }}'

@@ -10,8 +10,7 @@ repository = "https://github.com/kaidokert/num-traits"
 name = "const-num-traits"
 version = "0.1.0"
 readme = "README.md"
-build = "build.rs"
-exclude = ["/ci/*", "/.github/*"]
+exclude = ["/.github/*", "/.pre-commit-config.yaml"]
 edition = "2024"
 rust-version = "1.86"
 
@@ -29,11 +28,4 @@ default = ["std"]
 libm = ["dep:libm"]
 std = []
 nightly = ["c0nst/nightly"]
-# nightly + exact mirrors of unstable std APIs (e.g. `FormatInto` over
-# `core::fmt::NumBuffer`). Kept separate from `nightly` so const-traits-only
-# builds aren't exposed to churn in the `int_format_into` lang feature.
-nightly-std = ["nightly"]
 ct = ["dep:subtle"]
-
-[build-dependencies]
-autocfg = "1.2"

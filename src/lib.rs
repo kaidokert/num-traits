@@ -59,9 +59,6 @@
     feature = "nightly",
     feature(const_trait_impl, const_ops, const_cmp, const_destruct)
 )]
-// `int_format_into` is split out under its own feature so a const-traits-only
-// `nightly` build doesn't depend on this unrelated unstable lang feature.
-#![cfg_attr(feature = "nightly-std", feature(int_format_into))]
 
 // Need to explicitly bring the crate in for inherent float methods
 #[cfg(feature = "std")]
@@ -104,8 +101,6 @@ pub use crate::ops::euclid::{CheckedEuclid, Euclid, OverflowingEuclid, WrappingE
 pub use crate::ops::float_ops::{
     Algebraic, Erf, FloatBits, Gamma, Maximum, Minimum, NextDown, NextUp, RoundTiesEven,
 };
-#[cfg(feature = "nightly-std")]
-pub use crate::ops::format_into::{FormatInto, NumBuffer, NumBufferTrait};
 pub use crate::ops::from_ascii::{AsciiErrorKind, AsciiParseError, FromAscii};
 pub use crate::ops::inv::Inv;
 pub use crate::ops::log::{Ilog, Ilog2, Ilog10};
@@ -185,8 +180,6 @@ pub mod prelude {
     pub use crate::ops::ct::*;
     pub use crate::ops::euclid::*;
     pub use crate::ops::float_ops::*;
-    #[cfg(feature = "nightly-std")]
-    pub use crate::ops::format_into::*;
     pub use crate::ops::from_ascii::*;
     pub use crate::ops::inv::*;
     pub use crate::ops::log::*;
@@ -415,7 +408,6 @@ impl<T: FromStrRadix> FromStrRadix for Wrapping<T> {
     }
 }
 
-#[cfg(has_num_saturating)]
 impl<T: FromStrRadix> FromStrRadix for core::num::Saturating<T> {
     type Err = T::Err;
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::Err> {
@@ -454,7 +446,6 @@ where
 }
 
 // Same caveat as Wrapping<T>: no const PartialEq impl in std.
-#[cfg(has_num_saturating)]
 impl<T: Num> Num for core::num::Saturating<T>
 where
     core::num::Saturating<T>: NumOps,
@@ -862,7 +853,6 @@ fn wrapping_from_str_radix() {
 }
 
 #[test]
-#[cfg(has_num_saturating)]
 fn saturating_is_num() {
     fn require_num<T: Num>(_: &T) {}
     require_num(&core::num::Saturating(42_u32));
@@ -870,7 +860,6 @@ fn saturating_is_num() {
 }
 
 #[test]
-#[cfg(has_num_saturating)]
 fn saturating_from_str_radix() {
     macro_rules! test_saturating_from_str_radix {
         ($($t:ty)+) => {
