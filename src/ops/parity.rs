@@ -2,7 +2,7 @@
 //!
 //! std has no inherent `is_odd`/`is_even` (they live in `num-integer`'s
 //! `Integer` bundle); this is the atom version. Unlike a blanket impl over
-//! `BitAnd + One + PartialEq + Clone` (modmath's current fallback shape),
+//! `BitAnd + One + PartialEq + Clone` (the usual generic fallback shape),
 //! a per-type trait needs no `PartialEq`/`Clone` bounds — important both
 //! for constant-time types that deliberately don't expose `PartialEq` and
 //! for multi-limb bigints, which can answer from the lowest limb alone

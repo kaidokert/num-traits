@@ -46,7 +46,6 @@
 //!
 //! The `const-num-traits` crate is tested for rustc 1.86 and greater.
 
-#![doc(html_root_url = "https://docs.rs/const-num-traits/0.1")]
 #![deny(unconditional_recursion)]
 // By-value receivers mirror core's inherent methods, so `is_*` predicates take
 // `self` by value — intentional, though clippy's `wrong_self_convention` flags it.
@@ -59,6 +58,9 @@
     feature = "nightly",
     feature(const_trait_impl, const_ops, const_cmp, const_destruct)
 )]
+// docs.rs sets `--cfg docsrs`; enable `doc(cfg(...))` so feature-gated items
+// (e.g. the `ct` module) render with a "Available on crate feature …" label.
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 // Need to explicitly bring the crate in for inherent float methods
 #[cfg(feature = "std")]
@@ -93,6 +95,7 @@ pub use crate::ops::convert::{
     Truncate, UnsignedAbs, Widen, WrappingCast,
 };
 #[cfg(feature = "ct")]
+#[cfg_attr(docsrs, doc(cfg(feature = "ct")))]
 pub use crate::ops::ct::{
     CtCheckedAdd, CtCheckedMul, CtCheckedNeg, CtCheckedSignedDiff, CtCheckedSub, CtIsPowerOfTwo,
     CtIsZero, CtParity,
@@ -129,6 +132,7 @@ pub use crate::ops::strict::{
     StrictShl, StrictShr, StrictSub,
 };
 #[cfg(feature = "ct")]
+#[cfg_attr(docsrs, doc(cfg(feature = "ct")))]
 pub use crate::ops::typestate::CtNonZero;
 pub use crate::ops::typestate::{
     BitIndex, BitIndexOps, DivNonZero, Even, Finite, HasNonZero, NonMin, NonNegative, Odd,
@@ -177,6 +181,7 @@ pub mod prelude {
     pub use crate::ops::clmul::*;
     pub use crate::ops::convert::*;
     #[cfg(feature = "ct")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "ct")))]
     pub use crate::ops::ct::*;
     pub use crate::ops::euclid::*;
     pub use crate::ops::float_ops::*;
@@ -197,6 +202,7 @@ pub mod prelude {
     pub use crate::ops::sqrt::*;
     pub use crate::ops::strict::*;
     #[cfg(feature = "ct")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "ct")))]
     pub use crate::ops::typestate::CtNonZero;
     pub use crate::ops::typestate::{BitIndexOps, DivNonZero, HasNonZero, PowerOfTwoOps};
     pub use crate::ops::wrapping::*;

@@ -14,7 +14,7 @@
 //! - [`NonNegative`] / [`Positive`] (signed): unsigned cast, `abs`, `isqrt`, plus
 //!   `const` narrowings into each other / `NonZero` / `NonMin`.
 //! - [`NonMin`] (signed): total `neg`/`abs` and total signed division.
-//! - [`Odd`] / [`Even`]: bare proofs (consumer lives in the modmath layer).
+//! - [`Odd`] / [`Even`]: bare proofs (no consuming op in this crate).
 //! - [`Finite`] (floats): a total order (`Ord`/`Eq`) that bare floats lack.
 //!
 //! With the `ct` feature, families with a *secret-derived* predicate also gain a
@@ -677,12 +677,10 @@ nonmin_impl!(i8, i16, i32, i64, i128, isize);
 
 /// Proof that a value is odd.
 ///
-/// A **bare** typestate: it has no consuming op *in this crate*. Its consumer
-/// (e.g. an odd-modulus Montgomery constructor) lives in the modular-arithmetic
-/// layer, where the precondition is actually spent. It ships here because that
-/// is where the predicate ([`Parity`]) lives. `Odd` covers both the "non-zero"
-/// and "odd" preconditions a Montgomery modulus needs — zero is even — so no
-/// separate `OddNonZero` is required.
+/// A **bare** typestate: it carries the proof but has no consuming op in this
+/// crate. It ships here because that is where its predicate ([`Parity`]) lives.
+/// Note that `Odd` also implies non-zero — zero is even — so it doubles as a
+/// "non-zero and odd" proof without a separate `OddNonZero` type.
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Odd<T>(T);

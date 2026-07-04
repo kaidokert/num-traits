@@ -94,8 +94,8 @@ fn nonmin() {
 fn odd_modulus() {
     // a parsed/odd modulus, proven once
     let m = Odd::<u64>::new(0xFFFF_FFFF_FFFF_FFC5).expect("a large odd prime");
-    // `Odd ⇒ non-zero` (zero is even), so this one proof covers both
-    // preconditions a Montgomery-style modulus needs.
+    // `Odd ⇒ non-zero` (zero is even), so this one proof covers both the
+    // "odd" and "non-zero" preconditions at once.
     assert_eq!(m.get() & 1, 1);
 
     assert!(Odd::<u64>::new(0).is_none()); // zero is even

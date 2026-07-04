@@ -13,7 +13,7 @@ A fork of [`num-traits`](https://github.com/rust-num/num-traits). It:
   nightly toolchain the same surface becomes `const trait`, usable in `const`
   (via the [`c0nst`](https://crates.io/crates/c0nst) macro);
 - exposes newer `core` integer and float operations that `num-traits` yet does not,
-  such as `wide_mul`;
+  such as `widening_mul`;
 - is intentionally API-breaking with `num-traits`, to keep the `const` and
   non-`const` views of the API as close as possible.
 

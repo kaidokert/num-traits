@@ -72,9 +72,8 @@ impl Personality for Nct {
 ///
 /// Selects constant-time implementations of operation primitives — bodies
 /// whose execution time and memory access pattern do not depend on operand
-/// values. Appropriate for code that handles secret values (signing,
-/// scalar multiplication on secret scalars, Montgomery multiplication on
-/// secret operands).
+/// values. Appropriate for code that handles secret values, where
+/// operand-dependent timing or memory access would leak them.
 ///
 /// Constant-time-only APIs (e.g. `subtle::ConditionallySelectable`,
 /// `ConstantTimeEq`) should be exposed only for the `Ct` variant — wrong-
