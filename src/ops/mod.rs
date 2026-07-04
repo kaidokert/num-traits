@@ -8,8 +8,6 @@ pub mod convert;
 pub mod ct;
 pub mod euclid;
 pub mod float_ops;
-#[cfg(feature = "nightly-std")]
-pub mod format_into;
 pub mod from_ascii;
 pub mod inv;
 pub mod log;

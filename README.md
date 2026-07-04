@@ -3,7 +3,7 @@
 [![crate](https://img.shields.io/crates/v/const-num-traits.svg)](https://crates.io/crates/const-num-traits)
 [![documentation](https://docs.rs/const-num-traits/badge.svg)](https://docs.rs/const-num-traits)
 [![minimum rustc 1.86](https://img.shields.io/badge/rustc-1.86+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
-[![build status](https://github.com/kaidokert/num-traits/actions/workflows/main.yaml/badge.svg)](https://github.com/kaidokert/num-traits/actions)
+[![build status](https://github.com/kaidokert/num-traits/actions/workflows/ci.yaml/badge.svg)](https://github.com/kaidokert/num-traits/actions)
 
 Numeric traits for generic mathematics in Rust.
 

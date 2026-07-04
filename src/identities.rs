@@ -1,7 +1,6 @@
 use core::num::Wrapping;
 use core::ops::{Add, Mul};
 
-#[cfg(has_num_saturating)]
 use core::num::Saturating;
 
 c0nst::c0nst! {
@@ -120,7 +119,6 @@ where
     const ZERO: Self = Wrapping(T::ZERO);
 }
 
-#[cfg(has_num_saturating)]
 c0nst::c0nst! {
 c0nst impl<T: [c0nst] Zero> Zero for Saturating<T>
 where
@@ -140,7 +138,6 @@ where
 }
 }
 
-#[cfg(has_num_saturating)]
 impl<T: ConstZero> ConstZero for Saturating<T>
 where
     Saturating<T>: Add<Output = Saturating<T>>,
@@ -262,7 +259,6 @@ where
     const ONE: Self = Wrapping(T::ONE);
 }
 
-#[cfg(has_num_saturating)]
 c0nst::c0nst! {
 c0nst impl<T: [c0nst] One> One for Saturating<T>
 where
@@ -282,7 +278,6 @@ where
 }
 }
 
-#[cfg(has_num_saturating)]
 impl<T: ConstOne> ConstOne for Saturating<T>
 where
     Saturating<T>: Mul<Output = Saturating<T>>,
@@ -336,7 +331,6 @@ fn wrapping_is_one() {
 }
 
 #[test]
-#[cfg(has_num_saturating)]
 fn saturating_identities() {
     macro_rules! test_saturating_identities {
         ($($t:ty)+) => {
@@ -353,13 +347,11 @@ fn saturating_identities() {
 }
 
 #[test]
-#[cfg(has_num_saturating)]
 fn saturating_is_zero() {
     fn require_zero<T: Zero>(_: &T) {}
     require_zero(&Saturating(42));
 }
 #[test]
-#[cfg(has_num_saturating)]
 fn saturating_is_one() {
     fn require_one<T: One>(_: &T) {}
     require_one(&Saturating(42));
