@@ -33,7 +33,7 @@ repos:
         pass_filenames: false
     -   id: cargo-clippy-no-std
         name: cargo clippy (no_std libm ct, -D warnings)
-        entry: cargo clippy --no-default-features --features "libm ct" -- -D warnings
+        entry: cargo clippy --tests --no-default-features --features "libm ct" -- -D warnings
         language: system
         types: [rust]
         pass_filenames: false

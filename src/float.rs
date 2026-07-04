@@ -2287,7 +2287,7 @@ macro_rules! totalorder_impl {
         impl TotalOrder for $T {
             #[inline]
             fn total_cmp(&self, other: &Self) -> Ordering {
-                Self::total_cmp(&self, other)
+                <$T>::total_cmp(self, other)
             }
         }
     };
