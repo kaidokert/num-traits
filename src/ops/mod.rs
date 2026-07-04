@@ -5,6 +5,7 @@ pub mod checked;
 pub mod clmul;
 pub mod convert;
 #[cfg(feature = "ct")]
+#[cfg_attr(docsrs, doc(cfg(feature = "ct")))]
 pub mod ct;
 pub mod euclid;
 pub mod float_ops;

@@ -10,13 +10,21 @@ repository = "https://github.com/kaidokert/num-traits"
 name = "const-num-traits"
 version = "0.1.0"
 readme = "README.md"
-exclude = ["/.github/*", "/.pre-commit-config.yaml"]
+# Include-list of the files that ship. Anything not listed here is never packaged.
+include = [
+    "/src",
+    "/examples",
+    "/tests",
+    "/README.md",
+    "/LICENSE-APACHE",
+    "/LICENSE-MIT",
+]
 edition = "2024"
 rust-version = "1.86"
 
 [package.metadata.docs.rs]
-features = ["std"]
-rustdoc-args = ["--generate-link-to-definition"]
+features = ["std", "ct"]
+rustdoc-args = ["--generate-link-to-definition", "--cfg", "docsrs"]
 
 [dependencies]
 c0nst = "0.2.1"
