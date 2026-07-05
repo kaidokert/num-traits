@@ -142,7 +142,7 @@ pub use crate::ops::wrapping::{
     WrappingAbs, WrappingAdd, WrappingDiv, WrappingMul, WrappingNeg, WrappingPow, WrappingRem,
     WrappingShl, WrappingShr, WrappingSub,
 };
-pub use crate::personality::{Ct, Nct, Personality, PersonalityMarker, PersonalityTag};
+pub use crate::personality::{Ct, HasPersonality, Nct, Personality, PersonalityMarker, PersonalityTag};
 pub use crate::pow::{Pow, checked_pow, pow};
 pub use crate::sign::{Signed, Signum, Unsigned, abs, abs_sub, signum};
 

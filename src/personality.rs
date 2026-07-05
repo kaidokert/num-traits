@@ -90,6 +90,35 @@ impl Personality for Ct {
 /// Use as `_p: PersonalityMarker<P>` in struct definitions.
 pub type PersonalityMarker<P> = PhantomData<fn() -> P>;
 
+/// Projects a carrier type's [`Personality`] at the type level.
+///
+/// Implemented by carrier types whose implementation shape is selected
+/// by a personality parameter (e.g. a bigint's `FixedUInt<W, N, P>`
+/// projects `P`), and by the primitive integers, which are always
+/// [`Nct`] — their arithmetic is variable-time on common hardware.
+///
+/// Consumers bound on the projection to gate algorithm choice by
+/// personality: `T: HasPersonality<P = Nct>` admits a type into
+/// variable-time code paths, `P = Ct` into constant-time-only ones.
+/// The declaration is the carrier author's contract; there is no way
+/// to verify it structurally.
+pub trait HasPersonality {
+    /// The carrier's personality.
+    type P: Personality;
+}
+
+macro_rules! impl_has_personality_nct {
+    ($($t:ty),*) => {
+        $(
+            impl HasPersonality for $t {
+                type P = Nct;
+            }
+        )*
+    };
+}
+
+impl_has_personality_nct!(u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize);
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -100,6 +129,16 @@ mod tests {
         assert_eq!(Ct::TAG, PersonalityTag::Ct);
         assert_eq!(Nct, Nct);
         assert_eq!(Ct, Ct);
+    }
+
+    #[test]
+    fn has_personality_projects_nct_for_primitives() {
+        fn assert_nct<T: HasPersonality<P = Nct>>() {}
+        assert_nct::<u8>();
+        assert_nct::<u32>();
+        assert_nct::<u128>();
+        assert_nct::<usize>();
+        assert_nct::<i64>();
     }
 
     #[test]
