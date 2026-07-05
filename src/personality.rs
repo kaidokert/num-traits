@@ -93,9 +93,12 @@ pub type PersonalityMarker<P> = PhantomData<fn() -> P>;
 /// Projects a carrier type's [`Personality`] at the type level.
 ///
 /// Implemented by carrier types whose implementation shape is selected
-/// by a personality parameter (e.g. a bigint's `FixedUInt<W, N, P>`
-/// projects `P`), and by the primitive integers, which are always
-/// [`Nct`] — their arithmetic is variable-time on common hardware.
+/// by a personality parameter (a bigint parameterized over its
+/// personality projects that parameter), and by the primitive integers,
+/// which project [`Nct`]: they expose a single hardware-backed
+/// implementation, select no constant-time variant, and make no
+/// constant-time guarantee — integer division in particular has
+/// operand-dependent latency on common CPUs.
 ///
 /// Consumers bound on the projection to gate algorithm choice by
 /// personality: `T: HasPersonality<P = Nct>` admits a type into
