@@ -83,6 +83,7 @@ pub use crate::ops::bits::{
     BitWidth, DepositBits, ExtractBits, FunnelShl, FunnelShr, HighestOne, IsolateHighestOne,
     IsolateLowestOne, LowestOne, ShlExact, ShrExact, UnboundedShl, UnboundedShr,
 };
+pub use crate::ops::byte_slice::{ByteSliceError, ByteSliceErrorKind, FromByteSlice};
 pub use crate::ops::bytes::{FromBytes, ToBytes};
 pub use crate::ops::carrying::{BorrowingSub, CarryingAdd, CarryingMul, WideningMul};
 pub use crate::ops::checked::{
@@ -177,6 +178,7 @@ pub mod prelude {
     pub use crate::identities::*;
     pub use crate::int::*;
     pub use crate::ops::bits::*;
+    pub use crate::ops::byte_slice::*;
     pub use crate::ops::bytes::*;
     pub use crate::ops::carrying::*;
     pub use crate::ops::checked::*;

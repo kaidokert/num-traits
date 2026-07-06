@@ -16,7 +16,9 @@ use const_num_traits::{
     ShlExact, StrictAdd, StrictEuclid, Truncate, UnboundedShr, UnsignedAbs, Widen, WideningMul,
     WrappingPow,
 };
-use const_num_traits::{Algebraic, FloatBits, FromAscii, FromBytes, Maximum, NextUp, ToBytes};
+use const_num_traits::{
+    Algebraic, FloatBits, FromAscii, FromByteSlice, FromBytes, Maximum, NextUp, ToBytes,
+};
 
 #[test]
 fn bytes_in_const() {
@@ -159,6 +161,10 @@ fn ascii_and_floats_in_const() {
         Ok(v) => v,
         Err(_) => panic!("parse failed"),
     };
+    const SLICE: u32 = match <u32 as FromByteSlice>::from_be_slice(&[0x12, 0x34]) {
+        Ok(v) => v,
+        Err(_) => panic!("parse failed"),
+    };
     const BITS: u32 = FloatBits::to_bits(1.0f32);
     const ONE: f32 = FloatBits::from_bits(0x3F80_0000u32);
     const UP: f32 = NextUp::next_up(1.0f32);
@@ -166,6 +172,7 @@ fn ascii_and_floats_in_const() {
     const ALG: f64 = Algebraic::algebraic_mul(3.0f64, 0.5);
     assert_eq!(HEX, 0xdead_beef);
     assert_eq!(NEG, -1234);
+    assert_eq!(SLICE, 0x1234);
     assert_eq!(BITS, 0x3F80_0000);
     assert_eq!(ONE, 1.0);
     assert_eq!(UP, f32::from_bits(0x3F80_0001));
