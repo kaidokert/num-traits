@@ -1,4 +1,5 @@
 pub mod bits;
+pub mod byte_slice;
 pub mod bytes;
 pub mod carrying;
 pub mod checked;
