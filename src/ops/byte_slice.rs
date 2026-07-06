@@ -1,11 +1,9 @@
 //! Parsing an unsigned integer from a byte slice of *arbitrary* length.
 //!
-//! [`FromBytes`](super::bytes::FromBytes) mirrors core's `from_le_bytes` — the
-//! byte count is a type-level constant (`[u8; N]`) and the read is infallible.
-//! This is the variable-length cousin: the input is a `&[u8]` whose length the
-//! caller doesn't have to match to the target width, so the parse can fail
-//! (input wider than the target), which `FromBytes` has no channel to report.
-//! Shorter-than-width input is zero-extended; equal is exact; wider errors.
+//! The input `&[u8]` need not match the target's byte width: shorter input
+//! zero-extends, equal is exact, wider is rejected rather than truncated. That
+//! reject case is why the parse returns a `Result` — an over-long slice has no
+//! lossless reading.
 //!
 //! Unsigned-only: zero-extension is unambiguous for magnitudes but has no
 //! sign-extension analogue, so signed targets are deliberately excluded.
@@ -30,8 +28,8 @@ pub enum ByteSliceErrorKind {
 
 /// Error parsing an integer from a byte slice.
 ///
-/// Crate-owned (mirrors the [`AsciiParseError`](super::from_ascii::AsciiParseError)
-/// pattern) so it is constructible on stable and needs no std type.
+/// Crate-owned so it stays constructible on stable — the standard library's
+/// integer-parse error is opaque and can't be built outside `core`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ByteSliceError {
     /// What went wrong.
