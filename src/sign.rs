@@ -1,7 +1,7 @@
 use core::num::Wrapping;
 use core::ops::Neg;
 
-use crate::Num;
+use crate::Zero;
 use crate::float::FloatCore;
 
 c0nst::c0nst! {
@@ -33,7 +33,7 @@ pub c0nst trait Signum: Sized {
 
 c0nst::c0nst! {
 /// Useful functions for signed numbers (i.e. numbers that can be negative).
-pub c0nst trait Signed: Sized + [c0nst] Num + [c0nst] Neg + [c0nst] Signum {
+pub c0nst trait Signed: Sized + [c0nst] Zero + [c0nst] PartialOrd + [c0nst] Neg + [c0nst] Signum {
     /// Computes the absolute value.
     ///
     /// For `f32` and `f64`, `NaN` will be returned if the number is `NaN`.
@@ -121,7 +121,7 @@ impl<T: Signum<Output = T>> Signum for Wrapping<T> {
 
 impl<T: Signed + Neg<Output = T> + Signum<Output = T>> Signed for Wrapping<T>
 where
-    Wrapping<T>: Num + Neg<Output = Wrapping<T>>,
+    Wrapping<T>: Zero + PartialOrd + Neg<Output = Wrapping<T>>,
 {
     #[inline]
     fn abs(self) -> Self {
@@ -238,7 +238,7 @@ pub c0nst fn signum<T: [c0nst] Signed + [c0nst] Signum<Output = T> + [c0nst] Des
 
 c0nst::c0nst! {
 /// A trait for values which cannot be negative
-pub c0nst trait Unsigned: [c0nst] Num {}
+pub c0nst trait Unsigned: Sized {}
 }
 
 macro_rules! empty_trait_impl {
@@ -252,7 +252,7 @@ macro_rules! empty_trait_impl {
 empty_trait_impl!(Unsigned for usize u8 u16 u32 u64 u128);
 
 // Same `Wrapping<T>: Num` story as `Signed`: non-const blanket impl.
-impl<T: Unsigned> Unsigned for Wrapping<T> where Wrapping<T>: Num {}
+impl<T: Unsigned> Unsigned for Wrapping<T> {}
 
 #[test]
 fn unsigned_wrapping_is_unsigned() {

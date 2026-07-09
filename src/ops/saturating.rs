@@ -5,19 +5,19 @@
 //! `SaturatingDiv` is CT-hostile — it performs data-dependent division and
 //! panics on a zero divisor — so it is Tier C for secret inputs.
 
-use core::ops::{Add, Div, Mul, Neg, Sub};
-
 c0nst::c0nst! {
 /// Saturating math operations. Deprecated, use `SaturatingAdd`, `SaturatingSub` and
 /// `SaturatingMul` instead.
 pub c0nst trait Saturating {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Saturating addition operator.
     /// Returns a+b, saturating at the numeric bounds instead of overflowing.
-    fn saturating_add(self, v: Self) -> Self;
+    fn saturating_add(self, v: Self) -> Self::Output;
 
     /// Saturating subtraction operator.
     /// Returns a-b, saturating at the numeric bounds instead of overflowing.
-    fn saturating_sub(self, v: Self) -> Self;
+    fn saturating_sub(self, v: Self) -> Self::Output;
 }
 }
 
@@ -25,6 +25,7 @@ macro_rules! deprecated_saturating_impl {
     ($trait_name:ident for $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             fn saturating_add(self, v: Self) -> Self {
                 Self::saturating_add(self, v)
@@ -46,6 +47,7 @@ macro_rules! saturating_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             fn $method(self, v: Self) -> Self {
                 <$t>::$method(self, v)
@@ -57,10 +59,12 @@ macro_rules! saturating_impl {
 
 c0nst::c0nst! {
 /// Performs addition that saturates at the numeric bounds instead of overflowing.
-pub c0nst trait SaturatingAdd: Sized + [c0nst] Add<Self> {
+pub c0nst trait SaturatingAdd: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Saturating addition. Computes `self + other`, saturating at the relevant high or low boundary of
     /// the type.
-    fn saturating_add(self, v: Self) -> <Self as Add<Self>>::Output;
+    fn saturating_add(self, v: Self) -> Self::Output;
 }
 }
 
@@ -80,10 +84,12 @@ saturating_impl!(SaturatingAdd, saturating_add, i128);
 
 c0nst::c0nst! {
 /// Performs subtraction that saturates at the numeric bounds instead of overflowing.
-pub c0nst trait SaturatingSub: Sized + [c0nst] Sub<Self> {
+pub c0nst trait SaturatingSub: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Saturating subtraction. Computes `self - other`, saturating at the relevant high or low boundary of
     /// the type.
-    fn saturating_sub(self, v: Self) -> <Self as Sub<Self>>::Output;
+    fn saturating_sub(self, v: Self) -> Self::Output;
 }
 }
 
@@ -103,10 +109,12 @@ saturating_impl!(SaturatingSub, saturating_sub, i128);
 
 c0nst::c0nst! {
 /// Performs multiplication that saturates at the numeric bounds instead of overflowing.
-pub c0nst trait SaturatingMul: Sized + [c0nst] Mul<Self> {
+pub c0nst trait SaturatingMul: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Saturating multiplication. Computes `self * other`, saturating at the relevant high or low boundary of
     /// the type.
-    fn saturating_mul(self, v: Self) -> <Self as Mul<Self>>::Output;
+    fn saturating_mul(self, v: Self) -> Self::Output;
 }
 }
 
@@ -126,7 +134,9 @@ saturating_impl!(SaturatingMul, saturating_mul, i128);
 
 c0nst::c0nst! {
 /// Performs division that saturates at the numeric bounds instead of overflowing.
-pub c0nst trait SaturatingDiv: Sized + [c0nst] Div<Self> {
+pub c0nst trait SaturatingDiv: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Saturating division. Computes `self / other`, saturating at the
     /// relevant high or low boundary of the type. The only saturating case is
     /// `MIN / -1` on a signed type, which saturates to `MAX`.
@@ -141,7 +151,7 @@ pub c0nst trait SaturatingDiv: Sized + [c0nst] Div<Self> {
     /// assert_eq!(SaturatingDiv::saturating_div(5i32, 2), 2);
     /// assert_eq!(SaturatingDiv::saturating_div(i32::MIN, -1), i32::MAX);
     /// ```
-    fn saturating_div(self, v: Self) -> <Self as Div<Self>>::Output;
+    fn saturating_div(self, v: Self) -> Self::Output;
 }
 }
 
@@ -163,6 +173,7 @@ macro_rules! saturating_unary_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             fn $method(self) -> $t {
                 <$t>::$method(self)
@@ -174,7 +185,9 @@ macro_rules! saturating_unary_impl {
 
 c0nst::c0nst! {
 /// Performs negation that saturates at the numeric bounds instead of overflowing.
-pub c0nst trait SaturatingNeg: Sized + [c0nst] Neg {
+pub c0nst trait SaturatingNeg: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Saturating negation. Computes `-self`, saturating at the numeric
     /// bounds: `MIN.saturating_neg()` is `MAX`.
     ///
@@ -184,7 +197,7 @@ pub c0nst trait SaturatingNeg: Sized + [c0nst] Neg {
     /// assert_eq!(SaturatingNeg::saturating_neg(-5i32), 5);
     /// assert_eq!(SaturatingNeg::saturating_neg(i32::MIN), i32::MAX);
     /// ```
-    fn saturating_neg(self) -> <Self as Neg>::Output;
+    fn saturating_neg(self) -> Self::Output;
 }
 }
 
@@ -197,7 +210,9 @@ saturating_unary_impl!(SaturatingNeg, saturating_neg, i128);
 
 c0nst::c0nst! {
 /// Computes the absolute value, saturating at the numeric bounds instead of overflowing.
-pub c0nst trait SaturatingAbs: Sized + [c0nst] Neg {
+pub c0nst trait SaturatingAbs: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Saturating absolute value. Computes `self.abs()`, saturating at the
     /// numeric bounds: `MIN.saturating_abs()` is `MAX`.
     ///
@@ -207,7 +222,7 @@ pub c0nst trait SaturatingAbs: Sized + [c0nst] Neg {
     /// assert_eq!(SaturatingAbs::saturating_abs(-5i32), 5);
     /// assert_eq!(SaturatingAbs::saturating_abs(i32::MIN), i32::MAX);
     /// ```
-    fn saturating_abs(self) -> <Self as Neg>::Output;
+    fn saturating_abs(self) -> Self::Output;
 }
 }
 
@@ -222,6 +237,7 @@ macro_rules! saturating_pow_impl {
     ($t:ty) => {
         c0nst::c0nst! {
         c0nst impl SaturatingPow for $t {
+            type Output = $t;
             #[inline]
             fn saturating_pow(self, exp: u32) -> $t {
                 <$t>::saturating_pow(self, exp)
@@ -233,7 +249,9 @@ macro_rules! saturating_pow_impl {
 
 c0nst::c0nst! {
 /// Performs exponentiation that saturates at the numeric bounds instead of overflowing.
-pub c0nst trait SaturatingPow: Sized + [c0nst] Mul<Self> {
+pub c0nst trait SaturatingPow: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Saturating exponentiation. Computes `self.pow(exp)`, saturating at the
     /// relevant high or low boundary of the type.
     ///
@@ -244,7 +262,7 @@ pub c0nst trait SaturatingPow: Sized + [c0nst] Mul<Self> {
     /// assert_eq!(SaturatingPow::saturating_pow(4u8, 4), u8::MAX);
     /// assert_eq!(SaturatingPow::saturating_pow(-2i8, 7), i8::MIN);
     /// ```
-    fn saturating_pow(self, exp: u32) -> <Self as Mul<Self>>::Output;
+    fn saturating_pow(self, exp: u32) -> Self::Output;
 }
 }
 

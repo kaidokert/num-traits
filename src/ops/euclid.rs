@@ -3,10 +3,12 @@
 //! **CT tier C (CT-hostile)**: division is data-dependent on every
 //! mainstream CPU; constant-time types should not implement these.
 
-use core::ops::{Div, Rem};
-
 c0nst::c0nst! {
-pub c0nst trait Euclid: Sized + [c0nst] Div<Self> + [c0nst] Rem<Self> {
+pub c0nst trait Euclid: Sized {
+    /// The result type of Euclidean division and remainder (`Self` for the
+    /// primitive and float impls).
+    type Output;
+
     /// Calculates Euclidean division, the matching method for `rem_euclid`.
     ///
     /// This computes the integer `n` such that
@@ -26,7 +28,7 @@ pub c0nst trait Euclid: Sized + [c0nst] Div<Self> + [c0nst] Rem<Self> {
     /// assert_eq!(Euclid::div_euclid(a, -b), -1); // 7 >= -4 * -1
     /// assert_eq!(Euclid::div_euclid(-a, -b), 2); // -7 >= -4 * 2
     /// ```
-    fn div_euclid(self, v: Self) -> <Self as Div<Self>>::Output;
+    fn div_euclid(self, v: Self) -> Self::Output;
 
     /// Calculates the least nonnegative remainder of `self (mod v)`.
     ///
@@ -51,7 +53,7 @@ pub c0nst trait Euclid: Sized + [c0nst] Div<Self> + [c0nst] Rem<Self> {
     /// assert_eq!(Euclid::rem_euclid(a, -b), 3);
     /// assert_eq!(Euclid::rem_euclid(-a, -b), 1);
     /// ```
-    fn rem_euclid(self, v: Self) -> <Self as Rem<Self>>::Output;
+    fn rem_euclid(self, v: Self) -> Self::Output;
 
     /// Returns both the quotient and remainder from Euclidean division.
     ///
@@ -70,7 +72,7 @@ pub c0nst trait Euclid: Sized + [c0nst] Div<Self> + [c0nst] Rem<Self> {
     ///
     /// assert_eq!((div, rem), Euclid::div_rem_euclid(x, y));
     /// ```
-    fn div_rem_euclid(self, v: Self) -> (<Self as Div<Self>>::Output, <Self as Rem<Self>>::Output);
+    fn div_rem_euclid(self, v: Self) -> (Self::Output, Self::Output);
 }
 }
 
@@ -78,6 +80,7 @@ macro_rules! euclid_forward_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl Euclid for $t {
+            type Output = $t;
             #[inline]
             fn div_euclid(self, v: $t) -> Self {
                 <$t>::div_euclid(self, v)
@@ -106,6 +109,7 @@ euclid_forward_impl!(usize u8 u16 u32 u64 u128);
 macro_rules! euclid_forward_impl_float {
     ($($t:ty)*) => {$(
         impl Euclid for $t {
+            type Output = $t;
             #[inline]
             fn div_euclid(self, v: $t) -> Self {
                 <$t>::div_euclid(self, v)
@@ -129,6 +133,7 @@ euclid_forward_impl_float!(f32 f64);
 
 #[cfg(not(feature = "std"))]
 impl Euclid for f32 {
+    type Output = f32;
     #[inline]
     fn div_euclid(self, v: f32) -> f32 {
         let q = <f32 as crate::float::FloatCore>::trunc(self / v);
@@ -156,6 +161,7 @@ impl Euclid for f32 {
 
 #[cfg(not(feature = "std"))]
 impl Euclid for f64 {
+    type Output = f64;
     #[inline]
     fn div_euclid(self, v: f64) -> f64 {
         let q = <f64 as crate::float::FloatCore>::trunc(self / v);
@@ -185,11 +191,11 @@ c0nst::c0nst! {
 pub c0nst trait CheckedEuclid: [c0nst] Euclid {
     /// Performs euclid division, returning `None` on division by zero or if
     /// overflow occurred.
-    fn checked_div_euclid(self, v: Self) -> Option<<Self as Div<Self>>::Output>;
+    fn checked_div_euclid(self, v: Self) -> Option<<Self as Euclid>::Output>;
 
     /// Finds the euclid remainder of dividing two numbers, returning `None` on
     /// division by zero or if overflow occurred.
-    fn checked_rem_euclid(self, v: Self) -> Option<<Self as Rem<Self>>::Output>;
+    fn checked_rem_euclid(self, v: Self) -> Option<<Self as Euclid>::Output>;
 
     /// Returns both the quotient and remainder from checked Euclidean division,
     /// returning `None` on division by zero or if overflow occurred.
@@ -206,7 +212,7 @@ pub c0nst trait CheckedEuclid: [c0nst] Euclid {
     ///
     /// assert_eq!(Some((div.unwrap(), rem.unwrap())), CheckedEuclid::checked_div_rem_euclid(x, y));
     /// ```
-    fn checked_div_rem_euclid(self, v: Self) -> Option<(<Self as Div<Self>>::Output, <Self as Rem<Self>>::Output)>;
+    fn checked_div_rem_euclid(self, v: Self) -> Option<(<Self as Euclid>::Output, <Self as Euclid>::Output)>;
 }
 }
 
@@ -256,7 +262,7 @@ pub c0nst trait WrappingEuclid: [c0nst] Euclid {
     /// # Panics
     ///
     /// Panics if `v` is zero.
-    fn wrapping_div_euclid(self, v: Self) -> <Self as Div<Self>>::Output;
+    fn wrapping_div_euclid(self, v: Self) -> <Self as Euclid>::Output;
 
     /// Wrapping Euclidean remainder. Computes `Euclid::rem_euclid(self, v)`,
     /// wrapping around at the boundary of the type. The only wrapping case is
@@ -265,7 +271,7 @@ pub c0nst trait WrappingEuclid: [c0nst] Euclid {
     /// # Panics
     ///
     /// Panics if `v` is zero.
-    fn wrapping_rem_euclid(self, v: Self) -> <Self as Rem<Self>>::Output;
+    fn wrapping_rem_euclid(self, v: Self) -> <Self as Euclid>::Output;
 }
 }
 
@@ -300,7 +306,7 @@ pub c0nst trait OverflowingEuclid: [c0nst] Euclid {
     /// # Panics
     ///
     /// Panics if `v` is zero.
-    fn overflowing_div_euclid(self, v: Self) -> (<Self as Div<Self>>::Output, bool);
+    fn overflowing_div_euclid(self, v: Self) -> (<Self as Euclid>::Output, bool);
 
     /// Returns a tuple of the Euclidean remainder along with a boolean
     /// indicating whether an arithmetic overflow would occur. The only
@@ -310,7 +316,7 @@ pub c0nst trait OverflowingEuclid: [c0nst] Euclid {
     /// # Panics
     ///
     /// Panics if `v` is zero.
-    fn overflowing_rem_euclid(self, v: Self) -> (<Self as Rem<Self>>::Output, bool);
+    fn overflowing_rem_euclid(self, v: Self) -> (<Self as Euclid>::Output, bool);
 }
 }
 

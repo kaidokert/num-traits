@@ -6,14 +6,15 @@
 //! (cargo feature `ct`). `CheckedDiv`/`CheckedRem` are CT-hostile (data-dependent
 //! division) and `CheckedPow` is exponent-dependent — Tier C for secret inputs.
 
-use core::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};
-
 c0nst::c0nst! {
 /// Performs addition, returning `None` if overflow occurred.
-pub c0nst trait CheckedAdd: Sized + [c0nst] Add<Self> {
+pub c0nst trait CheckedAdd: Sized {
+    /// The result type. `Self` for the primitive impls; a distinct owned type
+    /// lets non-`Copy` types implement this via `impl for &Self`.
+    type Output;
     /// Adds two numbers, checking for overflow. If overflow happens, `None` is
     /// returned.
-    fn checked_add(self, v: Self) -> Option<<Self as Add<Self>>::Output>;
+    fn checked_add(self, v: Self) -> Option<Self::Output>;
 }
 }
 
@@ -21,6 +22,7 @@ macro_rules! checked_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             fn $method(self, v: $t) -> Option<$t> {
                 <$t>::$method(self, v)
@@ -46,10 +48,12 @@ checked_impl!(CheckedAdd, checked_add, i128);
 
 c0nst::c0nst! {
 /// Performs subtraction, returning `None` if overflow occurred.
-pub c0nst trait CheckedSub: Sized + [c0nst] Sub<Self> {
+pub c0nst trait CheckedSub: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Subtracts two numbers, checking for overflow. If overflow happens,
     /// `None` is returned.
-    fn checked_sub(self, v: Self) -> Option<<Self as Sub<Self>>::Output>;
+    fn checked_sub(self, v: Self) -> Option<Self::Output>;
 }
 }
 
@@ -69,10 +73,12 @@ checked_impl!(CheckedSub, checked_sub, i128);
 
 c0nst::c0nst! {
 /// Performs multiplication, returning `None` if overflow occurred.
-pub c0nst trait CheckedMul: Sized + [c0nst] Mul<Self> {
+pub c0nst trait CheckedMul: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Multiplies two numbers, checking for overflow. If overflow happens,
     /// `None` is returned.
-    fn checked_mul(self, v: Self) -> Option<<Self as Mul<Self>>::Output>;
+    fn checked_mul(self, v: Self) -> Option<Self::Output>;
 }
 }
 
@@ -93,10 +99,12 @@ checked_impl!(CheckedMul, checked_mul, i128);
 c0nst::c0nst! {
 /// Performs division, returning `None` on division by zero or if overflow
 /// occurred.
-pub c0nst trait CheckedDiv: Sized + [c0nst] Div<Self> {
+pub c0nst trait CheckedDiv: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Divides two numbers, checking for overflow and division by
     /// zero. If any of that happens, `None` is returned.
-    fn checked_div(self, v: Self) -> Option<<Self as Div<Self>>::Output>;
+    fn checked_div(self, v: Self) -> Option<Self::Output>;
 }
 }
 
@@ -117,7 +125,9 @@ checked_impl!(CheckedDiv, checked_div, i128);
 c0nst::c0nst! {
 /// Performs integral remainder, returning `None` on division by zero or if
 /// overflow occurred.
-pub c0nst trait CheckedRem: Sized + [c0nst] Rem<Self> {
+pub c0nst trait CheckedRem: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Finds the remainder of dividing two numbers, checking for overflow and
     /// division by zero. If any of that happens, `None` is returned.
     ///
@@ -137,7 +147,7 @@ pub c0nst trait CheckedRem: Sized + [c0nst] Rem<Self> {
     /// assert_eq!(CheckedRem::checked_rem(MIN, 1), Some(0));
     /// assert_eq!(CheckedRem::checked_rem(MIN, -1), None);
     /// ```
-    fn checked_rem(self, v: Self) -> Option<<Self as Rem<Self>>::Output>;
+    fn checked_rem(self, v: Self) -> Option<Self::Output>;
 }
 }
 
@@ -159,6 +169,7 @@ macro_rules! checked_impl_unary {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             fn $method(self) -> Option<$t> {
                 <$t>::$method(self)
@@ -214,7 +225,9 @@ checked_neg_impl!(u8 u16 u32 u64 usize u128 i8 i16 i32 i64 isize i128);
 c0nst::c0nst! {
 /// Performs shift left, returning `None` on shifts larger than or equal to
 /// the type width.
-pub c0nst trait CheckedShl: Sized + [c0nst] Shl<u32> {
+pub c0nst trait CheckedShl: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Checked shift left. Computes `self << rhs`, returning `None`
     /// if `rhs` is larger than or equal to the number of bits in `self`.
     ///
@@ -228,7 +241,7 @@ pub c0nst trait CheckedShl: Sized + [c0nst] Shl<u32> {
     /// assert_eq!(CheckedShl::checked_shl(x, 15), Some(0x8000));
     /// assert_eq!(CheckedShl::checked_shl(x, 16), None);
     /// ```
-    fn checked_shl(self, rhs: u32) -> Option<<Self as Shl<u32>>::Output>;
+    fn checked_shl(self, rhs: u32) -> Option<Self::Output>;
 }
 }
 
@@ -236,6 +249,7 @@ macro_rules! checked_shift_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             fn $method(self, rhs: u32) -> Option<$t> {
                 <$t>::$method(self, rhs)
@@ -262,7 +276,9 @@ checked_shift_impl!(CheckedShl, checked_shl, i128);
 c0nst::c0nst! {
 /// Performs shift right, returning `None` on shifts larger than or equal to
 /// the type width.
-pub c0nst trait CheckedShr: Sized + [c0nst] Shr<u32> {
+pub c0nst trait CheckedShr: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Checked shift right. Computes `self >> rhs`, returning `None`
     /// if `rhs` is larger than or equal to the number of bits in `self`.
     ///
@@ -276,7 +292,7 @@ pub c0nst trait CheckedShr: Sized + [c0nst] Shr<u32> {
     /// assert_eq!(CheckedShr::checked_shr(x, 15), Some(0x0001));
     /// assert_eq!(CheckedShr::checked_shr(x, 16), None);
     /// ```
-    fn checked_shr(self, rhs: u32) -> Option<<Self as Shr<u32>>::Output>;
+    fn checked_shr(self, rhs: u32) -> Option<Self::Output>;
 }
 }
 
@@ -296,7 +312,9 @@ checked_shift_impl!(CheckedShr, checked_shr, i128);
 
 c0nst::c0nst! {
 /// Computes the absolute value, returning `None` if it can't be represented.
-pub c0nst trait CheckedAbs: Sized + [c0nst] Neg {
+pub c0nst trait CheckedAbs: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Checked absolute value. Computes `self.abs()`, returning `None` if
     /// `self == MIN` (the result can't be represented).
     ///
@@ -308,7 +326,7 @@ pub c0nst trait CheckedAbs: Sized + [c0nst] Neg {
     /// assert_eq!(CheckedAbs::checked_abs(-5i32), Some(5));
     /// assert_eq!(CheckedAbs::checked_abs(i32::MIN), None);
     /// ```
-    fn checked_abs(self) -> Option<<Self as Neg>::Output>;
+    fn checked_abs(self) -> Option<Self::Output>;
 }
 }
 
@@ -321,7 +339,9 @@ checked_impl_unary!(CheckedAbs, checked_abs, i128);
 
 c0nst::c0nst! {
 /// Performs exponentiation, returning `None` if overflow occurred.
-pub c0nst trait CheckedPow: Sized + [c0nst] Mul<Self> {
+pub c0nst trait CheckedPow: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Checked exponentiation. Computes `self.pow(exp)`, returning `None` if
     /// overflow occurred.
     ///
@@ -337,7 +357,7 @@ pub c0nst trait CheckedPow: Sized + [c0nst] Mul<Self> {
     /// assert_eq!(CheckedPow::checked_pow(7i8, 8), None);
     /// assert_eq!(CheckedPow::checked_pow(0u32, 0), Some(1));
     /// ```
-    fn checked_pow(self, exp: u32) -> Option<<Self as Mul<Self>>::Output>;
+    fn checked_pow(self, exp: u32) -> Option<Self::Output>;
 }
 }
 
@@ -357,10 +377,10 @@ checked_shift_impl!(CheckedPow, checked_pow, i128);
 
 #[test]
 fn test_checked_abs_pow() {
-    fn checked_abs<T: CheckedAbs + core::ops::Neg<Output = T>>(a: T) -> Option<T> {
+    fn checked_abs<T: CheckedAbs<Output = T>>(a: T) -> Option<T> {
         a.checked_abs()
     }
-    fn checked_pow<T: CheckedPow + core::ops::Mul<Output = T>>(a: T, exp: u32) -> Option<T> {
+    fn checked_pow<T: CheckedPow<Output = T>>(a: T, exp: u32) -> Option<T> {
         a.checked_pow(exp)
     }
     assert_eq!(checked_abs(-5i16), Some(5));

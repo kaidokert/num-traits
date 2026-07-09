@@ -10,8 +10,6 @@
 //! **CT tier A (CT-implementable)**: carries and borrows are returned for
 //! arithmetic consumption; all bodies are branchless on the data.
 
-use core::ops::{Add, Mul, Sub};
-
 #[cfg(target_pointer_width = "16")]
 type UDoubleSize = u32;
 #[cfg(target_pointer_width = "32")]
@@ -28,7 +26,9 @@ type IDoubleSize = i128;
 
 c0nst::c0nst! {
 /// Performs addition with a carry bit, for chaining multi-word additions.
-pub c0nst trait CarryingAdd: Sized + [c0nst] Add<Self> {
+pub c0nst trait CarryingAdd: Sized {
+    /// The sum type (`Self` for the primitive impls).
+    type Output;
     /// Calculates `self + rhs + carry` and returns a tuple containing the sum
     /// and the output carry, performing the full addition rather than
     /// stopping at the first overflow.
@@ -44,7 +44,7 @@ pub c0nst trait CarryingAdd: Sized + [c0nst] Add<Self> {
     /// assert_eq!(CarryingAdd::carrying_add(u8::MAX, 1, true), (1, true));
     /// assert_eq!(CarryingAdd::carrying_add(5u8, 2, false), (7, false));
     /// ```
-    fn carrying_add(self, rhs: Self, carry: bool) -> (<Self as Add<Self>>::Output, bool);
+    fn carrying_add(self, rhs: Self, carry: bool) -> (Self::Output, bool);
 }
 }
 
@@ -53,6 +53,7 @@ macro_rules! carrying_add_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl CarryingAdd for $t {
+            type Output = $t;
             #[inline]
             fn carrying_add(self, rhs: Self, carry: bool) -> ($t, bool) {
                 let (a, c1) = <$t>::overflowing_add(self, rhs);
@@ -67,6 +68,7 @@ macro_rules! carrying_add_impl {
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl CarryingAdd for $t {
+            type Output = $t;
             #[inline]
             fn carrying_add(self, rhs: Self, carry: bool) -> ($t, bool) {
                 let (a, b) = <$t>::overflowing_add(self, rhs);
@@ -83,7 +85,9 @@ carrying_add_impl!(signed isize i8 i16 i32 i64 i128);
 
 c0nst::c0nst! {
 /// Performs subtraction with a borrow bit, for chaining multi-word subtractions.
-pub c0nst trait BorrowingSub: Sized + [c0nst] Sub<Self> {
+pub c0nst trait BorrowingSub: Sized {
+    /// The difference type (`Self` for the primitive impls).
+    type Output;
     /// Calculates `self - rhs - borrow` and returns a tuple containing the
     /// difference and the output borrow, performing the full subtraction
     /// rather than stopping at the first overflow.
@@ -98,7 +102,7 @@ pub c0nst trait BorrowingSub: Sized + [c0nst] Sub<Self> {
     /// assert_eq!(BorrowingSub::borrowing_sub(0u8, 0, true), (u8::MAX, true));
     /// assert_eq!(BorrowingSub::borrowing_sub(7u8, 2, false), (5, false));
     /// ```
-    fn borrowing_sub(self, rhs: Self, borrow: bool) -> (<Self as Sub<Self>>::Output, bool);
+    fn borrowing_sub(self, rhs: Self, borrow: bool) -> (Self::Output, bool);
 }
 }
 
@@ -106,6 +110,7 @@ macro_rules! borrowing_sub_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl BorrowingSub for $t {
+            type Output = $t;
             #[inline]
             fn borrowing_sub(self, rhs: Self, borrow: bool) -> ($t, bool) {
                 let (a, c1) = <$t>::overflowing_sub(self, rhs);
@@ -118,6 +123,7 @@ macro_rules! borrowing_sub_impl {
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl BorrowingSub for $t {
+            type Output = $t;
             #[inline]
             fn borrowing_sub(self, rhs: Self, borrow: bool) -> ($t, bool) {
                 let (a, b) = <$t>::overflowing_sub(self, rhs);
@@ -135,11 +141,14 @@ borrowing_sub_impl!(signed isize i8 i16 i32 i64 i128);
 c0nst::c0nst! {
 /// Performs full double-width multiplication with carry and addend inputs,
 /// the workhorse for multi-word ("bigint") multiplication.
-pub c0nst trait CarryingMul: Sized + [c0nst] Mul<Self> {
+pub c0nst trait CarryingMul: Sized {
     /// The type of the low half of the result: `Self` for unsigned types,
     /// the unsigned counterpart for signed types (matching std's
     /// `carrying_mul` signatures).
     type Unsigned;
+
+    /// The type of the high half of the result (`Self` for the primitive impls).
+    type Output;
 
     /// Calculates the "full multiplication" `self * rhs + carry` without the
     /// possibility to overflow, returning `(low, high)` words of the result.
@@ -150,14 +159,14 @@ pub c0nst trait CarryingMul: Sized + [c0nst] Mul<Self> {
     /// assert_eq!(CarryingMul::carrying_mul(u8::MAX, u8::MAX, u8::MAX), (0, u8::MAX));
     /// assert_eq!(CarryingMul::carrying_mul(5u8, 7, 3), (38, 0));
     /// ```
-    fn carrying_mul(self, rhs: Self, carry: Self) -> (Self::Unsigned, <Self as Mul<Self>>::Output);
+    fn carrying_mul(self, rhs: Self, carry: Self) -> (Self::Unsigned, Self::Output);
 
     /// Calculates the "full multiplication" `self * rhs + carry + add`
     /// without the possibility to overflow, returning `(low, high)` words.
     ///
     /// This cannot overflow because `MAX * MAX + MAX + MAX` still fits in
     /// twice the bit width.
-    fn carrying_mul_add(self, rhs: Self, carry: Self, add: Self) -> (Self::Unsigned, <Self as Mul<Self>>::Output);
+    fn carrying_mul_add(self, rhs: Self, carry: Self, add: Self) -> (Self::Unsigned, Self::Output);
 }
 }
 
@@ -168,6 +177,7 @@ macro_rules! carrying_mul_impl {
         c0nst::c0nst! {
         c0nst impl CarryingMul for $t {
             type Unsigned = $u;
+            type Output = $t;
 
             #[inline]
             fn carrying_mul(self, rhs: Self, carry: Self) -> ($u, $t) {
@@ -228,6 +238,7 @@ pub(crate) const fn wide_mul_u128(a: u128, b: u128) -> (u128, u128) {
 c0nst::c0nst! {
 c0nst impl CarryingMul for u128 {
     type Unsigned = u128;
+    type Output = u128;
 
     #[inline]
     fn carrying_mul(self, rhs: Self, carry: Self) -> (u128, u128) {
@@ -252,6 +263,7 @@ c0nst impl CarryingMul for u128 {
 c0nst::c0nst! {
 c0nst impl CarryingMul for i128 {
     type Unsigned = u128;
+    type Output = i128;
 
     #[inline]
     fn carrying_mul(self, rhs: Self, carry: Self) -> (u128, i128) {
@@ -279,7 +291,7 @@ c0nst impl CarryingMul for i128 {
 c0nst::c0nst! {
 /// Performs multiplication that widens into the next-larger integer type, so
 /// it cannot overflow.
-pub c0nst trait WideningMul: Sized + [c0nst] Mul<Self> {
+pub c0nst trait WideningMul: Sized {
     /// The double-width result type.
     type Wide;
 

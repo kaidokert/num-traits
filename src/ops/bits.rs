@@ -17,11 +17,11 @@
 //! shift amount); for a secret mask they are Tier C. [`HighestOne`]/[`LowestOne`]
 //! and [`ShlExact`]/[`ShrExact`] are Tier B (`Option` returns).
 
-use core::ops::{Shl, Shr};
-
 c0nst::c0nst! {
 /// Performs a left shift that never panics, returning 0 for large shifts.
-pub c0nst trait UnboundedShl: Sized + [c0nst] Shl<u32> {
+pub c0nst trait UnboundedShl: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Unbounded shift left. Computes `self << rhs`, without bounding the
     /// value of `rhs`: if `rhs >= BITS` the entire value is shifted out and
     /// 0 is returned.
@@ -32,14 +32,16 @@ pub c0nst trait UnboundedShl: Sized + [c0nst] Shl<u32> {
     /// assert_eq!(UnboundedShl::unbounded_shl(1u8, 4), 16);
     /// assert_eq!(UnboundedShl::unbounded_shl(1u8, 200), 0);
     /// ```
-    fn unbounded_shl(self, rhs: u32) -> <Self as Shl<u32>>::Output;
+    fn unbounded_shl(self, rhs: u32) -> Self::Output;
 }
 }
 
 c0nst::c0nst! {
 /// Performs a right shift that never panics, shifting in zero or sign bits
 /// for large shift amounts.
-pub c0nst trait UnboundedShr: Sized + [c0nst] Shr<u32> {
+pub c0nst trait UnboundedShr: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Unbounded shift right. Computes `self >> rhs`, without bounding the
     /// value of `rhs`: if `rhs >= BITS`, unsigned values become 0 and signed
     /// values become 0 or -1 depending on the sign (the sign bit fills every
@@ -52,7 +54,7 @@ pub c0nst trait UnboundedShr: Sized + [c0nst] Shr<u32> {
     /// assert_eq!(UnboundedShr::unbounded_shr(16u8, 200), 0);
     /// assert_eq!(UnboundedShr::unbounded_shr(-16i8, 200), -1);
     /// ```
-    fn unbounded_shr(self, rhs: u32) -> <Self as Shr<u32>>::Output;
+    fn unbounded_shr(self, rhs: u32) -> Self::Output;
 }
 }
 
@@ -60,6 +62,7 @@ macro_rules! unbounded_shift_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl UnboundedShl for $t {
+            type Output = $t;
             #[inline]
             fn unbounded_shl(self, rhs: u32) -> Self {
                 if rhs < <$t>::BITS { self << rhs } else { 0 }
@@ -68,6 +71,7 @@ macro_rules! unbounded_shift_impl {
         }
         c0nst::c0nst! {
         c0nst impl UnboundedShr for $t {
+            type Output = $t;
             #[inline]
             fn unbounded_shr(self, rhs: u32) -> Self {
                 if rhs < <$t>::BITS { self >> rhs } else { 0 }
@@ -78,6 +82,7 @@ macro_rules! unbounded_shift_impl {
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl UnboundedShl for $t {
+            type Output = $t;
             #[inline]
             fn unbounded_shl(self, rhs: u32) -> Self {
                 if rhs < <$t>::BITS { self << rhs } else { 0 }
@@ -86,6 +91,7 @@ macro_rules! unbounded_shift_impl {
         }
         c0nst::c0nst! {
         c0nst impl UnboundedShr for $t {
+            type Output = $t;
             #[inline]
             fn unbounded_shr(self, rhs: u32) -> Self {
                 if rhs < <$t>::BITS {
@@ -186,7 +192,9 @@ funnel_shift_impl!(usize u8 u16 u32 u64 u128);
 
 c0nst::c0nst! {
 /// Performs a lossless (exactly reversible) left shift.
-pub c0nst trait ShlExact: Sized + [c0nst] Shl<u32> {
+pub c0nst trait ShlExact: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Exact shift left. Computes `self << rhs` if no bits would be shifted
     /// out (so the operation can be losslessly reversed), `None` otherwise.
     ///
@@ -196,13 +204,15 @@ pub c0nst trait ShlExact: Sized + [c0nst] Shl<u32> {
     /// assert_eq!(ShlExact::shl_exact(0x11u8, 3), Some(0x88));
     /// assert_eq!(ShlExact::shl_exact(0x11u8, 4), None);
     /// ```
-    fn shl_exact(self, rhs: u32) -> Option<<Self as Shl<u32>>::Output>;
+    fn shl_exact(self, rhs: u32) -> Option<Self::Output>;
 }
 }
 
 c0nst::c0nst! {
 /// Performs a lossless (exactly reversible) right shift.
-pub c0nst trait ShrExact: Sized + [c0nst] Shr<u32> {
+pub c0nst trait ShrExact: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Exact shift right. Computes `self >> rhs` if no one-bits would be
     /// shifted out (so the operation can be losslessly reversed), `None`
     /// otherwise.
@@ -213,7 +223,7 @@ pub c0nst trait ShrExact: Sized + [c0nst] Shr<u32> {
     /// assert_eq!(ShrExact::shr_exact(0x88u8, 3), Some(0x11));
     /// assert_eq!(ShrExact::shr_exact(0x88u8, 4), None);
     /// ```
-    fn shr_exact(self, rhs: u32) -> Option<<Self as Shr<u32>>::Output>;
+    fn shr_exact(self, rhs: u32) -> Option<Self::Output>;
 }
 }
 
@@ -221,6 +231,7 @@ macro_rules! exact_shift_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl ShlExact for $t {
+            type Output = $t;
             #[inline]
             fn shl_exact(self, rhs: u32) -> Option<Self> {
                 if rhs <= <$t>::leading_zeros(self) && rhs < <$t>::BITS {
@@ -236,6 +247,7 @@ macro_rules! exact_shift_impl {
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl ShlExact for $t {
+            type Output = $t;
             #[inline]
             fn shl_exact(self, rhs: u32) -> Option<Self> {
                 // for negative values the sign-extension bits are the
@@ -253,6 +265,7 @@ macro_rules! exact_shift_impl {
     (@shr $t:ty) => {
         c0nst::c0nst! {
         c0nst impl ShrExact for $t {
+            type Output = $t;
             #[inline]
             fn shr_exact(self, rhs: u32) -> Option<Self> {
                 if rhs <= <$t>::trailing_zeros(self) && rhs < <$t>::BITS {

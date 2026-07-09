@@ -6,12 +6,12 @@
 //! exponent-dependent — Tier C for secret inputs.
 
 use core::num::Wrapping;
-use core::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};
 
 macro_rules! wrapping_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             fn $method(self, v: Self) -> Self {
                 <$t>::$method(self, v)
@@ -22,6 +22,7 @@ macro_rules! wrapping_impl {
     ($trait_name:ident, $method:ident, $t:ty, $rhs:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name<$rhs> for $t {
+            type Output = $t;
             #[inline]
             fn $method(self, v: $rhs) -> Self {
                 <$t>::$method(self, v)
@@ -33,10 +34,12 @@ macro_rules! wrapping_impl {
 
 c0nst::c0nst! {
 /// Performs addition that wraps around on overflow.
-pub c0nst trait WrappingAdd: Sized + [c0nst] Add<Self> {
+pub c0nst trait WrappingAdd: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Wrapping (modular) addition. Computes `self + other`, wrapping around at the boundary of
     /// the type.
-    fn wrapping_add(self, v: Self) -> <Self as Add<Self>>::Output;
+    fn wrapping_add(self, v: Self) -> Self::Output;
 }
 }
 
@@ -56,10 +59,12 @@ wrapping_impl!(WrappingAdd, wrapping_add, i128);
 
 c0nst::c0nst! {
 /// Performs subtraction that wraps around on overflow.
-pub c0nst trait WrappingSub: Sized + [c0nst] Sub<Self> {
+pub c0nst trait WrappingSub: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Wrapping (modular) subtraction. Computes `self - other`, wrapping around at the boundary
     /// of the type.
-    fn wrapping_sub(self, v: Self) -> <Self as Sub<Self>>::Output;
+    fn wrapping_sub(self, v: Self) -> Self::Output;
 }
 }
 
@@ -79,10 +84,12 @@ wrapping_impl!(WrappingSub, wrapping_sub, i128);
 
 c0nst::c0nst! {
 /// Performs multiplication that wraps around on overflow.
-pub c0nst trait WrappingMul: Sized + [c0nst] Mul<Self> {
+pub c0nst trait WrappingMul: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Wrapping (modular) multiplication. Computes `self * other`, wrapping around at the boundary
     /// of the type.
-    fn wrapping_mul(self, v: Self) -> <Self as Mul<Self>>::Output;
+    fn wrapping_mul(self, v: Self) -> Self::Output;
 }
 }
 
@@ -118,6 +125,7 @@ macro_rules! wrapping_unary_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             fn $method(self) -> $t {
                 <$t>::$method(self)
@@ -158,6 +166,7 @@ macro_rules! wrapping_shift_impl {
     ($trait_name:ident, $method:ident, $t:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             fn $method(self, rhs: u32) -> $t {
                 <$t>::$method(self, rhs)
@@ -169,7 +178,9 @@ macro_rules! wrapping_shift_impl {
 
 c0nst::c0nst! {
 /// Performs a left shift that does not panic.
-pub c0nst trait WrappingShl: Sized + [c0nst] Shl<usize> {
+pub c0nst trait WrappingShl: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Panic-free bitwise shift-left; yields `self << mask(rhs)`,
     /// where `mask` removes any high order bits of `rhs` that would
     /// cause the shift to exceed the bitwidth of the type.
@@ -184,7 +195,7 @@ pub c0nst trait WrappingShl: Sized + [c0nst] Shl<usize> {
     /// assert_eq!(WrappingShl::wrapping_shl(x, 15), 0x8000);
     /// assert_eq!(WrappingShl::wrapping_shl(x, 16), 0x0001);
     /// ```
-    fn wrapping_shl(self, rhs: u32) -> <Self as Shl<usize>>::Output;
+    fn wrapping_shl(self, rhs: u32) -> Self::Output;
 }
 }
 
@@ -204,7 +215,9 @@ wrapping_shift_impl!(WrappingShl, wrapping_shl, i128);
 
 c0nst::c0nst! {
 /// Performs a right shift that does not panic.
-pub c0nst trait WrappingShr: Sized + [c0nst] Shr<usize> {
+pub c0nst trait WrappingShr: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Panic-free bitwise shift-right; yields `self >> mask(rhs)`,
     /// where `mask` removes any high order bits of `rhs` that would
     /// cause the shift to exceed the bitwidth of the type.
@@ -219,7 +232,7 @@ pub c0nst trait WrappingShr: Sized + [c0nst] Shr<usize> {
     /// assert_eq!(WrappingShr::wrapping_shr(x, 15), 0x0001);
     /// assert_eq!(WrappingShr::wrapping_shr(x, 16), 0x8000);
     /// ```
-    fn wrapping_shr(self, rhs: u32) -> <Self as Shr<usize>>::Output;
+    fn wrapping_shr(self, rhs: u32) -> Self::Output;
 }
 }
 
@@ -239,7 +252,9 @@ wrapping_shift_impl!(WrappingShr, wrapping_shr, i128);
 
 c0nst::c0nst! {
 /// Performs division that wraps around on overflow.
-pub c0nst trait WrappingDiv: Sized + [c0nst] Div<Self> {
+pub c0nst trait WrappingDiv: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Wrapping (modular) division. Computes `self / other`, wrapping around
     /// at the boundary of the type.
     ///
@@ -258,7 +273,7 @@ pub c0nst trait WrappingDiv: Sized + [c0nst] Div<Self> {
     /// assert_eq!(WrappingDiv::wrapping_div(100i8, 10), 10);
     /// assert_eq!(WrappingDiv::wrapping_div(i8::MIN, -1), i8::MIN); // wrapped!
     /// ```
-    fn wrapping_div(self, v: Self) -> <Self as Div<Self>>::Output;
+    fn wrapping_div(self, v: Self) -> Self::Output;
 }
 }
 
@@ -278,7 +293,9 @@ wrapping_impl!(WrappingDiv, wrapping_div, i128);
 
 c0nst::c0nst! {
 /// Performs a remainder operation that wraps around on overflow.
-pub c0nst trait WrappingRem: Sized + [c0nst] Rem<Self> {
+pub c0nst trait WrappingRem: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Wrapping (modular) remainder. Computes `self % other`, wrapping around
     /// at the boundary of the type.
     ///
@@ -296,7 +313,7 @@ pub c0nst trait WrappingRem: Sized + [c0nst] Rem<Self> {
     /// assert_eq!(WrappingRem::wrapping_rem(100i8, 10), 0);
     /// assert_eq!(WrappingRem::wrapping_rem(i8::MIN, -1), 0); // wrapped!
     /// ```
-    fn wrapping_rem(self, v: Self) -> <Self as Rem<Self>>::Output;
+    fn wrapping_rem(self, v: Self) -> Self::Output;
 }
 }
 
@@ -316,7 +333,9 @@ wrapping_impl!(WrappingRem, wrapping_rem, i128);
 
 c0nst::c0nst! {
 /// Computes the absolute value, wrapping around on overflow.
-pub c0nst trait WrappingAbs: Sized + [c0nst] Neg {
+pub c0nst trait WrappingAbs: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Wrapping (modular) absolute value. Computes `self.abs()`, wrapping
     /// around at the boundary of the type. The only wrapping case is
     /// `MIN.wrapping_abs() == MIN`.
@@ -327,7 +346,7 @@ pub c0nst trait WrappingAbs: Sized + [c0nst] Neg {
     /// assert_eq!(WrappingAbs::wrapping_abs(-100i8), 100);
     /// assert_eq!(WrappingAbs::wrapping_abs(i8::MIN), i8::MIN); // wrapped!
     /// ```
-    fn wrapping_abs(self) -> <Self as Neg>::Output;
+    fn wrapping_abs(self) -> Self::Output;
 }
 }
 
@@ -340,7 +359,9 @@ wrapping_unary_impl!(WrappingAbs, wrapping_abs, i128);
 
 c0nst::c0nst! {
 /// Performs exponentiation that wraps around on overflow.
-pub c0nst trait WrappingPow: Sized + [c0nst] Mul<Self> {
+pub c0nst trait WrappingPow: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Wrapping (modular) exponentiation. Computes `self.pow(exp)`, wrapping
     /// around at the boundary of the type.
     ///
@@ -350,7 +371,7 @@ pub c0nst trait WrappingPow: Sized + [c0nst] Mul<Self> {
     /// assert_eq!(WrappingPow::wrapping_pow(3u8, 5), 243);
     /// assert_eq!(WrappingPow::wrapping_pow(3u8, 6), 217); // wrapped!
     /// ```
-    fn wrapping_pow(self, exp: u32) -> <Self as Mul<Self>>::Output;
+    fn wrapping_pow(self, exp: u32) -> Self::Output;
 }
 }
 
@@ -382,51 +403,38 @@ fn test_wrapping_div_rem_abs_pow() {
 
 // Wrapping<T> blanket impls stay non-const: std's `Add`/`Sub`/`Mul`/`Neg`/`Shl`/`Shr`
 // impls for `Wrapping<T>` are not const-trait impls (same situation as Num).
-impl<T: WrappingAdd<Output = T>> WrappingAdd for Wrapping<T>
-where
-    Wrapping<T>: Add<Output = Wrapping<T>>,
-{
+impl<T: WrappingAdd<Output = T>> WrappingAdd for Wrapping<T> {
+    type Output = Wrapping<T>;
     fn wrapping_add(self, v: Self) -> Self {
         Wrapping(self.0.wrapping_add(v.0))
     }
 }
-impl<T: WrappingSub<Output = T>> WrappingSub for Wrapping<T>
-where
-    Wrapping<T>: Sub<Output = Wrapping<T>>,
-{
+impl<T: WrappingSub<Output = T>> WrappingSub for Wrapping<T> {
+    type Output = Wrapping<T>;
     fn wrapping_sub(self, v: Self) -> Self {
         Wrapping(self.0.wrapping_sub(v.0))
     }
 }
-impl<T: WrappingMul<Output = T>> WrappingMul for Wrapping<T>
-where
-    Wrapping<T>: Mul<Output = Wrapping<T>>,
-{
+impl<T: WrappingMul<Output = T>> WrappingMul for Wrapping<T> {
+    type Output = Wrapping<T>;
     fn wrapping_mul(self, v: Self) -> Self {
         Wrapping(self.0.wrapping_mul(v.0))
     }
 }
-impl<T: WrappingNeg<Output = T>> WrappingNeg for Wrapping<T>
-where
-    Wrapping<T>: Neg<Output = Wrapping<T>>,
-{
+impl<T: WrappingNeg<Output = T>> WrappingNeg for Wrapping<T> {
     type Output = Wrapping<T>;
     fn wrapping_neg(self) -> Self {
         Wrapping(self.0.wrapping_neg())
     }
 }
-impl<T: WrappingShl<Output = T>> WrappingShl for Wrapping<T>
-where
-    Wrapping<T>: Shl<usize, Output = Wrapping<T>>,
-{
+impl<T: WrappingShl<Output = T>> WrappingShl for Wrapping<T> {
+    type Output = Wrapping<T>;
     fn wrapping_shl(self, rhs: u32) -> Self {
         Wrapping(self.0.wrapping_shl(rhs))
     }
 }
-impl<T: WrappingShr<Output = T>> WrappingShr for Wrapping<T>
-where
-    Wrapping<T>: Shr<usize, Output = Wrapping<T>>,
-{
+impl<T: WrappingShr<Output = T>> WrappingShr for Wrapping<T> {
+    type Output = Wrapping<T>;
     fn wrapping_shr(self, rhs: u32) -> Self {
         Wrapping(self.0.wrapping_shr(rhs))
     }

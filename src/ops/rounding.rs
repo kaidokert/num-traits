@@ -12,11 +12,11 @@
 //! **CT tiers**: [`Midpoint`] is Tier A (branchless); everything else here
 //! is Tier C (division-based).
 
-use core::ops::{Add, Div, Rem};
-
 c0nst::c0nst! {
 /// Performs division, rounding the quotient towards positive infinity.
-pub c0nst trait DivCeil: Sized + [c0nst] Div<Self> {
+pub c0nst trait DivCeil: Sized {
+    /// The quotient type (`Self` for the primitive impls).
+    type Output;
     /// Calculates the quotient of `self` and `rhs`, rounding the result
     /// towards positive infinity.
     ///
@@ -32,7 +32,7 @@ pub c0nst trait DivCeil: Sized + [c0nst] Div<Self> {
     /// assert_eq!(DivCeil::div_ceil(7i8, -2), -3);
     /// assert_eq!(DivCeil::div_ceil(-7i8, 2), -3);
     /// ```
-    fn div_ceil(self, rhs: Self) -> <Self as Div<Self>>::Output;
+    fn div_ceil(self, rhs: Self) -> Self::Output;
 }
 }
 
@@ -40,6 +40,7 @@ macro_rules! div_ceil_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl DivCeil for $t {
+            type Output = $t;
             #[inline]
             fn div_ceil(self, rhs: Self) -> Self {
                 <$t>::div_ceil(self, rhs)
@@ -51,6 +52,7 @@ macro_rules! div_ceil_impl {
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl DivCeil for $t {
+            type Output = $t;
             #[inline]
             fn div_ceil(self, rhs: Self) -> Self {
                 let d = self / rhs;
@@ -74,7 +76,9 @@ div_ceil_impl!(signed isize i8 i16 i32 i64 i128);
 
 c0nst::c0nst! {
 /// Performs division, rounding the quotient towards negative infinity.
-pub c0nst trait DivFloor: Sized + [c0nst] Div<Self> {
+pub c0nst trait DivFloor: Sized {
+    /// The quotient type (`Self` for the primitive impls).
+    type Output;
     /// Calculates the quotient of `self` and `rhs`, rounding the result
     /// towards negative infinity. For unsigned types this is the normal
     /// integer division.
@@ -91,7 +95,7 @@ pub c0nst trait DivFloor: Sized + [c0nst] Div<Self> {
     /// assert_eq!(DivFloor::div_floor(7i8, -2), -4);
     /// assert_eq!(DivFloor::div_floor(-7i8, 2), -4);
     /// ```
-    fn div_floor(self, rhs: Self) -> <Self as Div<Self>>::Output;
+    fn div_floor(self, rhs: Self) -> Self::Output;
 }
 }
 
@@ -100,6 +104,7 @@ macro_rules! div_floor_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl DivFloor for $t {
+            type Output = $t;
             #[inline]
             fn div_floor(self, rhs: Self) -> Self {
                 self / rhs
@@ -110,6 +115,7 @@ macro_rules! div_floor_impl {
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl DivFloor for $t {
+            type Output = $t;
             #[inline]
             fn div_floor(self, rhs: Self) -> Self {
                 let d = self / rhs;
@@ -132,7 +138,9 @@ div_floor_impl!(signed isize i8 i16 i32 i64 i128);
 
 c0nst::c0nst! {
 /// Performs division without remainder.
-pub c0nst trait DivExact: Sized + [c0nst] Div<Self> + [c0nst] Rem<Self> {
+pub c0nst trait DivExact: Sized {
+    /// The quotient type (`Self` for the primitive impls).
+    type Output;
     /// Integer division without remainder. Computes `self / rhs`, returning
     /// `None` if `self % rhs != 0`.
     ///
@@ -147,12 +155,12 @@ pub c0nst trait DivExact: Sized + [c0nst] Div<Self> + [c0nst] Rem<Self> {
     /// assert_eq!(DivExact::div_exact(64u8, 2), Some(32));
     /// assert_eq!(DivExact::div_exact(65u8, 2), None);
     /// ```
-    fn div_exact(self, rhs: Self) -> Option<<Self as Div<Self>>::Output>;
+    fn div_exact(self, rhs: Self) -> Option<Self::Output>;
 
     /// Checked integer division without remainder. Computes `self / rhs`,
     /// returning `None` if `rhs == 0`, `self % rhs != 0`, or the division
     /// overflowed (`MIN / -1` on a signed type).
-    fn checked_div_exact(self, rhs: Self) -> Option<<Self as Div<Self>>::Output>;
+    fn checked_div_exact(self, rhs: Self) -> Option<Self::Output>;
 }
 }
 
@@ -160,6 +168,7 @@ macro_rules! div_exact_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl DivExact for $t {
+            type Output = $t;
             #[inline]
             fn div_exact(self, rhs: Self) -> Option<Self> {
                 if self % rhs != 0 {
@@ -195,7 +204,7 @@ div_exact_impl!(isize i8 i16 i32 i64 i128);
 
 c0nst::c0nst! {
 /// Checks divisibility, mirroring `is_multiple_of` on the unsigned primitives.
-pub c0nst trait MultipleOf: Sized + [c0nst] Rem<Self> {
+pub c0nst trait MultipleOf: Sized {
     /// Returns `true` if `self` is an integer multiple of `rhs`, and `false`
     /// otherwise.
     ///
@@ -237,7 +246,9 @@ multiple_of_impl!(usize u8 u16 u32 u64 u128);
 
 c0nst::c0nst! {
 /// Rounds up to the nearest multiple of a value.
-pub c0nst trait NextMultipleOf: Sized + [c0nst] Add<Self> + [c0nst] Rem<Self> {
+pub c0nst trait NextMultipleOf: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Calculates the smallest value greater than or equal to `self` that is
     /// a multiple of `rhs` (for negative `rhs` on signed types: the closest
     /// to negative infinity).
@@ -254,12 +265,12 @@ pub c0nst trait NextMultipleOf: Sized + [c0nst] Add<Self> + [c0nst] Rem<Self> {
     /// assert_eq!(NextMultipleOf::next_multiple_of(23u8, 8), 24);
     /// assert_eq!(NextMultipleOf::next_multiple_of(-16i8, -5), -20);
     /// ```
-    fn next_multiple_of(self, rhs: Self) -> <Self as Add<Self>>::Output;
+    fn next_multiple_of(self, rhs: Self) -> Self::Output;
 
     /// Calculates the smallest value greater than or equal to `self` that is
     /// a multiple of `rhs`, returning `None` if `rhs` is zero or the
     /// operation would result in overflow.
-    fn checked_next_multiple_of(self, rhs: Self) -> Option<<Self as Add<Self>>::Output>;
+    fn checked_next_multiple_of(self, rhs: Self) -> Option<Self::Output>;
 }
 }
 
@@ -267,6 +278,7 @@ macro_rules! next_multiple_of_impl {
     (unsigned $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl NextMultipleOf for $t {
+            type Output = $t;
             #[inline]
             fn next_multiple_of(self, rhs: Self) -> Self {
                 <$t>::next_multiple_of(self, rhs)
@@ -283,6 +295,7 @@ macro_rules! next_multiple_of_impl {
     (signed $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl NextMultipleOf for $t {
+            type Output = $t;
             #[inline]
             fn next_multiple_of(self, rhs: Self) -> Self {
                 // rhs == -1 would otherwise fail computing `MIN % -1`
