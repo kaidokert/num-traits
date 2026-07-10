@@ -9,13 +9,13 @@
 //! **CT tier C (CT-hostile)**: panicking on overflow is data-dependent
 //! control flow by definition.
 
-use core::ops::{Add, Div, Mul, Neg, Rem, Shl, Shr, Sub};
-
 use super::euclid::Euclid;
 
 c0nst::c0nst! {
 /// Performs addition that panics on overflow, even in release builds.
-pub c0nst trait StrictAdd: Sized + [c0nst] Add<Self> {
+pub c0nst trait StrictAdd: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Strict addition. Computes `self + v`, panicking on overflow regardless
     /// of whether overflow checks are enabled.
     ///
@@ -24,25 +24,29 @@ pub c0nst trait StrictAdd: Sized + [c0nst] Add<Self> {
     ///
     /// assert_eq!(StrictAdd::strict_add(5u8, 250), 255);
     /// ```
-    fn strict_add(self, v: Self) -> <Self as Add<Self>>::Output;
+    fn strict_add(self, v: Self) -> Self::Output;
 }
 }
 
 c0nst::c0nst! {
 /// Performs subtraction that panics on overflow, even in release builds.
-pub c0nst trait StrictSub: Sized + [c0nst] Sub<Self> {
+pub c0nst trait StrictSub: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Strict subtraction. Computes `self - v`, panicking on overflow
     /// regardless of whether overflow checks are enabled.
-    fn strict_sub(self, v: Self) -> <Self as Sub<Self>>::Output;
+    fn strict_sub(self, v: Self) -> Self::Output;
 }
 }
 
 c0nst::c0nst! {
 /// Performs multiplication that panics on overflow, even in release builds.
-pub c0nst trait StrictMul: Sized + [c0nst] Mul<Self> {
+pub c0nst trait StrictMul: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Strict multiplication. Computes `self * v`, panicking on overflow
     /// regardless of whether overflow checks are enabled.
-    fn strict_mul(self, v: Self) -> <Self as Mul<Self>>::Output;
+    fn strict_mul(self, v: Self) -> Self::Output;
 }
 }
 
@@ -50,6 +54,7 @@ macro_rules! strict_binary_impl {
     ($trait_name:ident, $method:ident, $overflowing:ident, $msg:expr, $t:ty) => {
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             #[track_caller]
             fn $method(self, v: Self) -> Self {
@@ -102,19 +107,23 @@ strict_binary_impl_all!(
 
 c0nst::c0nst! {
 /// Performs division that panics on overflow, even in release builds.
-pub c0nst trait StrictDiv: Sized + [c0nst] Div<Self> {
+pub c0nst trait StrictDiv: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Strict division. Computes `self / v`, panicking on overflow (only
     /// possible for `MIN / -1` on a signed type) or if `v` is zero.
-    fn strict_div(self, v: Self) -> <Self as Div<Self>>::Output;
+    fn strict_div(self, v: Self) -> Self::Output;
 }
 }
 
 c0nst::c0nst! {
 /// Performs a remainder operation that panics on overflow, even in release builds.
-pub c0nst trait StrictRem: Sized + [c0nst] Rem<Self> {
+pub c0nst trait StrictRem: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Strict remainder. Computes `self % v`, panicking on overflow (only
     /// possible for `MIN % -1` on a signed type) or if `v` is zero.
-    fn strict_rem(self, v: Self) -> <Self as Rem<Self>>::Output;
+    fn strict_rem(self, v: Self) -> Self::Output;
 }
 }
 
@@ -165,10 +174,12 @@ strict_neg_impl!(isize i8 i16 i32 i64 i128);
 
 c0nst::c0nst! {
 /// Computes the absolute value, panicking on overflow even in release builds.
-pub c0nst trait StrictAbs: Sized + [c0nst] Neg {
+pub c0nst trait StrictAbs: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Strict absolute value. Computes `self.abs()`, panicking for
     /// `MIN.strict_abs()` (the result can't be represented).
-    fn strict_abs(self) -> <Self as Neg>::Output;
+    fn strict_abs(self) -> Self::Output;
 }
 }
 
@@ -176,6 +187,7 @@ macro_rules! strict_abs_impl {
     ($($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl StrictAbs for $t {
+            type Output = $t;
             #[inline]
             #[track_caller]
             fn strict_abs(self) -> Self {
@@ -194,19 +206,23 @@ strict_abs_impl!(isize i8 i16 i32 i64 i128);
 
 c0nst::c0nst! {
 /// Performs a left shift that panics on overflowing shift amounts, even in release builds.
-pub c0nst trait StrictShl: Sized + [c0nst] Shl<u32> {
+pub c0nst trait StrictShl: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Strict shift left. Computes `self << rhs`, panicking if `rhs` is
     /// larger than or equal to the number of bits in `self`.
-    fn strict_shl(self, rhs: u32) -> <Self as Shl<u32>>::Output;
+    fn strict_shl(self, rhs: u32) -> Self::Output;
 }
 }
 
 c0nst::c0nst! {
 /// Performs a right shift that panics on overflowing shift amounts, even in release builds.
-pub c0nst trait StrictShr: Sized + [c0nst] Shr<u32> {
+pub c0nst trait StrictShr: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Strict shift right. Computes `self >> rhs`, panicking if `rhs` is
     /// larger than or equal to the number of bits in `self`.
-    fn strict_shr(self, rhs: u32) -> <Self as Shr<u32>>::Output;
+    fn strict_shr(self, rhs: u32) -> Self::Output;
 }
 }
 
@@ -214,6 +230,7 @@ macro_rules! strict_shift_impl {
     ($trait_name:ident, $method:ident, $checked:ident, $msg:expr, $($t:ty)*) => {$(
         c0nst::c0nst! {
         c0nst impl $trait_name for $t {
+            type Output = $t;
             #[inline]
             #[track_caller]
             fn $method(self, rhs: u32) -> Self {
@@ -244,10 +261,12 @@ strict_shift_impl!(
 
 c0nst::c0nst! {
 /// Performs exponentiation that panics on overflow, even in release builds.
-pub c0nst trait StrictPow: Sized + [c0nst] Mul<Self> {
+pub c0nst trait StrictPow: Sized {
+    /// The result type (`Self` for the primitive impls).
+    type Output;
     /// Strict exponentiation. Computes `self.pow(exp)`, panicking on
     /// overflow regardless of whether overflow checks are enabled.
-    fn strict_pow(self, exp: u32) -> <Self as Mul<Self>>::Output;
+    fn strict_pow(self, exp: u32) -> Self::Output;
 }
 }
 
@@ -265,12 +284,12 @@ pub c0nst trait StrictEuclid: [c0nst] Euclid {
     /// Strict Euclidean division. Computes `Euclid::div_euclid(self, v)`,
     /// panicking on overflow (only possible for `MIN / -1` on a signed type)
     /// or if `v` is zero.
-    fn strict_div_euclid(self, v: Self) -> <Self as Div<Self>>::Output;
+    fn strict_div_euclid(self, v: Self) -> <Self as Euclid>::Output;
 
     /// Strict Euclidean remainder. Computes `Euclid::rem_euclid(self, v)`,
     /// panicking on overflow (only possible for `MIN % -1` on a signed type)
     /// or if `v` is zero.
-    fn strict_rem_euclid(self, v: Self) -> <Self as Rem<Self>>::Output;
+    fn strict_rem_euclid(self, v: Self) -> <Self as Euclid>::Output;
 }
 }
 
