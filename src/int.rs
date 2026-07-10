@@ -378,7 +378,7 @@ pub c0nst trait PrimInt:
     + [c0nst] CheckedSub<Output = Self>
     + [c0nst] CheckedMul<Output = Self>
     + [c0nst] CheckedDiv<Output = Self>
-    + [c0nst] Saturating
+    + [c0nst] Saturating<Output = Self>
 {
     /// Raises self to the power of `exp`, using exponentiation by squaring.
     ///
