@@ -437,18 +437,13 @@ macro_rules! bit_width_impl {
 bit_width_impl!(usize u8 u16 u32 u64 u128);
 
 c0nst::c0nst! {
-/// Reports a value's operating **width** — the number of bits it was
-/// constructed over.
+/// A value's operating **width** — the number of bits it was constructed over:
+/// the type's bit-width for fixed carriers (`u32` → 32, value-independent), the
+/// constructed length for variable-width bignums (per value).
 ///
-/// For built-in integers and other fixed-width carriers this is the type's
-/// bit-width and is value-independent; for variable-width carriers (runtime-len
-/// bignums) it is the constructed length, so it is reported per value.
-///
-/// Deliberately a runtime method, never an associated `const`: a variable-width
-/// carrier has no compile-time width, and a `const` width would invite the
-/// fixed-width proxies (`size_of::<T>() * 8`, `count_zeros(zero())`) this trait
-/// replaces. Contrast [`BitWidth::bit_width`], which reports *bit-length* — the
-/// significant bits of the value, always `<= bits_precision()`.
+/// A runtime method, not a `const`: a variable-width carrier has no compile-time
+/// width. Contrast [`BitWidth::bit_width`] (*bit-length* — significant bits,
+/// always `<= bits_precision()`).
 pub c0nst trait BitsPrecision: Sized {
     /// The number of bits `self` operates over (its constructed width).
     ///
