@@ -437,6 +437,48 @@ macro_rules! bit_width_impl {
 bit_width_impl!(usize u8 u16 u32 u64 u128);
 
 c0nst::c0nst! {
+/// Reports a value's operating **width** — the number of bits it was
+/// constructed over.
+///
+/// For built-in integers and other fixed-width carriers this is the type's
+/// bit-width and is value-independent; for variable-width carriers (runtime-len
+/// bignums) it is the constructed length, so it is reported per value.
+///
+/// Deliberately a runtime method, never an associated `const`: a variable-width
+/// carrier has no compile-time width, and a `const` width would invite the
+/// fixed-width proxies (`size_of::<T>() * 8`, `count_zeros(zero())`) this trait
+/// replaces. Contrast [`BitWidth::bit_width`], which reports *bit-length* — the
+/// significant bits of the value, always `<= bits_precision()`.
+pub c0nst trait BitsPrecision: Sized {
+    /// The number of bits `self` operates over (its constructed width).
+    ///
+    /// ```
+    /// use const_num_traits::BitsPrecision;
+    ///
+    /// assert_eq!(BitsPrecision::bits_precision(0u32), 32);
+    /// assert_eq!(BitsPrecision::bits_precision(u32::MAX), 32);
+    /// assert_eq!(BitsPrecision::bits_precision(7u8), 8);
+    /// ```
+    fn bits_precision(self) -> u32;
+}
+}
+
+macro_rules! bits_precision_impl {
+    ($($t:ty)*) => {$(
+        c0nst::c0nst! {
+        c0nst impl BitsPrecision for $t {
+            #[inline]
+            fn bits_precision(self) -> u32 {
+                <$t>::BITS
+            }
+        }
+        }
+    )*};
+}
+
+bits_precision_impl!(usize u8 u16 u32 u64 u128);
+
+c0nst::c0nst! {
 /// Scatters bits through a mask (the PDEP operation).
 pub c0nst trait DepositBits: Sized {
     /// Scatters the contiguous low-order bits of `self` into the positions

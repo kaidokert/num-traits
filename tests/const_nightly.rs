@@ -9,12 +9,12 @@
 use const_num_traits::Signed;
 use const_num_traits::ops::overflowing::{OverflowingAdd, OverflowingShl};
 use const_num_traits::{
-    AbsDiff, BorrowingSub, CarryingAdd, CarryingMul, CarrylessMul, CastSigned, CastUnsigned,
-    CheckedAddSigned, CheckedCast, CheckedPow, CheckedSignedDiff, ClampMagnitude, DepositBits,
-    DivCeil, DivExact, DivFloor, FunnelShl, HighestOne, Ilog2, Isqrt, Midpoint, MultipleOf,
-    NextMultipleOf, NextPowerOfTwo, OverflowingSubUnsigned, Parity, SaturatingAbs, SaturatingCast,
-    ShlExact, StrictAdd, StrictEuclid, Truncate, UnboundedShr, UnsignedAbs, Widen, WideningMul,
-    WrappingPow,
+    AbsDiff, BitsPrecision, BorrowingSub, CarryingAdd, CarryingMul, CarrylessMul, CastSigned,
+    CastUnsigned, CheckedAddSigned, CheckedCast, CheckedPow, CheckedSignedDiff, ClampMagnitude,
+    DepositBits, DivCeil, DivExact, DivFloor, FunnelShl, HighestOne, Ilog2, Isqrt, Midpoint,
+    MultipleOf, NextMultipleOf, NextPowerOfTwo, OverflowingSubUnsigned, Parity, SaturatingAbs,
+    SaturatingCast, ShlExact, StrictAdd, StrictEuclid, Truncate, UnboundedShr, UnsignedAbs, Widen,
+    WideningMul, WrappingPow,
 };
 use const_num_traits::{
     Algebraic, FloatBits, FromAscii, FromByteSlice, FromBytes, Maximum, NextUp, ToBytes,
@@ -144,11 +144,13 @@ fn bits_in_const() {
     const EXSHL: Option<u8> = ShlExact::shl_exact(0x11u8, 3);
     const HI: Option<u32> = HighestOne::highest_one(0b0101_0000u8);
     const DEP: u8 = DepositBits::deposit_bits(0b101u8, 0b1111_0000);
+    const PREC: u32 = BitsPrecision::bits_precision(0u32);
     assert_eq!(USHR, -1);
     assert_eq!(FUN, 0x03);
     assert_eq!(EXSHL, Some(0x88));
     assert_eq!(HI, Some(6));
     assert_eq!(DEP, 0b0101_0000);
+    assert_eq!(PREC, 32);
 }
 
 #[test]
