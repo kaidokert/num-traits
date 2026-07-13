@@ -441,9 +441,9 @@ c0nst::c0nst! {
 /// the type's bit-width for fixed carriers (`u32` → 32, value-independent), the
 /// constructed length for variable-width bignums (per value).
 ///
-/// A runtime method, not a `const`: a variable-width carrier has no compile-time
-/// width. Contrast [`BitWidth::bit_width`] (*bit-length* — significant bits,
-/// always `<= bits_precision()`).
+/// A method, not an associated `const`: a variable-width carrier's width is only
+/// known at runtime. Contrast [`BitWidth::bit_width`] (*bit-length* —
+/// significant bits, always `<= bits_precision()`).
 pub c0nst trait BitsPrecision: Sized {
     /// The number of bits `self` operates over (its constructed width).
     ///
