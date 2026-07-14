@@ -437,13 +437,26 @@ macro_rules! bit_width_impl {
 bit_width_impl!(usize u8 u16 u32 u64 u128);
 
 c0nst::c0nst! {
-/// A value's operating **width** — the number of bits it was constructed over:
-/// the type's bit-width for fixed carriers (`u32` → 32, value-independent), the
-/// constructed length for variable-width bignums (per value).
+/// A value's operating **width** in bits — how many bits it is represented over,
+/// which may be **less than its storage capacity**. Named after
+/// `crypto-bigint`'s `BoxedUint::bits_precision`.
+///
+/// For a fixed-width carrier the width is a property of the type and
+/// value-independent (`u32` → 32; `arbitrary-int`'s `u48` → 48, below its `u64`
+/// store; a fixed-point `Q48.8` → 56); for a variable-width carrier (a
+/// runtime-length bignum) it is the value's constructed length. Contrast
+/// [`BitWidth::bit_width`] (*bit-length* — the significant bits of the value,
+/// always `<= bits_precision()`).
+///
+/// A binary quantity only: types whose "precision" is not a binary width below a
+/// binary capacity — decimals (base-10 digits), floats (fixed mantissa),
+/// rationals — do not implement it.
 ///
 /// A method, not an associated `const`: a variable-width carrier's width is only
-/// known at runtime. Contrast [`BitWidth::bit_width`] (*bit-length* —
-/// significant bits, always `<= bits_precision()`).
+/// known at runtime — and there the identity is *minimal*-width, so
+/// `bits_precision(Zero::zero())` is `0`, **not** the operating width. Probe a
+/// full-width witness (typically the modulus), never the identity. See
+/// [`WithPrecision`] to establish a width constructively.
 pub c0nst trait BitsPrecision: Sized {
     /// The number of bits `self` operates over (its constructed width).
     ///
@@ -472,6 +485,108 @@ macro_rules! bits_precision_impl {
 }
 
 bits_precision_impl!(usize u8 u16 u32 u64 u128);
+
+c0nst::c0nst! {
+/// Establishes a value's operating **width** from a witness — the constructive
+/// companion to [`BitsPrecision`], which *reads* it. The method names mirror the
+/// width-carrying constructors on `crypto-bigint`'s `BoxedUint`
+/// (`zero_with_precision`, `one_with_precision`, `widen`), lifted to a
+/// cross-carrier trait.
+///
+/// [`Zero::zero`](crate::Zero::zero) and [`One::one`](crate::One::one) are
+/// *minimal*-width on a runtime-width carrier: `zero()` is a 0-bit value, `one()`
+/// a 1-bit value. Generic code that seeds an accumulator with `zero()` and drives
+/// it toward a modulus width then operates at the seed width and wraps early —
+/// correct on a fixed-width type, silently truncated on a variable-width one.
+/// Seeding at the modulus width removes the trap: `T::zero_with_precision_of(&m)`.
+///
+/// [`widen_to_precision`](Self::widen_to_precision) **never shrinks** and
+/// preserves the numeric value. On a fixed-width carrier (a primitive,
+/// `arbitrary-int`'s `u48`, a fixed-point type) the width is the type, so it is
+/// the identity and the requested precision is ignored. Widening preserves the
+/// value only to a *representation-compatible* width — for a fixed-point carrier,
+/// the same fractional format — which is why the ergonomic forms take a witness
+/// *value* rather than a bare bit count.
+///
+/// ```
+/// use const_num_traits::WithPrecision;
+///
+/// // Fixed-width: width is the type; the requested precision is ignored.
+/// assert_eq!(WithPrecision::widen_to_precision(5u32, 256), 5u32);
+/// assert_eq!(WithPrecision::zero_with_precision_of(&99u32), 0u32);
+/// let one: u32 = WithPrecision::one_with_precision(128);
+/// assert_eq!(one, 1);
+/// ```
+pub c0nst trait WithPrecision: [c0nst] BitsPrecision {
+    /// Returns `self` re-represented over a width of **at least**
+    /// `bits_precision`, preserving its numeric value. Never shrinks; on a
+    /// fixed-width carrier the width is the type and this is the identity.
+    fn widen_to_precision(self, bits_precision: u32) -> Self;
+
+    /// A [`Zero`](crate::Zero) carried at a width of at least `bits_precision`.
+    #[inline]
+    fn zero_with_precision(bits_precision: u32) -> Self
+    where
+        Self: [c0nst] crate::Zero,
+    {
+        Self::zero().widen_to_precision(bits_precision)
+    }
+
+    /// A [`One`](crate::One) carried at a width of at least `bits_precision`.
+    #[inline]
+    fn one_with_precision(bits_precision: u32) -> Self
+    where
+        Self: [c0nst] crate::One,
+    {
+        Self::one().widen_to_precision(bits_precision)
+    }
+
+    /// [`widen_to_precision`](Self::widen_to_precision) to the width of a
+    /// `witness` value — typically the modulus a reducer operates over. Prefer
+    /// this to hand-picking a bit count: the witness carries the intended width.
+    #[inline]
+    fn widen_to_precision_of(self, witness: &Self) -> Self
+    where
+        Self: Copy,
+    {
+        self.widen_to_precision(witness.bits_precision())
+    }
+
+    /// A [`Zero`](crate::Zero) carried at the `witness`'s width — the width-safe
+    /// seed for a generic accumulator.
+    #[inline]
+    fn zero_with_precision_of(witness: &Self) -> Self
+    where
+        Self: [c0nst] crate::Zero + Copy,
+    {
+        Self::zero_with_precision(witness.bits_precision())
+    }
+
+    /// A [`One`](crate::One) carried at the `witness`'s width.
+    #[inline]
+    fn one_with_precision_of(witness: &Self) -> Self
+    where
+        Self: [c0nst] crate::One + Copy,
+    {
+        Self::one_with_precision(witness.bits_precision())
+    }
+}
+}
+
+macro_rules! with_precision_impl {
+    ($($t:ty)*) => {$(
+        c0nst::c0nst! {
+        c0nst impl WithPrecision for $t {
+            #[inline]
+            fn widen_to_precision(self, _bits_precision: u32) -> $t {
+                self
+            }
+        }
+        }
+    )*};
+}
+
+with_precision_impl!(usize u8 u16 u32 u64 u128);
 
 c0nst::c0nst! {
 /// Scatters bits through a mask (the PDEP operation).
@@ -633,6 +748,18 @@ mod tests {
         assert_eq!(BitWidth::bit_width(1u8), 1);
         assert_eq!(BitWidth::bit_width(255u8), 8);
         assert_eq!(BitWidth::bit_width(0x0101u16), 9);
+    }
+
+    #[test]
+    fn with_precision_is_identity_on_fixed_width() {
+        // Fixed-width carriers: width is the type, requested precision ignored.
+        assert_eq!(WithPrecision::widen_to_precision(5u32, 256), 5);
+        assert_eq!(WithPrecision::widen_to_precision_of(5u32, &9999u32), 5);
+        assert_eq!(WithPrecision::zero_with_precision_of(&99u32), 0u32);
+        assert_eq!(WithPrecision::one_with_precision_of(&99u8), 1u8);
+        let z: u16 = WithPrecision::zero_with_precision(64);
+        let o: u16 = WithPrecision::one_with_precision(64);
+        assert_eq!((z, o), (0, 1));
     }
 
     #[test]

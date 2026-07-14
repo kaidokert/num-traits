@@ -82,6 +82,7 @@ pub use crate::int::{PrimBits, PrimInt};
 pub use crate::ops::bits::{
     BitWidth, BitsPrecision, DepositBits, ExtractBits, FunnelShl, FunnelShr, HighestOne,
     IsolateHighestOne, IsolateLowestOne, LowestOne, ShlExact, ShrExact, UnboundedShl, UnboundedShr,
+    WithPrecision,
 };
 pub use crate::ops::byte_slice::{ByteSliceError, ByteSliceErrorKind, FromByteSlice};
 pub use crate::ops::bytes::{FromBytes, ToBytes};
