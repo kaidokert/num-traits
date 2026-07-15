@@ -144,7 +144,7 @@ fn bits_in_const() {
     const EXSHL: Option<u8> = ShlExact::shl_exact(0x11u8, 3);
     const HI: Option<u32> = HighestOne::highest_one(0b0101_0000u8);
     const DEP: u8 = DepositBits::deposit_bits(0b101u8, 0b1111_0000);
-    const PREC: u32 = BitsPrecision::bits_precision(0u32);
+    const PREC: u32 = BitsPrecision::bits_precision(&0u32);
     // WithPrecision: identity on fixed-width carriers, const on nightly.
     const WP: u32 = WithPrecision::widen_to_precision(5u32, 256);
     const WPZ: u32 = <u32 as WithPrecision>::zero_with_precision(64);
