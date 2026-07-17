@@ -480,7 +480,7 @@ macro_rules! bits_precision_impl {
     )*};
 }
 
-bits_precision_impl!(usize u8 u16 u32 u64 u128);
+bits_precision_impl!(usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128);
 
 c0nst::c0nst! {
 /// Establishes a value's operating **width** from a witness — the constructive
@@ -575,7 +575,7 @@ macro_rules! with_precision_impl {
     )*};
 }
 
-with_precision_impl!(usize u8 u16 u32 u64 u128);
+with_precision_impl!(usize u8 u16 u32 u64 u128 isize i8 i16 i32 i64 i128);
 
 c0nst::c0nst! {
 /// Scatters bits through a mask (the PDEP operation).
@@ -749,6 +749,10 @@ mod tests {
         let z: u16 = WithPrecision::zero_with_precision(64);
         let o: u16 = WithPrecision::one_with_precision(64);
         assert_eq!((z, o), (0, 1));
+        // signed carriers: width is the type (`i32::BITS`), ops are the identity.
+        assert_eq!(BitsPrecision::bits_precision(&-1i32), 32);
+        assert_eq!(WithPrecision::widen_to_precision(-5i16, 128), -5);
+        assert_eq!(WithPrecision::zero_with_precision_of(&-9i64), 0i64);
     }
 
     // A runtime-width, non-`Copy` carrier (only `Clone`). Proves the witness `_of`
