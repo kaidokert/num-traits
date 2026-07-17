@@ -438,31 +438,21 @@ bit_width_impl!(usize u8 u16 u32 u64 u128);
 
 c0nst::c0nst! {
 /// A value's operating **width** in bits — how many bits it is represented over,
-/// which may be **less than its storage capacity**. Named after
-/// `crypto-bigint`'s `BoxedUint::bits_precision`.
+/// possibly **less than its storage capacity**. Fixed per type for a fixed-width
+/// carrier (`u32` → 32, `arbitrary-int`'s `u48` → 48), per-value for a
+/// variable-width bignum. Named after `crypto-bigint`'s `BoxedUint::bits_precision`.
+/// Contrast [`BitWidth::bit_width`] (*bit-length* — significant bits,
+/// `<= bits_precision()`).
 ///
-/// For a fixed-width carrier the width is a property of the type and
-/// value-independent (`u32` → 32; `arbitrary-int`'s `u48` → 48, below its `u64`
-/// store; a fixed-point `Q48.8` → 56); for a variable-width carrier (a
-/// runtime-length bignum) it is the value's constructed length. Contrast
-/// [`BitWidth::bit_width`] (*bit-length* — the significant bits of the value,
-/// always `<= bits_precision()`).
+/// Binary carriers only — not decimals/floats/rationals (non-binary precision).
 ///
-/// A binary quantity only: types whose "precision" is not a binary width below a
-/// binary capacity — decimals (base-10 digits), floats (fixed mantissa),
-/// rationals — do not implement it.
+/// **Footgun:** on a variable-width carrier the identity is minimal-width, so
+/// `bits_precision(&Zero::zero())` is `0`, not the operating width — probe a
+/// full-width witness (the modulus), never the identity. See [`WithPrecision`].
 ///
-/// A method, not an associated `const`: a variable-width carrier's width is only
-/// known at runtime — and there the identity is *minimal*-width, so
-/// `bits_precision(&Zero::zero())` is `0`, **not** the operating width. Probe a
-/// full-width witness (typically the modulus), never the identity. See
-/// [`WithPrecision`] to establish a width constructively.
-///
-/// Takes `&self`: reading a value's width never consumes it, so — like
-/// [`FromBytes`](crate::FromBytes) — the by-value operand convention does not
-/// apply. Borrowing is what lets a non-`Copy` carrier be *queried as a witness*
-/// without a clone, which is exactly how [`WithPrecision`]'s `_of` forms stay
-/// `Copy`-free.
+/// `&self`, not `self`: a width query never consumes its value (cf.
+/// [`FromBytes`](crate::FromBytes)), and borrowing lets a non-`Copy` carrier be a
+/// witness without a clone — how [`WithPrecision`]'s `_of` forms stay `Copy`-free.
 pub c0nst trait BitsPrecision: Sized {
     /// The number of bits `self` operates over (its constructed width).
     ///
@@ -494,30 +484,21 @@ bits_precision_impl!(usize u8 u16 u32 u64 u128);
 
 c0nst::c0nst! {
 /// Establishes a value's operating **width** from a witness — the constructive
-/// companion to [`BitsPrecision`], which *reads* it. The method names mirror the
-/// width-carrying constructors on `crypto-bigint`'s `BoxedUint`
-/// (`zero_with_precision`, `one_with_precision`, `widen`), lifted to a
-/// cross-carrier trait.
+/// companion to [`BitsPrecision`]. Method names mirror `crypto-bigint`'s
+/// `BoxedUint::{zero_with_precision, one_with_precision, widen}`.
 ///
-/// [`Zero::zero`](crate::Zero::zero) and [`One::one`](crate::One::one) are
-/// *minimal*-width on a runtime-width carrier: `zero()` is a 0-bit value, `one()`
-/// a 1-bit value. Generic code that seeds an accumulator with `zero()` and drives
-/// it toward a modulus width then operates at the seed width and wraps early —
+/// **Why it exists:** [`Zero::zero`](crate::Zero::zero)/[`One::one`](crate::One::one)
+/// are minimal-width on a runtime-width carrier, so a reducer seeded with `zero()`
+/// and grown toward a modulus width operates at the seed width and wraps early —
 /// correct on a fixed-width type, silently truncated on a variable-width one.
-/// Seeding at the modulus width removes the trap: `T::zero_with_precision_of(&m)`.
+/// `T::zero_with_precision_of(&m)` seeds at the modulus width instead.
 ///
-/// [`widen_to_precision`](Self::widen_to_precision) **never shrinks** and
-/// preserves the numeric value. On a fixed-width carrier (a primitive,
-/// `arbitrary-int`'s `u48`, a fixed-point type) the width is the type, so it is
-/// the identity and the requested precision is ignored. Widening preserves the
-/// value only to a *representation-compatible* width — for a fixed-point carrier,
-/// the same fractional format — which is why the ergonomic forms take a witness
-/// *value* rather than a bare bit count.
-///
-/// The witness `_of` forms borrow the witness (`&Self`) and read its width
-/// through [`BitsPrecision::bits_precision`], which also borrows — so they carry
-/// **no `Copy` bound** and serve a `Clone`-generic (non-`Copy`) carrier, the case
-/// the whole family exists for.
+/// [`widen_to_precision`](Self::widen_to_precision) grows, never shrinks, and
+/// preserves the value (identity on a fixed-width carrier). It preserves value
+/// only to a *representation-compatible* width — a fixed-point carrier's fractional
+/// format must match — which is why the `_of` forms take a witness *value*, not a
+/// bit count. Those forms borrow the witness, so they carry **no `Copy` bound** and
+/// serve `Clone`-only carriers, the case the family exists for.
 ///
 /// ```
 /// use const_num_traits::WithPrecision;
@@ -770,9 +751,8 @@ mod tests {
         assert_eq!((z, o), (0, 1));
     }
 
-    // A runtime-width, **non-`Copy`** carrier (only `Clone`) — the ed25519
-    // `sha512_modq` case. Proves the witness `_of` forms carry no `Copy` bound and
-    // establish width from a borrowed witness without cloning the value.
+    // A runtime-width, non-`Copy` carrier (only `Clone`). Proves the witness `_of`
+    // forms carry no `Copy` bound and establish width from a borrowed witness.
     #[derive(Clone, PartialEq, Debug)]
     struct RtWidth {
         val: u64,
@@ -818,8 +798,7 @@ mod tests {
     #[test]
     fn with_precision_serves_non_copy_carrier() {
         let modulus = RtWidth { val: 7, width: 256 };
-        // zero/one seeded at the witness width — the idiom `sha512_modq` needed.
-        // `modulus` is only borrowed: it is still usable afterward.
+        // zero/one seeded at the witness width; `modulus` is only borrowed.
         let z = RtWidth::zero_with_precision_of(&modulus);
         let o = RtWidth::one_with_precision_of(&modulus);
         assert_eq!(z, RtWidth { val: 0, width: 256 });
