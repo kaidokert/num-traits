@@ -2,7 +2,7 @@
 
 [![crate](https://img.shields.io/crates/v/const-num-traits.svg)](https://crates.io/crates/const-num-traits)
 [![documentation](https://docs.rs/const-num-traits/badge.svg)](https://docs.rs/const-num-traits)
-[![minimum rustc 1.86](https://img.shields.io/badge/rustc-1.86+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
+[![minimum rustc 1.88](https://img.shields.io/badge/rustc-1.88+-red.svg)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
 [![build status](https://github.com/kaidokert/num-traits/actions/workflows/ci.yaml/badge.svg)](https://github.com/kaidokert/num-traits/actions)
 
 Numeric traits for generic mathematics in Rust.
@@ -53,7 +53,7 @@ point exponents in `Pow`.
 
 ## Compatibility
 
-The `const-num-traits` crate is tested for rustc 1.86 and greater.
+The `const-num-traits` crate is tested for rustc 1.88 and greater.
 
 ## License
 
