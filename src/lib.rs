@@ -44,7 +44,7 @@
 //!
 //! ## Compatibility
 //!
-//! The `const-num-traits` crate is tested for rustc 1.86 and greater.
+//! The `const-num-traits` crate is tested for rustc 1.88 and greater.
 
 #![deny(unconditional_recursion)]
 // By-value receivers mirror core's inherent methods, so `is_*` predicates take
