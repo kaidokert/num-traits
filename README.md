@@ -23,14 +23,14 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-const-num-traits = "0.2"
+const-num-traits = "0.3"
 ```
 
 Enable the `const trait` surface with the `nightly` feature on a nightly compiler:
 
 ```toml
 [dependencies]
-const-num-traits = { version = "0.2", features = ["nightly"] }
+const-num-traits = { version = "0.3", features = ["nightly"] }
 ```
 
 ## Features
@@ -40,7 +40,7 @@ the default `std` feature. Use this in `Cargo.toml`:
 
 ```toml
 [dependencies.const-num-traits]
-version = "0.2"
+version = "0.3"
 default-features = false
 # features = ["libm"]    # <--- Uncomment if you wish to use `Float` and `Real` without `std`
 ```
