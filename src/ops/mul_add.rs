@@ -147,7 +147,7 @@ mod tests {
 
                         let abs_difference = (MulAdd::mul_add(m, x, b) - (m*x + b)).abs();
 
-                        assert!(abs_difference <= 46.4 * $t::EPSILON);
+                        assert!(abs_difference <= 46.4 * <$t>::EPSILON);
                     }
                 )+
             };

@@ -2,7 +2,6 @@
 authors = ["The Rust Project Developers"]
 description = "Const-friendly numeric traits for generic mathematics (fork of num-traits)"
 documentation = "https://docs.rs/const-num-traits"
-homepage = "https://github.com/kaidokert/num-traits"
 keywords = ["mathematics", "numerics"]
 categories = ["algorithms", "science", "no-std"]
 license = "MIT OR Apache-2.0"
