@@ -2,9 +2,6 @@ use core::cmp::Ordering;
 use core::num::FpCategory;
 use core::ops::{Add, Div, Neg};
 
-use core::f32;
-use core::f64;
-
 use crate::{Num, NumCast, ToPrimitive};
 
 /// Generic trait for floating point numbers that works with `no_std`.
@@ -2182,10 +2179,10 @@ macro_rules! float_const_impl {
     (@float $T:ident, $($constant:ident,)+) => (
         impl FloatConst for $T {
             constant! {
-                $( $constant() -> $T::consts::$constant; )+
-                TAU() -> $T::consts::TAU;
-                LOG10_2() -> $T::consts::LOG10_2;
-                LOG2_10() -> $T::consts::LOG2_10;
+                $( $constant() -> core::$T::consts::$constant; )+
+                TAU() -> core::$T::consts::TAU;
+                LOG10_2() -> core::$T::consts::LOG10_2;
+                LOG2_10() -> core::$T::consts::LOG2_10;
             }
         }
     );
@@ -2428,7 +2425,6 @@ mod tests {
     fn total_cmp() {
         use crate::float::TotalOrder;
         use core::cmp::Ordering;
-        use core::{f32, f64};
 
         fn check_eq<T: TotalOrder>(x: T, y: T) {
             assert_eq!(x.total_cmp(&y), Ordering::Equal);
