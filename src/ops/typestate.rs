@@ -17,6 +17,11 @@
 //! - [`Odd`] / [`Even`]: bare proofs (no consuming op in this crate).
 //! - [`Finite`] (floats): a total order (`Ord`/`Eq`) that bare floats lack.
 //!
+//! [`PowerOfTwo`], [`BitIndex`] and [`Positive`] carry a niche, so wrapping one
+//! in an `Option` (or a `Result` whose error is small) costs no extra tag:
+//! `Option<PowerOfTwo<T>>` and `Option<BitIndex<T>>` are one byte, and
+//! `Option<Positive<T>>` is the size of `T`.
+//!
 //! With the `ct` feature, families with a *secret-derived* predicate also gain a
 //! masked `new_ct`. [`BitIndex`] (public shift amounts) and [`Finite`] (floats
 //! are outside the CT model) have none.
@@ -46,19 +51,87 @@ impl core::fmt::Display for TypestateError {
 // `core::error::Error` is available in `no_std` since Rust 1.81 (< our MSRV).
 impl core::error::Error for TypestateError {}
 
+// ─────────────────────────────── BitPos ────────────────────────────────────
+
+/// A bit position `0..128`: the shared representation of [`PowerOfTwo`]'s
+/// exponent and [`BitIndex`]'s index.
+///
+/// One byte, read with a zero-extension, and the 128 values `128..=255` are a
+/// niche, so `Option` of a proof built on it needs no tag of its own. 128 covers
+/// every primitive; a wider carrier can prove positions below 128 only.
+#[repr(u8)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+#[rustfmt::skip]
+// Built only by `new_unchecked`'s transmute, never by name.
+#[allow(dead_code)]
+enum BitPos {
+    B0 = 0, B1 = 1, B2 = 2, B3 = 3, B4 = 4, B5 = 5, B6 = 6, B7 = 7,
+    B8 = 8, B9 = 9, B10 = 10, B11 = 11, B12 = 12, B13 = 13, B14 = 14, B15 = 15,
+    B16 = 16, B17 = 17, B18 = 18, B19 = 19, B20 = 20, B21 = 21, B22 = 22, B23 = 23,
+    B24 = 24, B25 = 25, B26 = 26, B27 = 27, B28 = 28, B29 = 29, B30 = 30, B31 = 31,
+    B32 = 32, B33 = 33, B34 = 34, B35 = 35, B36 = 36, B37 = 37, B38 = 38, B39 = 39,
+    B40 = 40, B41 = 41, B42 = 42, B43 = 43, B44 = 44, B45 = 45, B46 = 46, B47 = 47,
+    B48 = 48, B49 = 49, B50 = 50, B51 = 51, B52 = 52, B53 = 53, B54 = 54, B55 = 55,
+    B56 = 56, B57 = 57, B58 = 58, B59 = 59, B60 = 60, B61 = 61, B62 = 62, B63 = 63,
+    B64 = 64, B65 = 65, B66 = 66, B67 = 67, B68 = 68, B69 = 69, B70 = 70, B71 = 71,
+    B72 = 72, B73 = 73, B74 = 74, B75 = 75, B76 = 76, B77 = 77, B78 = 78, B79 = 79,
+    B80 = 80, B81 = 81, B82 = 82, B83 = 83, B84 = 84, B85 = 85, B86 = 86, B87 = 87,
+    B88 = 88, B89 = 89, B90 = 90, B91 = 91, B92 = 92, B93 = 93, B94 = 94, B95 = 95,
+    B96 = 96, B97 = 97, B98 = 98, B99 = 99, B100 = 100, B101 = 101, B102 = 102, B103 = 103,
+    B104 = 104, B105 = 105, B106 = 106, B107 = 107, B108 = 108, B109 = 109, B110 = 110, B111 = 111,
+    B112 = 112, B113 = 113, B114 = 114, B115 = 115, B116 = 116, B117 = 117, B118 = 118, B119 = 119,
+    B120 = 120, B121 = 121, B122 = 122, B123 = 123, B124 = 124, B125 = 125, B126 = 126, B127 = 127,
+}
+
+impl BitPos {
+    /// One past the largest position.
+    const END: u32 = 128;
+
+    /// `Some` iff `position < 128`.
+    #[inline]
+    const fn new(position: u32) -> Option<Self> {
+        if position < Self::END {
+            // SAFETY: `position < 128`, and `BitPos` has a variant for every
+            // value `0..128` (checked by the tests).
+            Some(unsafe { Self::new_unchecked(position) })
+        } else {
+            None
+        }
+    }
+
+    /// # Safety
+    ///
+    /// `position` must be `< 128`.
+    #[inline]
+    const unsafe fn new_unchecked(position: u32) -> Self {
+        // SAFETY: the caller guarantees `position < 128`; `BitPos` is
+        // `repr(u8)` with the discriminants `0..128`.
+        unsafe { core::mem::transmute::<u8, BitPos>(position as u8) }
+    }
+
+    #[inline]
+    const fn get(self) -> u32 {
+        self as u32
+    }
+}
+
 /// Proof that a value is a power of two (`2^k`, `k ≥ 0`), for an unsigned
 /// integer type `T`.
 ///
 /// **Representation is the exponent `k`, not the value** — so the consuming
 /// operations in [`PowerOfTwoOps`] are pure shifts and masks with nothing
-/// recomputed per call, and a (future) big-integer backend carries a tiny
-/// `u32` proof regardless of its width. The field is private, so the
+/// recomputed per call. The exponent is stored in one byte whose values
+/// `128..=255` are a niche, so `PowerOfTwo<T>` is one byte for every `T` and
+/// `Option<PowerOfTwo<T>>` is one byte too. The field is private, so the
 /// representation is an implementation detail. Consequently `PowerOfTwo` does
 /// **not** deref to `T`; use [`get`](Self::get) (which reconstructs `1 << k`)
 /// or [`exp`](Self::exp).
 ///
-/// `PowerOfTwo<T>` is always `Copy` (it stores only a `u32`), independent of
-/// whether `T` is.
+/// Every primitive's powers of two fit. A carrier wider than 128 bits can prove
+/// the powers `2^0..2^127` only: [`new_checked`](Self::new_checked) returns
+/// `None` above them.
+///
+/// `PowerOfTwo<T>` is always `Copy`, independent of whether `T` is.
 ///
 /// # Examples
 ///
@@ -71,10 +144,11 @@ impl core::error::Error for TypestateError {}
 /// assert_eq!(100u32.div_pow2(p), 6); // 100 / 16
 /// assert_eq!(100u32.rem_pow2(p), 4); // 100 % 16
 /// assert!(PowerOfTwo::<u32>::new(6).is_none());
+/// assert_eq!(core::mem::size_of::<Option<PowerOfTwo<u128>>>(), 1);
 /// ```
 pub struct PowerOfTwo<T> {
     // Invariant: `1 << exp` is a valid power of two of `T` (`exp < T::BITS`).
-    exp: u32,
+    exp: BitPos,
     _t: PhantomData<T>,
 }
 
@@ -86,34 +160,53 @@ impl<T> Clone for PowerOfTwo<T> {
 }
 impl<T> Copy for PowerOfTwo<T> {}
 
+impl<T> PartialEq for PowerOfTwo<T> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.exp == other.exp
+    }
+}
+impl<T> Eq for PowerOfTwo<T> {}
+
+impl<T> core::fmt::Debug for PowerOfTwo<T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("PowerOfTwo")
+            .field("exp", &self.exp.get())
+            .finish()
+    }
+}
+
 impl<T> PowerOfTwo<T> {
     /// Constructs the proof directly from an exponent, without checking.
     ///
     /// # Safety
     ///
     /// `exp` must be `< T::BITS` (so that `1 << exp` is a valid power of two of
-    /// `T`). Passing a too-large exponent makes the consuming ops produce
-    /// nonsense or overflow.
+    /// `T`) and `< 128` (the representation's limit; every primitive satisfies
+    /// it through the first condition).
     #[inline]
     pub const unsafe fn from_exp_unchecked(exp: u32) -> Self {
         PowerOfTwo {
-            exp,
+            // SAFETY: the caller guarantees `exp < 128`.
+            exp: unsafe { BitPos::new_unchecked(exp) },
             _t: PhantomData,
         }
     }
 
-    /// The exponent `k` such that the proven value is `2^k`. Free (no recompute).
+    /// The exponent `k` such that the proven value is `2^k`. Free (a
+    /// zero-extension, no recompute).
     #[inline]
     pub const fn exp(self) -> u32 {
-        self.exp
+        self.exp.get()
     }
 }
 
 c0nst::c0nst! {
 impl<T> PowerOfTwo<T> {
     /// Safe constructor for any carrier, not just the primitives: `Some` iff
-    /// `value` is a power of two. Keeps the `unsafe` crate-internal; the
-    /// per-primitive [`new`](Self::new) stays the `const` fast path.
+    /// `value` is a power of two `2^k` with `k < 128`. Keeps the `unsafe`
+    /// crate-internal; the per-primitive [`new`](Self::new) stays the `const`
+    /// fast path.
     #[inline]
     pub c0nst fn new_checked(value: T) -> Option<Self>
     where
@@ -121,9 +214,12 @@ impl<T> PowerOfTwo<T> {
     {
         if value.is_power_of_two() {
             let width = T::ZERO.count_zeros();
+            // `value` is a power of two, so `exp < width` (= `T::BITS`).
             let exp = width - 1 - value.leading_zeros();
-            // SAFETY: `value` is a power of two, so `exp < width` (= `T::BITS`).
-            Some(unsafe { Self::from_exp_unchecked(exp) })
+            match BitPos::new(exp) {
+                Some(exp) => Some(PowerOfTwo { exp, _t: PhantomData }),
+                None => None,
+            }
         } else {
             None
         }
@@ -176,7 +272,8 @@ macro_rules! pow2_typestate_impl {
             #[inline]
             pub const fn new(value: $t) -> Option<Self> {
                 if value.is_power_of_two() {
-                    Some(PowerOfTwo { exp: value.ilog2(), _t: PhantomData })
+                    // SAFETY: `ilog2 < BITS <= 128` for every primitive.
+                    Some(unsafe { Self::from_exp_unchecked(value.ilog2()) })
                 } else {
                     None
                 }
@@ -185,7 +282,7 @@ macro_rules! pow2_typestate_impl {
             /// Reconstructs the proven value, `1 << exp`.
             #[inline]
             pub const fn get(self) -> $t {
-                (1 as $t) << self.exp
+                (1 as $t) << self.exp()
             }
         }
 
@@ -195,30 +292,30 @@ macro_rules! pow2_typestate_impl {
 
             #[inline]
             fn div_pow2(self, p: PowerOfTwo<$t>) -> $t {
-                self >> p.exp
+                self >> p.exp()
             }
 
             #[inline]
             fn rem_pow2(self, p: PowerOfTwo<$t>) -> $t {
-                let mask = ((1 as $t) << p.exp) - 1;
+                let mask = ((1 as $t) << p.exp()) - 1;
                 self & mask
             }
 
             #[inline]
             fn is_multiple_of_pow2(self, p: PowerOfTwo<$t>) -> bool {
-                let mask = ((1 as $t) << p.exp) - 1;
+                let mask = ((1 as $t) << p.exp()) - 1;
                 (self & mask) == 0
             }
 
             #[inline]
             fn next_multiple_of_pow2(self, p: PowerOfTwo<$t>) -> $t {
-                let mask = ((1 as $t) << p.exp) - 1;
+                let mask = ((1 as $t) << p.exp()) - 1;
                 (self + mask) & !mask
             }
 
             #[inline]
             fn checked_next_multiple_of_pow2(self, p: PowerOfTwo<$t>) -> Option<$t> {
-                let mask = ((1 as $t) << p.exp) - 1;
+                let mask = ((1 as $t) << p.exp()) - 1;
                 match self.checked_add(mask) {
                     Some(s) => Some(s & !mask),
                     None => None,
@@ -246,9 +343,11 @@ pow2_typestate_impl!(u8, u16, u32, u64, u128, usize);
 /// Proof that a value is a valid bit index for `T` (`0 <= index < T::BITS`), so
 /// a shift by it can't overflow, panic, or hit the "shift `>= BITS`" UB.
 ///
-/// Like [`PowerOfTwo`], the rep is the `u32` index (never `T`), so the proof is
-/// `Copy` regardless of `T`; consuming ops live in [`BitIndexOps`] (signed and
-/// unsigned). No constant-time constructor — shift amounts are public.
+/// Like [`PowerOfTwo`], the rep is a one-byte index (never `T`) with a niche, so
+/// the proof is `Copy` regardless of `T` and `Option<BitIndex<T>>` is one byte;
+/// consuming ops live in [`BitIndexOps`] (signed and unsigned). Indices of a
+/// carrier wider than 128 bits are limited to `0..128`. No constant-time
+/// constructor — shift amounts are public.
 ///
 /// ```
 /// use const_num_traits::{BitIndex, BitIndexOps};
@@ -257,10 +356,11 @@ pow2_typestate_impl!(u8, u16, u32, u64, u128, usize);
 /// assert_eq!(1u8.shl_index(i), 8);
 /// assert_eq!(0x80u8.shr_index(i), 0x10);
 /// assert!(BitIndex::<u8>::new(8).is_none()); // == BITS, rejected
+/// assert_eq!(core::mem::size_of::<Option<BitIndex<u64>>>(), 1);
 /// ```
 pub struct BitIndex<T> {
     // Invariant: `index < T::BITS`.
-    index: u32,
+    index: BitPos,
     _t: PhantomData<T>,
 }
 
@@ -272,40 +372,59 @@ impl<T> Clone for BitIndex<T> {
 }
 impl<T> Copy for BitIndex<T> {}
 
+impl<T> PartialEq for BitIndex<T> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.index == other.index
+    }
+}
+impl<T> Eq for BitIndex<T> {}
+
+impl<T> core::fmt::Debug for BitIndex<T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("BitIndex").field(&self.index.get()).finish()
+    }
+}
+
 impl<T> BitIndex<T> {
     /// Constructs the proof directly from an index, without checking.
     ///
     /// # Safety
     ///
-    /// `index` must be `< T::BITS`; otherwise the consuming shifts are
-    /// undefined / panic.
+    /// `index` must be `< T::BITS` and `< 128` (the representation's limit;
+    /// every primitive satisfies it through the first condition); otherwise the
+    /// consuming shifts are undefined / panic.
     #[inline]
     pub const unsafe fn from_u32_unchecked(index: u32) -> Self {
         BitIndex {
-            index,
+            // SAFETY: the caller guarantees `index < 128`.
+            index: unsafe { BitPos::new_unchecked(index) },
             _t: PhantomData,
         }
     }
 
-    /// The proven index. Free (no recompute).
+    /// The proven index. Free (a zero-extension, no recompute).
     #[inline]
     pub const fn get(self) -> u32 {
-        self.index
+        self.index.get()
     }
 }
 
 c0nst::c0nst! {
 impl<T> BitIndex<T> {
     /// Safe constructor for any [`PrimBits`] carrier, not just the primitives:
-    /// `Some` iff `index < T::BITS`. The per-primitive [`new`](Self::new) stays
-    /// the `const` fast path.
+    /// `Some` iff `index < T::BITS` and `index < 128`. The per-primitive
+    /// [`new`](Self::new) stays the `const` fast path.
     #[inline]
     pub c0nst fn new_checked(index: u32) -> Option<Self>
     where
         T: [c0nst] PrimBits,
     {
         if index < T::ZERO.count_zeros() {
-            Some(BitIndex { index, _t: PhantomData })
+            match BitPos::new(index) {
+                Some(index) => Some(BitIndex { index, _t: PhantomData }),
+                None => None,
+            }
         } else {
             None
         }
@@ -339,7 +458,8 @@ macro_rules! bit_index_impl {
             #[inline]
             pub const fn new(index: u32) -> Option<Self> {
                 if index < <$t>::BITS {
-                    Some(BitIndex { index, _t: PhantomData })
+                    // SAFETY: `index < BITS <= 128` for every primitive.
+                    Some(unsafe { Self::from_u32_unchecked(index) })
                 } else {
                     None
                 }
@@ -352,12 +472,12 @@ macro_rules! bit_index_impl {
 
             #[inline]
             fn shl_index(self, index: BitIndex<$t>) -> $t {
-                self << index.index
+                self << index.get()
             }
 
             #[inline]
             fn shr_index(self, index: BitIndex<$t>) -> $t {
-                self >> index.index
+                self >> index.get()
             }
         }
         }
@@ -446,6 +566,11 @@ macro_rules! nonzero_bridge_impl {
         }
         }
 
+    )+};
+}
+
+macro_rules! div_nonzero_impl {
+    ($($t:ty),+) => {$(
         c0nst::c0nst! {
         c0nst impl DivNonZero for $t {
             type Output = $t;
@@ -464,7 +589,10 @@ macro_rules! nonzero_bridge_impl {
     )+};
 }
 
-nonzero_bridge_impl!(u8, u16, u32, u64, u128, usize);
+nonzero_bridge_impl!(
+    u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+);
+div_nonzero_impl!(u8, u16, u32, u64, u128, usize);
 
 // ─────────────────────────────── sign typestates ──────────────────────────
 
@@ -474,9 +602,18 @@ nonzero_bridge_impl!(u8, u16, u32, u64, u128, usize);
 pub struct NonNegative<T>(T);
 
 /// Proof that a signed value is `> 0`.
+///
+/// Stored as its [`HasNonZero::NonZero`] form (`core::num::NonZero` for the
+/// primitives), so `Option<Positive<T>>` is the size of `T`:
+///
+/// ```
+/// use const_num_traits::Positive;
+///
+/// assert_eq!(core::mem::size_of::<Option<Positive<i32>>>(), 4);
+/// ```
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Positive<T>(T);
+pub struct Positive<T: HasNonZero>(T::NonZero);
 
 macro_rules! sign_typestate_impl {
     ($($t:ty => $u:ty),+) => {$(
@@ -521,16 +658,23 @@ macro_rules! sign_typestate_impl {
             /// `Some` iff `value > 0`.
             #[inline]
             pub const fn new(value: $t) -> Option<Self> {
-                if value > 0 { Some(Positive(value)) } else { None }
+                match core::num::NonZero::new(value) {
+                    Some(nonzero) if value > 0 => Some(Positive(nonzero)),
+                    _ => None,
+                }
             }
             /// # Safety
             /// `value` must be `> 0`.
             #[inline]
-            pub const unsafe fn new_unchecked(value: $t) -> Self { Positive(value) }
+            pub const unsafe fn new_unchecked(value: $t) -> Self {
+                // SAFETY: the caller guarantees `value > 0`, hence non-zero.
+                Positive(unsafe { core::num::NonZero::new_unchecked(value) })
+            }
             /// The proven value.
             #[inline]
-            pub const fn get(self) -> $t { self.0 }
-            /// Zero-cost borrowed proof (repr(transparent) reinterpret).
+            pub const fn get(self) -> $t { self.0.get() }
+            /// Zero-cost borrowed proof (repr(transparent) reinterpret: a
+            /// positive `$t` is a valid `NonZero<$t>`).
             #[inline]
             pub fn from_ref(value: &$t) -> Option<&Self> {
                 if *value > 0 {
@@ -539,30 +683,27 @@ macro_rules! sign_typestate_impl {
             }
             /// Infallible cast to the unsigned counterpart.
             #[inline]
-            pub const fn to_unsigned(self) -> $u { self.0 as $u }
+            pub const fn to_unsigned(self) -> $u { self.get() as $u }
             /// `abs` is the identity on a positive value.
             #[inline]
-            pub const fn abs(self) -> $t { self.0 }
+            pub const fn abs(self) -> $t { self.get() }
             /// `isqrt` is total on a positive value.
             #[inline]
-            pub const fn isqrt(self) -> $t { self.0.isqrt() }
+            pub const fn isqrt(self) -> $t { self.get().isqrt() }
 
             // ── refinement lattice (cheap const-fn narrowings) ──
             /// `Positive ⊂ NonNegative`.
             #[inline]
             pub const fn into_nonnegative(self) -> NonNegative<$t> {
-                NonNegative(self.0)
+                NonNegative(self.get())
             }
-            /// `Positive ⊂ NonZero` — narrows to `core::num::NonZero` with no
-            /// recheck, so a `Positive` divisor can feed `DivNonZero` directly.
+            /// `Positive ⊂ NonZero` — the stored form, so no recheck; a
+            /// `Positive` divisor can feed `DivNonZero` directly.
             #[inline]
-            pub const fn into_nonzero(self) -> core::num::NonZero<$t> {
-                // SAFETY: value > 0, hence non-zero.
-                unsafe { core::num::NonZero::new_unchecked(self.0) }
-            }
+            pub const fn into_nonzero(self) -> core::num::NonZero<$t> { self.0 }
             /// `Positive ⊂ NonMin` (`> 0`, so `!= MIN`).
             #[inline]
-            pub const fn into_nonmin(self) -> NonMin<$t> { NonMin(self.0) }
+            pub const fn into_nonmin(self) -> NonMin<$t> { NonMin(self.get()) }
         }
 
         /// Checked construction by value; mirrors [`NonNegative::new`].
@@ -975,7 +1116,11 @@ mod ct_constructors {
                 pub fn new_ct(value: $t) -> CtOption<Positive<$t>> {
                     let neg = Choice::from(((value >> (<$t>::BITS - 1)) & 1) as u8);
                     let zero = value.ct_is_zero();
-                    CtOption::new(Positive(value), !neg & !zero)
+                    // Force non-zero in the masked branch so the `NonZero` stays
+                    // sound (one holding 0 is UB even when masked out).
+                    let safe = value | (zero.unwrap_u8() as $t);
+                    let proof = Positive(unsafe { core::num::NonZero::new_unchecked(safe) });
+                    CtOption::new(proof, !neg & !zero)
                 }
             }
         )+};
@@ -1043,6 +1188,47 @@ mod ct_constructors {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bit_positions_round_trip() {
+        for position in 0..BitPos::END {
+            assert_eq!(BitPos::new(position).map(BitPos::get), Some(position));
+        }
+        assert!(BitPos::new(BitPos::END).is_none());
+        assert!(BitPos::new(u32::MAX).is_none());
+        for k in 0..128u32 {
+            assert_eq!(PowerOfTwo::<u128>::new(1 << k).unwrap().exp(), k);
+            assert_eq!(BitIndex::<i128>::new(k).unwrap().get(), k);
+        }
+    }
+
+    #[test]
+    fn proofs_carry_a_niche() {
+        use core::mem::size_of;
+        assert_eq!(size_of::<PowerOfTwo<u8>>(), 1);
+        assert_eq!(size_of::<Option<PowerOfTwo<u128>>>(), 1);
+        assert_eq!(size_of::<Option<Option<PowerOfTwo<u32>>>>(), 1);
+        assert_eq!(size_of::<Option<BitIndex<u64>>>(), 1);
+        assert_eq!(size_of::<Option<Positive<i8>>>(), 1);
+        assert_eq!(size_of::<Option<Positive<i64>>>(), 8);
+        assert_eq!(size_of::<Result<PowerOfTwo<u32>, TypestateError>>(), 1);
+    }
+
+    #[test]
+    fn positive_matches_value() {
+        for value in i8::MIN..=i8::MAX {
+            let proof = Positive::<i8>::new(value);
+            assert_eq!(proof.is_some(), value > 0);
+            if let Some(proof) = proof {
+                assert_eq!(proof.get(), value);
+                assert_eq!(proof.into_nonzero().get(), value);
+                assert_eq!(
+                    Positive::<i8>::from_ref(&value).map(|p| p.get()),
+                    Some(value)
+                );
+            }
+        }
+    }
 
     #[test]
     fn construction_and_accessors() {
