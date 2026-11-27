@@ -15,7 +15,8 @@
 //! `Div`) that nonetheless constructs every proof below.
 
 use const_num_traits::{
-    BitIndex, ConstOne, ConstZero, IsPowerOfTwo, Odd, One, Parity, PowerOfTwo, PrimBits, Zero,
+    BitIndex, BitPos8, BitPos16, ConstOne, ConstZero, HasBitPos, IsPowerOfTwo, Odd, One, Parity,
+    PowerOfTwo, PrimBits, Zero,
 };
 use core::ops::{Add, BitAnd, BitOr, BitXor, Mul, Not, Shl, Shr};
 
@@ -150,6 +151,10 @@ impl PrimBits for Carrier {
     }
 }
 
+impl HasBitPos for Carrier {
+    type BitPos = BitPos8;
+}
+
 impl IsPowerOfTwo for Carrier {
     fn is_power_of_two(self) -> bool {
         self.0.is_power_of_two()
@@ -173,10 +178,10 @@ impl Parity for Carrier {
 // API. If any of these stops resolving, a proof has regressed to primitive-only
 // construction.
 
-fn pow2_from_caps<T: IsPowerOfTwo + PrimBits>(v: T) -> Option<PowerOfTwo<T>> {
+fn pow2_from_caps<T: IsPowerOfTwo + PrimBits + HasBitPos>(v: T) -> Option<PowerOfTwo<T>> {
     PowerOfTwo::new_checked(v)
 }
-fn bitindex_from_caps<T: PrimBits>(i: u32) -> Option<BitIndex<T>> {
+fn bitindex_from_caps<T: PrimBits + HasBitPos>(i: u32) -> Option<BitIndex<T>> {
     BitIndex::<T>::new_checked(i)
 }
 fn odd_from_caps<T: Parity + Copy>(v: T) -> Option<Odd<T>> {
@@ -203,9 +208,9 @@ fn typestates_construct_from_non_primitive_carrier() {
 }
 
 /// `PowerOfTwo<T>` and `BitIndex<T>` compare and format whatever `T` is: this
-/// compiles only while those impls carry no bound on `T`.
+/// compiles only while those impls carry no bound on `T` beyond `HasBitPos`.
 #[allow(dead_code)]
-fn proofs_are_eq_and_debug_for_any_carrier<T>() {
+fn proofs_are_eq_and_debug_for_any_carrier<T: HasBitPos>() {
     fn has<X: Copy + Eq + core::fmt::Debug>() {}
     has::<PowerOfTwo<T>>();
     has::<BitIndex<T>>();
@@ -225,7 +230,7 @@ fn proofs_compare_over_a_carrier_without_partial_eq() {
     );
 }
 
-// ── a carrier wider than the proofs' 128 positions ───────────────────────────
+// ── a carrier wider than 128 bits ─────────────────────────────────────────────
 
 /// A 256-bit carrier, limbs little-endian. Only what `PrimBits` and
 /// `IsPowerOfTwo` need; the methods the proofs never call are `unreachable!`.
@@ -341,27 +346,27 @@ impl PrimBits for Wide {
     }
 }
 
+impl HasBitPos for Wide {
+    type BitPos = BitPos16;
+}
+
 impl IsPowerOfTwo for Wide {
     fn is_power_of_two(self) -> bool {
         self.count_ones() == 1
     }
 }
 
-/// The proofs store a position in one byte with a niche above 127, so a
-/// 256-bit carrier can prove positions `0..128` only, and says so with `None`
-/// rather than storing a truncated position.
+/// A 256-bit carrier with two-byte positions proves every power of two and
+/// every index it has, and `Option` of either proof is still tag-free.
 #[test]
-fn wide_carrier_proves_positions_below_128_only() {
-    for k in 0..128 {
+fn wide_carrier_proves_every_position() {
+    for k in 0..256 {
         assert_eq!(pow2_from_caps(Wide::bit(k)).map(|p| p.exp()), Some(k));
         assert_eq!(bitindex_from_caps::<Wide>(k).map(|i| i.get()), Some(k));
     }
-    for k in 128..256 {
-        assert!(pow2_from_caps(Wide::bit(k)).is_none(), "2^{k}");
-        assert!(bitindex_from_caps::<Wide>(k).is_none(), "index {k}");
-    }
-    // 256 = BITS is rejected by the width check, before the representation's.
-    assert!(bitindex_from_caps::<Wide>(256).is_none());
+    assert!(bitindex_from_caps::<Wide>(256).is_none()); // == BITS
     assert!(pow2_from_caps(Wide([3, 0])).is_none());
     assert!(pow2_from_caps(Wide::ZERO).is_none());
+    assert_eq!(core::mem::size_of::<Option<PowerOfTwo<Wide>>>(), 2);
+    assert_eq!(core::mem::size_of::<Option<BitIndex<Wide>>>(), 2);
 }

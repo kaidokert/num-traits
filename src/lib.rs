@@ -137,8 +137,8 @@ pub use crate::ops::strict::{
 #[cfg_attr(docsrs, doc(cfg(feature = "ct")))]
 pub use crate::ops::typestate::CtNonZero;
 pub use crate::ops::typestate::{
-    BitIndex, BitIndexOps, DivNonZero, Even, Finite, HasNonZero, NonMin, NonNegative, Odd,
-    Positive, PowerOfTwo, PowerOfTwoOps, TypestateError,
+    BitIndex, BitIndexOps, BitPos8, BitPos16, BitPosRepr, DivNonZero, Even, Finite, HasBitPos,
+    HasNonZero, NonMin, NonNegative, Odd, Positive, PowerOfTwo, PowerOfTwoOps, TypestateError,
 };
 pub use crate::ops::wrapping::{
     WrappingAbs, WrappingAdd, WrappingDiv, WrappingMul, WrappingNeg, WrappingPow, WrappingRem,
@@ -209,7 +209,9 @@ pub mod prelude {
     #[cfg(feature = "ct")]
     #[cfg_attr(docsrs, doc(cfg(feature = "ct")))]
     pub use crate::ops::typestate::CtNonZero;
-    pub use crate::ops::typestate::{BitIndexOps, DivNonZero, HasNonZero, PowerOfTwoOps};
+    pub use crate::ops::typestate::{
+        BitIndexOps, BitPosRepr, DivNonZero, HasBitPos, HasNonZero, PowerOfTwoOps,
+    };
     pub use crate::ops::wrapping::*;
     pub use crate::pow::*;
     #[cfg(any(feature = "std", feature = "libm"))]

@@ -17,10 +17,10 @@
 //! - [`Odd`] / [`Even`]: bare proofs (no consuming op in this crate).
 //! - [`Finite`] (floats): a total order (`Ord`/`Eq`) that bare floats lack.
 //!
-//! [`PowerOfTwo`] and [`BitIndex`] carry a niche for every `T`, and
-//! [`Positive`] does for the primitives, so wrapping one in an `Option` (or a
-//! `Result` whose error is small) costs no extra tag: `Option<PowerOfTwo<T>>`
-//! and `Option<BitIndex<T>>` are one byte, and `Option<Positive<i32>>` is four.
+//! [`PowerOfTwo`], [`BitIndex`] and [`Positive`] carry a niche, so wrapping one
+//! in an `Option` (or a `Result` whose error is small) costs no extra tag. For
+//! the primitives, `Option<PowerOfTwo<T>>` and `Option<BitIndex<T>>` are one
+//! byte and `Option<Positive<i32>>` is four.
 //!
 //! With the `ct` feature, families with a *secret-derived* predicate also gain a
 //! masked `new_ct`. [`BitIndex`] (public shift amounts) and [`Finite`] (floats
@@ -30,6 +30,8 @@ use crate::int::PrimBits;
 use crate::ops::parity::Parity;
 use crate::ops::pow2::IsPowerOfTwo;
 use core::marker::PhantomData;
+use core::mem::size_of;
+use core::num::NonZeroU16;
 
 /// Error returned by the `TryFrom` constructors of the typestate proofs when
 /// the value fails the proof's predicate (e.g. a non-odd value into [`Odd`]).
@@ -51,21 +53,57 @@ impl core::fmt::Display for TypestateError {
 // `core::error::Error` is available in `no_std` since Rust 1.81 (< our MSRV).
 impl core::error::Error for TypestateError {}
 
-// ─────────────────────────────── BitPos ────────────────────────────────────
+// ─────────────────────────────── bit positions ─────────────────────────────
 
-/// A bit position `0..128`: the shared representation of [`PowerOfTwo`]'s
-/// exponent and [`BitIndex`]'s index.
+mod sealed {
+    pub trait Sealed {}
+}
+
+/// How [`PowerOfTwo`] and [`BitIndex`] store a bit position: [`BitPos8`] or
+/// [`BitPos16`]. Sealed; a carrier picks one through [`HasBitPos`].
+pub trait BitPosRepr: sealed::Sealed + Copy + Eq {
+    /// One past the largest position the representation holds.
+    const END: u32;
+}
+
+/// Chooses how a carrier's [`PowerOfTwo`] and [`BitIndex`] proofs store their
+/// bit position.
 ///
-/// One byte, read with a zero-extension. The 128 values `128..=255` are a
-/// niche, so `Option` of a proof built on it, nested or not, needs no tag of
-/// its own. 128 covers every primitive; a wider carrier can prove positions
-/// below 128 only.
+/// The primitives use [`BitPos8`]: one byte, positions `0..128`, and `Option`
+/// of a proof is one byte too. A carrier wider than 128 bits should use
+/// [`BitPos16`], which holds positions `0..65535` at two bytes per proof. A
+/// constructor rejects a position the representation can't hold, so a
+/// representation that is too narrow is safe, but leaves the high positions
+/// unprovable:
+///
+/// ```
+/// use const_num_traits::{BitPos16, HasBitPos};
+///
+/// struct U256([u64; 4]);
+///
+/// impl HasBitPos for U256 {
+///     type BitPos = BitPos16;
+/// }
+/// ```
+pub trait HasBitPos {
+    /// [`BitPos8`] or [`BitPos16`].
+    type BitPos: BitPosRepr;
+}
+
+/// A one-byte bit position `0..128`, the representation the primitives use.
+///
+/// Read with a zero-extension. The byte values `128..=255` are a niche, so
+/// `Option` of a proof built on it, nested or not, needs no tag of its own.
+#[repr(transparent)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct BitPos8(U7);
+
 #[repr(u8)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[rustfmt::skip]
-// Built only by `new_unchecked`'s transmute, never by name.
+// Built only by `BitPos8::new_unchecked`'s transmute, never by name.
 #[allow(dead_code)]
-enum BitPos {
+enum U7 {
     B0 = 0, B1 = 1, B2 = 2, B3 = 3, B4 = 4, B5 = 5, B6 = 6, B7 = 7,
     B8 = 8, B9 = 9, B10 = 10, B11 = 11, B12 = 12, B13 = 13, B14 = 14, B15 = 15,
     B16 = 16, B17 = 17, B18 = 18, B19 = 19, B20 = 20, B21 = 21, B22 = 22, B23 = 23,
@@ -84,53 +122,134 @@ enum BitPos {
     B120 = 120, B121 = 121, B122 = 122, B123 = 123, B124 = 124, B125 = 125, B126 = 126, B127 = 127,
 }
 
-impl BitPos {
-    /// One past the largest position.
-    const END: u32 = 128;
-
-    /// `Some` iff `position < 128`.
-    #[inline]
-    const fn new(position: u32) -> Option<Self> {
-        if position < Self::END {
-            // SAFETY: `position < 128`.
-            Some(unsafe { Self::new_unchecked(position) })
-        } else {
-            None
-        }
-    }
-
+impl BitPos8 {
     /// # Safety
     ///
     /// `position` must be `< 128`.
     #[inline]
     const unsafe fn new_unchecked(position: u32) -> Self {
-        // SAFETY: `BitPos` is `repr(u8)` with a variant for every value
-        // `0..128` (the tests walk all of them), and the caller guarantees
+        // SAFETY: `U7` is `repr(u8)` with a variant for every value `0..128`
+        // (the tests walk all of them), and the caller guarantees
         // `position < 128`, so the truncated byte is one of them.
-        unsafe { core::mem::transmute::<u8, BitPos>(position as u8) }
+        BitPos8(unsafe { core::mem::transmute::<u8, U7>(position as u8) })
     }
 
     #[inline]
     const fn get(self) -> u32 {
-        self as u32
+        self.0 as u32
     }
 }
+
+/// A two-byte bit position `0..65535`, for carriers wider than 128 bits.
+///
+/// Stores the position plus one in a [`NonZeroU16`], so `Option` of a proof
+/// built on it is two bytes as well.
+#[repr(transparent)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct BitPos16(NonZeroU16);
+
+impl BitPos16 {
+    /// # Safety
+    ///
+    /// `position` must be `< 65535`.
+    #[inline]
+    const unsafe fn new_unchecked(position: u32) -> Self {
+        // SAFETY: `position < 65535`, so `position + 1` fits a `u16` and is
+        // non-zero.
+        BitPos16(unsafe { NonZeroU16::new_unchecked(position as u16 + 1) })
+    }
+
+    #[inline]
+    const fn get(self) -> u32 {
+        self.0.get() as u32 - 1
+    }
+}
+
+impl core::fmt::Debug for BitPos8 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("BitPos8").field(&self.get()).finish()
+    }
+}
+
+impl core::fmt::Debug for BitPos16 {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("BitPos16").field(&self.get()).finish()
+    }
+}
+
+impl sealed::Sealed for BitPos8 {}
+impl sealed::Sealed for BitPos16 {}
+impl BitPosRepr for BitPos8 {
+    const END: u32 = 128;
+}
+impl BitPosRepr for BitPos16 {
+    const END: u32 = u16::MAX as u32;
+}
+
+// `pos_new_unchecked` and `pos_get` tell the two representations apart by size.
+const _: () = assert!(size_of::<BitPos8>() == 1 && size_of::<BitPos16>() == 2);
+
+/// `Some` iff `position < P::END`.
+#[inline]
+const fn pos_new<P: BitPosRepr>(position: u32) -> Option<P> {
+    if position < P::END {
+        // SAFETY: `position < P::END`.
+        Some(unsafe { pos_new_unchecked(position) })
+    } else {
+        None
+    }
+}
+
+/// # Safety
+///
+/// `position` must be `< P::END`.
+#[inline]
+const unsafe fn pos_new_unchecked<P: BitPosRepr>(position: u32) -> P {
+    // SAFETY: `BitPosRepr` is sealed and its implementors differ in size, so
+    // in each arm `P` is the type being copied, and the caller's bound is
+    // that type's `END`.
+    unsafe {
+        if size_of::<P>() == 1 {
+            core::mem::transmute_copy::<BitPos8, P>(&BitPos8::new_unchecked(position))
+        } else {
+            core::mem::transmute_copy::<BitPos16, P>(&BitPos16::new_unchecked(position))
+        }
+    }
+}
+
+#[inline]
+const fn pos_get<P: BitPosRepr>(pos: &P) -> u32 {
+    // SAFETY: as in `pos_new_unchecked`, `P` is the implementor of its size.
+    unsafe {
+        if size_of::<P>() == 1 {
+            core::mem::transmute_copy::<P, BitPos8>(pos).get()
+        } else {
+            core::mem::transmute_copy::<P, BitPos16>(pos).get()
+        }
+    }
+}
+
+macro_rules! has_bit_pos_impl {
+    ($($t:ty),+) => {$(
+        impl HasBitPos for $t {
+            type BitPos = BitPos8;
+        }
+    )+};
+}
+
+has_bit_pos_impl!(
+    u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+);
 
 /// Proof that a value is a power of two (`2^k`, `k ≥ 0`), for an unsigned
 /// integer type `T`.
 ///
 /// **Representation is the exponent `k`, not the value** — so the consuming
 /// operations in [`PowerOfTwoOps`] are pure shifts and masks with nothing
-/// recomputed per call. The exponent is stored in one byte whose values
-/// `128..=255` are a niche, so `PowerOfTwo<T>` is one byte for every `T` and
-/// `Option<PowerOfTwo<T>>` is one byte too. The field is private, so the
-/// representation is an implementation detail. Consequently `PowerOfTwo` does
-/// **not** deref to `T`; use [`get`](Self::get) (which reconstructs `1 << k`)
-/// or [`exp`](Self::exp).
-///
-/// Every primitive's powers of two fit. A carrier wider than 128 bits can prove
-/// the powers `2^0..2^127` only: [`new_checked`](Self::new_checked) returns
-/// `None` above them.
+/// recomputed per call. It is stored as `T`'s [`HasBitPos::BitPos`]: one byte
+/// with a niche for the primitives, so `Option<PowerOfTwo<T>>` is one byte too.
+/// `PowerOfTwo` does **not** deref to `T`; use [`get`](Self::get) (which
+/// reconstructs `1 << k`) or [`exp`](Self::exp).
 ///
 /// `PowerOfTwo<T>` is always `Copy`, independent of whether `T` is.
 ///
@@ -147,32 +266,32 @@ impl BitPos {
 /// assert!(PowerOfTwo::<u32>::new(6).is_none());
 /// assert_eq!(core::mem::size_of::<Option<PowerOfTwo<u128>>>(), 1);
 /// ```
-pub struct PowerOfTwo<T> {
+pub struct PowerOfTwo<T: HasBitPos> {
     // Invariant: `1 << exp` is a valid power of two of `T` (`exp < T::BITS`).
-    exp: BitPos,
+    exp: T::BitPos,
     _t: PhantomData<T>,
 }
 
-impl<T> Clone for PowerOfTwo<T> {
+impl<T: HasBitPos> Clone for PowerOfTwo<T> {
     #[inline]
     fn clone(&self) -> Self {
         *self
     }
 }
-impl<T> Copy for PowerOfTwo<T> {}
+impl<T: HasBitPos> Copy for PowerOfTwo<T> {}
 
 // Written by hand because a derive would require `T: PartialEq` / `T: Debug`,
 // and only the exponent is compared and printed. As with `Clone`/`Copy`, a
 // proof over a carrier without those traits still has them.
-impl<T> PartialEq for PowerOfTwo<T> {
+impl<T: HasBitPos> PartialEq for PowerOfTwo<T> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.exp == other.exp
     }
 }
-impl<T> Eq for PowerOfTwo<T> {}
+impl<T: HasBitPos> Eq for PowerOfTwo<T> {}
 
-impl<T> core::fmt::Debug for PowerOfTwo<T> {
+impl<T: HasBitPos> core::fmt::Debug for PowerOfTwo<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("PowerOfTwo")
             .field("exp", &self.exp())
@@ -180,20 +299,21 @@ impl<T> core::fmt::Debug for PowerOfTwo<T> {
     }
 }
 
-impl<T> PowerOfTwo<T> {
+impl<T: HasBitPos> PowerOfTwo<T> {
     /// Constructs the proof directly from an exponent, without checking.
     ///
     /// # Safety
     ///
     /// `exp` must be `< T::BITS` (so that `1 << exp` is a valid power of two of
-    /// `T`) and `< 128` (the representation's limit; every primitive satisfies
-    /// it through the first condition). An exponent of 128 or more is undefined
-    /// behaviour on construction.
+    /// `T`) and `< T::BitPos::END` (the representation's limit, implied by the
+    /// first condition when `T::BitPos` covers `T`'s width, as it does for every
+    /// primitive). An exponent at or above `END` is undefined behaviour on
+    /// construction.
     #[inline]
     pub const unsafe fn from_exp_unchecked(exp: u32) -> Self {
         PowerOfTwo {
             // SAFETY: the caller guarantees `exp < 128`.
-            exp: unsafe { BitPos::new_unchecked(exp) },
+            exp: unsafe { pos_new_unchecked(exp) },
             _t: PhantomData,
         }
     }
@@ -202,14 +322,14 @@ impl<T> PowerOfTwo<T> {
     /// zero-extension, no recompute).
     #[inline]
     pub const fn exp(self) -> u32 {
-        self.exp.get()
+        pos_get(&self.exp)
     }
 }
 
 c0nst::c0nst! {
-impl<T> PowerOfTwo<T> {
+impl<T: HasBitPos> PowerOfTwo<T> {
     /// Safe constructor for any carrier, not just the primitives: `Some` iff
-    /// `value` is a power of two `2^k` with `k < 128`. Keeps the `unsafe`
+    /// `value` is a power of two `2^k` with `k < T::BitPos::END`. Keeps the `unsafe`
     /// crate-internal; the per-primitive [`new`](Self::new) stays the `const`
     /// fast path.
     #[inline]
@@ -221,7 +341,7 @@ impl<T> PowerOfTwo<T> {
             let width = T::ZERO.count_zeros();
             // `value` is a power of two, so `exp < width` (= `T::BITS`).
             let exp = width - 1 - value.leading_zeros();
-            match BitPos::new(exp) {
+            match pos_new(exp) {
                 Some(exp) => Some(PowerOfTwo { exp, _t: PhantomData }),
                 None => None,
             }
@@ -240,7 +360,7 @@ c0nst::c0nst! {
 ///
 /// Owned results carry an associated [`Output`](Self::Output) so non-`Copy`
 /// types can implement the trait for their reference type.
-pub c0nst trait PowerOfTwoOps: Sized {
+pub c0nst trait PowerOfTwoOps: Sized + HasBitPos {
     /// The owned result type (`Self` for the primitive impls).
     type Output;
 
@@ -348,11 +468,11 @@ pow2_typestate_impl!(u8, u16, u32, u64, u128, usize);
 /// Proof that a value is a valid bit index for `T` (`0 <= index < T::BITS`), so
 /// a shift by it can't overflow, panic, or hit the "shift `>= BITS`" UB.
 ///
-/// Like [`PowerOfTwo`], the representation is a one-byte index (never `T`) with a niche, so
-/// the proof is `Copy` regardless of `T` and `Option<BitIndex<T>>` is one byte;
-/// consuming ops live in [`BitIndexOps`] (signed and unsigned). Indices of a
-/// carrier wider than 128 bits are limited to `0..128`. No constant-time
-/// constructor — shift amounts are public.
+/// Like [`PowerOfTwo`], the representation is `T`'s [`HasBitPos::BitPos`]
+/// (never `T`), so the proof is `Copy` regardless of `T`, and
+/// `Option<BitIndex<T>>` is one byte for the primitives; consuming ops live in
+/// [`BitIndexOps`] (signed and unsigned). No constant-time constructor — shift
+/// amounts are public.
 ///
 /// ```
 /// use const_num_traits::{BitIndex, BitIndexOps};
@@ -363,49 +483,50 @@ pow2_typestate_impl!(u8, u16, u32, u64, u128, usize);
 /// assert!(BitIndex::<u8>::new(8).is_none()); // == BITS, rejected
 /// assert_eq!(core::mem::size_of::<Option<BitIndex<u64>>>(), 1);
 /// ```
-pub struct BitIndex<T> {
+pub struct BitIndex<T: HasBitPos> {
     // Invariant: `index < T::BITS`.
-    index: BitPos,
+    index: T::BitPos,
     _t: PhantomData<T>,
 }
 
-impl<T> Clone for BitIndex<T> {
+impl<T: HasBitPos> Clone for BitIndex<T> {
     #[inline]
     fn clone(&self) -> Self {
         *self
     }
 }
-impl<T> Copy for BitIndex<T> {}
+impl<T: HasBitPos> Copy for BitIndex<T> {}
 
 // Bound-free for the same reason as `PowerOfTwo`'s.
-impl<T> PartialEq for BitIndex<T> {
+impl<T: HasBitPos> PartialEq for BitIndex<T> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.index == other.index
     }
 }
-impl<T> Eq for BitIndex<T> {}
+impl<T: HasBitPos> Eq for BitIndex<T> {}
 
-impl<T> core::fmt::Debug for BitIndex<T> {
+impl<T: HasBitPos> core::fmt::Debug for BitIndex<T> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_tuple("BitIndex").field(&self.get()).finish()
     }
 }
 
-impl<T> BitIndex<T> {
+impl<T: HasBitPos> BitIndex<T> {
     /// Constructs the proof directly from an index, without checking.
     ///
     /// # Safety
     ///
-    /// `index` must be `< T::BITS` and `< 128` (the representation's limit;
-    /// every primitive satisfies it through the first condition). An index of
-    /// 128 or more is undefined behaviour on construction; one in
-    /// `T::BITS..128` makes the consuming shifts overflow.
+    /// `index` must be `< T::BITS` and `< T::BitPos::END` (the representation's
+    /// limit, implied by the first condition when `T::BitPos` covers `T`'s width,
+    /// as it does for every primitive). An index at or above `END` is undefined
+    /// behaviour on construction; one in `T::BITS..END` makes the consuming
+    /// shifts overflow.
     #[inline]
     pub const unsafe fn from_u32_unchecked(index: u32) -> Self {
         BitIndex {
             // SAFETY: the caller guarantees `index < 128`.
-            index: unsafe { BitPos::new_unchecked(index) },
+            index: unsafe { pos_new_unchecked(index) },
             _t: PhantomData,
         }
     }
@@ -413,14 +534,14 @@ impl<T> BitIndex<T> {
     /// The proven index. Free (a zero-extension, no recompute).
     #[inline]
     pub const fn get(self) -> u32 {
-        self.index.get()
+        pos_get(&self.index)
     }
 }
 
 c0nst::c0nst! {
-impl<T> BitIndex<T> {
+impl<T: HasBitPos> BitIndex<T> {
     /// Safe constructor for any [`PrimBits`] carrier, not just the primitives:
-    /// `Some` iff `index < T::BITS` and `index < 128`. The per-primitive
+    /// `Some` iff `index < T::BITS` and `index < T::BitPos::END`. The per-primitive
     /// [`new`](Self::new) stays the `const` fast path.
     #[inline]
     pub c0nst fn new_checked(index: u32) -> Option<Self>
@@ -428,7 +549,7 @@ impl<T> BitIndex<T> {
         T: [c0nst] PrimBits,
     {
         if index < T::ZERO.count_zeros() {
-            match BitPos::new(index) {
+            match pos_new(index) {
                 Some(index) => Some(BitIndex { index, _t: PhantomData }),
                 None => None,
             }
@@ -446,7 +567,7 @@ c0nst::c0nst! {
 ///
 /// Owned results carry an associated [`Output`](Self::Output) so non-`Copy`
 /// types can implement the trait for their reference type.
-pub c0nst trait BitIndexOps: Sized {
+pub c0nst trait BitIndexOps: Sized + HasBitPos {
     /// The owned result type (`Self` for the primitive impls).
     type Output;
 
@@ -1209,14 +1330,26 @@ mod tests {
 
     #[test]
     fn bit_positions_round_trip() {
-        for position in 0..BitPos::END {
-            assert_eq!(BitPos::new(position).map(BitPos::get), Some(position));
+        fn walk<P: BitPosRepr>(step: usize) {
+            for position in (0..P::END).step_by(step).chain([P::END - 1]) {
+                assert_eq!(pos_new::<P>(position).map(|p| pos_get(&p)), Some(position));
+            }
+            assert!(pos_new::<P>(P::END).is_none());
+            assert!(pos_new::<P>(u32::MAX).is_none());
         }
-        assert!(BitPos::new(BitPos::END).is_none());
-        assert!(BitPos::new(256).is_none(), "must not wrap through `as u8`");
-        assert!(BitPos::new(u32::MAX).is_none());
-        // Every byte the enum can't hold is a niche value.
-        assert_eq!(core::mem::size_of::<Option<Option<BitPos>>>(), 1);
+        walk::<BitPos8>(1);
+        walk::<BitPos16>(if cfg!(miri) { 251 } else { 1 });
+        assert!(
+            pos_new::<BitPos8>(256).is_none(),
+            "must not wrap through `as u8`"
+        );
+        assert!(
+            pos_new::<BitPos16>(65536).is_none(),
+            "must not wrap through `as u16`"
+        );
+        // Every value the representations can't hold is a niche value.
+        assert_eq!(size_of::<Option<Option<BitPos8>>>(), 1);
+        assert_eq!(size_of::<Option<BitPos16>>(), 2);
     }
 
     #[test]
