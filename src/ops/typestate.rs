@@ -1037,10 +1037,9 @@ mod ct_constructors {
                 pub fn new_ct(value: $t) -> CtOption<Positive<$t>> {
                     let neg = Choice::from(((value >> (<$t>::BITS - 1)) & 1) as u8);
                     let zero = value.ct_is_zero();
-                    // Force non-zero in the masked-out branch: a `NonZero`
-                    // holding 0 is UB even when `CtOption` hides it.
                     let safe = value | (zero.unwrap_u8() as $t);
-                    // SAFETY: `safe` is `value` when non-zero and 1 otherwise.
+                    // SAFETY: `safe` is `value`, or 1 when `value` is 0. A
+                    // `NonZero` holding 0 is UB even when `CtOption` masks it.
                     let proof = Positive(unsafe { core::num::NonZero::new_unchecked(safe) });
                     CtOption::new(proof, !neg & !zero)
                 }

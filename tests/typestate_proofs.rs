@@ -172,8 +172,8 @@ fn positive_const_constructors() {
     assert_eq!(SEVEN.into_nonzero().get(), 7);
 }
 
-/// Every accessor and narrowing agrees with the plain value, for every value
-/// of the type that the step visits.
+/// Checks every constructor, accessor and narrowing of `Positive<$t>` against
+/// the plain value, for each of `$values`.
 macro_rules! check_positive {
     ($t:ty, $u:ty, $values:expr) => {
         for value in $values {
