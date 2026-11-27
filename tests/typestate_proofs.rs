@@ -158,7 +158,7 @@ const _: () = {
     assert!(size_of::<Result<Positive<i32>, TypestateError>>() == 4);
 };
 
-// The constructors stay `const` on stable.
+// The constructors are `const` on stable.
 const FIVE: Option<Positive<i32>> = Positive::<i32>::new(5);
 const NONE: Option<Positive<i32>> = Positive::<i32>::new(0);
 // SAFETY: 7 > 0.
