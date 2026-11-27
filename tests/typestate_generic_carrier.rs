@@ -224,3 +224,144 @@ fn proofs_compare_over_a_carrier_without_partial_eq() {
         bitindex_from_caps::<Carrier>(6)
     );
 }
+
+// ── a carrier wider than the proofs' 128 positions ───────────────────────────
+
+/// A 256-bit carrier, limbs little-endian. Only what `PrimBits` and
+/// `IsPowerOfTwo` need; the methods the proofs never call are `unreachable!`.
+#[derive(Copy, Clone, Debug)]
+struct Wide([u128; 2]);
+
+impl Wide {
+    fn bit(k: u32) -> Self {
+        if k < 128 {
+            Wide([1 << k, 0])
+        } else {
+            Wide([0, 1 << (k - 128)])
+        }
+    }
+}
+
+impl Not for Wide {
+    type Output = Self;
+    fn not(self) -> Self {
+        Wide([!self.0[0], !self.0[1]])
+    }
+}
+impl BitAnd for Wide {
+    type Output = Self;
+    fn bitand(self, r: Self) -> Self {
+        Wide([self.0[0] & r.0[0], self.0[1] & r.0[1]])
+    }
+}
+impl BitOr for Wide {
+    type Output = Self;
+    fn bitor(self, r: Self) -> Self {
+        Wide([self.0[0] | r.0[0], self.0[1] | r.0[1]])
+    }
+}
+impl BitXor for Wide {
+    type Output = Self;
+    fn bitxor(self, r: Self) -> Self {
+        Wide([self.0[0] ^ r.0[0], self.0[1] ^ r.0[1]])
+    }
+}
+impl Shl<usize> for Wide {
+    type Output = Self;
+    fn shl(self, _: usize) -> Self {
+        unreachable!("not used by the proofs")
+    }
+}
+impl Shr<usize> for Wide {
+    type Output = Self;
+    fn shr(self, _: usize) -> Self {
+        unreachable!("not used by the proofs")
+    }
+}
+impl ConstZero for Wide {
+    const ZERO: Self = Wide([0, 0]);
+}
+impl ConstOne for Wide {
+    const ONE: Self = Wide([1, 0]);
+}
+
+impl PrimBits for Wide {
+    fn count_ones(self) -> u32 {
+        self.0[0].count_ones() + self.0[1].count_ones()
+    }
+    fn count_zeros(self) -> u32 {
+        self.0[0].count_zeros() + self.0[1].count_zeros()
+    }
+    fn leading_zeros(self) -> u32 {
+        if self.0[1] != 0 {
+            self.0[1].leading_zeros()
+        } else {
+            128 + self.0[0].leading_zeros()
+        }
+    }
+    fn trailing_zeros(self) -> u32 {
+        if self.0[0] != 0 {
+            self.0[0].trailing_zeros()
+        } else {
+            128 + self.0[1].trailing_zeros()
+        }
+    }
+    fn rotate_left(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn rotate_right(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn signed_shl(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn signed_shr(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn unsigned_shl(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn unsigned_shr(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn swap_bytes(self) -> Self {
+        unreachable!()
+    }
+    fn from_be(_: Self) -> Self {
+        unreachable!()
+    }
+    fn from_le(_: Self) -> Self {
+        unreachable!()
+    }
+    fn to_be(self) -> Self {
+        unreachable!()
+    }
+    fn to_le(self) -> Self {
+        unreachable!()
+    }
+}
+
+impl IsPowerOfTwo for Wide {
+    fn is_power_of_two(self) -> bool {
+        self.count_ones() == 1
+    }
+}
+
+/// The proofs store a position in one byte with a niche above 127, so a
+/// 256-bit carrier can prove positions `0..128` only, and says so with `None`
+/// rather than storing a truncated position.
+#[test]
+fn wide_carrier_proves_positions_below_128_only() {
+    for k in 0..128 {
+        assert_eq!(pow2_from_caps(Wide::bit(k)).map(|p| p.exp()), Some(k));
+        assert_eq!(bitindex_from_caps::<Wide>(k).map(|i| i.get()), Some(k));
+    }
+    for k in 128..256 {
+        assert!(pow2_from_caps(Wide::bit(k)).is_none(), "2^{k}");
+        assert!(bitindex_from_caps::<Wide>(k).is_none(), "index {k}");
+    }
+    // 256 = BITS is rejected by the width check, before the representation's.
+    assert!(bitindex_from_caps::<Wide>(256).is_none());
+    assert!(pow2_from_caps(Wide([3, 0])).is_none());
+    assert!(pow2_from_caps(Wide::ZERO).is_none());
+}

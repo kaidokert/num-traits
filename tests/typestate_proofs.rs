@@ -2,7 +2,9 @@
 //! formatting, and the `HasNonZero` bridge, checked exhaustively where the
 //! domain allows.
 
-use const_num_traits::{BitIndex, HasNonZero, Positive, PowerOfTwo, TypestateError};
+use const_num_traits::{
+    BitIndex, BitIndexOps, HasNonZero, Positive, PowerOfTwo, PowerOfTwoOps, TypestateError,
+};
 use core::mem::size_of;
 
 /// A struct that holds both proofs and derives `PartialEq`, `Eq` and `Debug`.
@@ -250,4 +252,90 @@ fn positive_ct_matches_checked_constructor() {
             Positive::<i128>::new(value)
         );
     }
+}
+
+// ───────────────────── PowerOfTwo / BitIndex representation ──────────────────
+
+// One byte whatever the carrier, with 128 spare values, so `Option` costs
+// nothing even when nested, and so does a `Result` with a zero-sized error.
+const _: () = {
+    macro_rules! one_byte {
+        ($($t:ty),+) => {$(
+            assert!(size_of::<PowerOfTwo<$t>>() == 1);
+            assert!(size_of::<Option<PowerOfTwo<$t>>>() == 1);
+            assert!(size_of::<Option<Option<PowerOfTwo<$t>>>>() == 1);
+            assert!(size_of::<Result<PowerOfTwo<$t>, TypestateError>>() == 1);
+            assert!(size_of::<BitIndex<$t>>() == 1);
+            assert!(size_of::<Option<BitIndex<$t>>>() == 1);
+            assert!(size_of::<Option<Option<BitIndex<$t>>>>() == 1);
+            assert!(size_of::<Result<BitIndex<$t>, TypestateError>>() == 1);
+        )+};
+    }
+    one_byte!(
+        u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+    );
+    // A plan holding both proofs packs into two bytes.
+    assert!(size_of::<Option<(PowerOfTwo<u32>, BitIndex<i64>)>>() == 2);
+};
+
+/// Every exponent of every unsigned width round-trips through each
+/// constructor, and the consuming ops match the plain arithmetic at it.
+#[test]
+fn power_of_two_every_exponent() {
+    macro_rules! every {
+        ($($t:ty),+) => {$(
+            for k in 0..<$t>::BITS {
+                let value: $t = 1 << k;
+                let p = PowerOfTwo::<$t>::new(value).unwrap();
+                assert_eq!(p.exp(), k);
+                assert_eq!(p.get(), value);
+                assert_eq!(PowerOfTwo::<$t>::new_checked(value), Some(p));
+                assert_eq!(PowerOfTwo::<$t>::try_from(value), Ok(p));
+                // SAFETY: `k < BITS <= 128`.
+                assert_eq!(unsafe { PowerOfTwo::<$t>::from_exp_unchecked(k) }, p);
+                for x in [0, 1, value - 1, value, value | 1, <$t>::MAX / 3, <$t>::MAX] {
+                    assert_eq!(x.div_pow2(p), x / value, "{x} / 2^{k}");
+                    assert_eq!(x.rem_pow2(p), x % value, "{x} % 2^{k}");
+                    assert_eq!(x.is_multiple_of_pow2(p), x % value == 0);
+                    assert_eq!(x.checked_next_multiple_of_pow2(p), x.checked_next_multiple_of(value));
+                }
+                // Non-powers next to it are rejected.
+                if k >= 2 {
+                    assert_eq!(PowerOfTwo::<$t>::new(value + 1), None);
+                    assert_eq!(PowerOfTwo::<$t>::new(value - 1), None);
+                }
+            }
+            assert_eq!(PowerOfTwo::<$t>::new(0), None);
+        )+};
+    }
+    every!(u8, u16, u32, u64, u128, usize);
+}
+
+/// Every index of every width round-trips, shifts like `<<`/`>>`, and the
+/// width itself is rejected.
+#[test]
+fn bit_index_every_index() {
+    macro_rules! every {
+        ($($t:ty),+) => {$(
+            for k in 0..<$t>::BITS {
+                let i = BitIndex::<$t>::new(k).unwrap();
+                assert_eq!(i.get(), k);
+                assert_eq!(BitIndex::<$t>::new_checked(k), Some(i));
+                assert_eq!(BitIndex::<$t>::try_from(k), Ok(i));
+                // SAFETY: `k < BITS <= 128`.
+                assert_eq!(unsafe { BitIndex::<$t>::from_u32_unchecked(k) }, i);
+                for x in [0, 1, -1i8 as $t, <$t>::MIN, <$t>::MAX, <$t>::MAX / 3] {
+                    assert_eq!(x.shl_index(i), x << k);
+                    assert_eq!(x.shr_index(i), x >> k);
+                }
+            }
+            for k in [<$t>::BITS, <$t>::BITS + 1, 128, 255, 256, u32::MAX] {
+                assert_eq!(BitIndex::<$t>::new(k), None, "{k}");
+                assert_eq!(BitIndex::<$t>::new_checked(k), None, "{k}");
+            }
+        )+};
+    }
+    every!(
+        u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+    );
 }
