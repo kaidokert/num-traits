@@ -3,7 +3,8 @@
 //! domain allows.
 
 use const_num_traits::{
-    BitIndex, BitIndexOps, HasNonZero, Positive, PowerOfTwo, PowerOfTwoOps, TypestateError,
+    BitIndex, BitIndexOps, HasNonZero, NonMin, NonNegative, Positive, PowerOfTwo, PowerOfTwoOps,
+    TypestateError,
 };
 use core::mem::size_of;
 
@@ -338,4 +339,38 @@ fn bit_index_every_index() {
     every!(
         u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
     );
+}
+
+// ─────────────────────── masked constant-time proofs ─────────────────────────
+
+/// A `None`-masked `CtOption` still carries a value, and it must satisfy the
+/// proof's invariant (the accessors state that invariant to the optimiser).
+/// `Debug` is the one view of the masked value, so check it there.
+#[cfg(feature = "ct")]
+#[test]
+fn masked_ct_proofs_hold_valid_values() {
+    // `subtle` is not a dependency of this test crate, so read `is_some` off
+    // the same `Debug` output.
+    fn masked(ct: impl core::fmt::Debug) -> String {
+        let shown = format!("{ct:?}");
+        assert!(shown.contains("is_some: Choice(0)"), "{shown}");
+        shown
+    }
+    macro_rules! check {
+        ($($t:ty),+) => {$(
+            for value in [<$t>::MIN, <$t>::MIN + 1, -2, -1] {
+                assert!(masked(NonNegative::<$t>::new_ct(value)).contains("NonNegative(0)"));
+                assert!(masked(Positive::<$t>::new_ct(value)).contains("Positive(1)"));
+            }
+            assert!(masked(Positive::<$t>::new_ct(0)).contains("Positive(1)"));
+            assert!(masked(NonMin::<$t>::new_ct(<$t>::MIN)).contains("NonMin(0)"));
+            // Valid inputs pass through unchanged.
+            for value in [1, <$t>::MAX] {
+                assert_eq!(Positive::<$t>::new_ct(value).unwrap().get(), value);
+                assert_eq!(NonNegative::<$t>::new_ct(value).unwrap().get(), value);
+                assert_eq!(NonMin::<$t>::new_ct(-value).unwrap().get(), -value);
+            }
+        )+};
+    }
+    check!(i8, i16, i32, i64, i128, isize);
 }

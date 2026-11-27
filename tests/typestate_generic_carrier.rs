@@ -370,3 +370,129 @@ fn wide_carrier_proves_every_position() {
     assert_eq!(core::mem::size_of::<Option<PowerOfTwo<Wide>>>(), 2);
     assert_eq!(core::mem::size_of::<Option<BitIndex<Wide>>>(), 2);
 }
+
+// ── a carrier whose safe trait impls lie ─────────────────────────────────────
+
+/// One byte of storage that claims to be 64 bits wide, and claims every value
+/// is a power of two with its top bit set. `PrimBits` and `IsPowerOfTwo` are
+/// safe traits, so the proofs must stay sound against this: their accessors
+/// tell the optimiser `position < 8 * size_of::<T>()`, and the generic
+/// constructors check that bound instead of trusting the claimed width.
+#[derive(Copy, Clone, Debug)]
+struct Liar(u8);
+
+impl Not for Liar {
+    type Output = Self;
+    fn not(self) -> Self {
+        Liar(!self.0)
+    }
+}
+impl BitAnd for Liar {
+    type Output = Self;
+    fn bitand(self, r: Self) -> Self {
+        Liar(self.0 & r.0)
+    }
+}
+impl BitOr for Liar {
+    type Output = Self;
+    fn bitor(self, r: Self) -> Self {
+        Liar(self.0 | r.0)
+    }
+}
+impl BitXor for Liar {
+    type Output = Self;
+    fn bitxor(self, r: Self) -> Self {
+        Liar(self.0 ^ r.0)
+    }
+}
+impl Shl<usize> for Liar {
+    type Output = Self;
+    fn shl(self, _: usize) -> Self {
+        self
+    }
+}
+impl Shr<usize> for Liar {
+    type Output = Self;
+    fn shr(self, _: usize) -> Self {
+        self
+    }
+}
+impl ConstZero for Liar {
+    const ZERO: Self = Liar(0);
+}
+impl ConstOne for Liar {
+    const ONE: Self = Liar(1);
+}
+impl PrimBits for Liar {
+    fn count_ones(self) -> u32 {
+        1
+    }
+    fn count_zeros(self) -> u32 {
+        64
+    }
+    fn leading_zeros(self) -> u32 {
+        self.0 as u32 % 64
+    }
+    fn trailing_zeros(self) -> u32 {
+        0
+    }
+    fn rotate_left(self, _: u32) -> Self {
+        self
+    }
+    fn rotate_right(self, _: u32) -> Self {
+        self
+    }
+    fn signed_shl(self, _: u32) -> Self {
+        self
+    }
+    fn signed_shr(self, _: u32) -> Self {
+        self
+    }
+    fn unsigned_shl(self, _: u32) -> Self {
+        self
+    }
+    fn unsigned_shr(self, _: u32) -> Self {
+        self
+    }
+    fn swap_bytes(self) -> Self {
+        self
+    }
+    fn from_be(x: Self) -> Self {
+        x
+    }
+    fn from_le(x: Self) -> Self {
+        x
+    }
+    fn to_be(self) -> Self {
+        self
+    }
+    fn to_le(self) -> Self {
+        self
+    }
+}
+impl HasBitPos for Liar {
+    type BitPos = BitPos8;
+}
+
+impl IsPowerOfTwo for Liar {
+    fn is_power_of_two(self) -> bool {
+        true
+    }
+}
+
+#[test]
+fn lying_carrier_cannot_prove_past_its_storage() {
+    // Claimed width 64, storage 8 bits: only 0..8 is provable.
+    for k in 0..8 {
+        assert_eq!(bitindex_from_caps::<Liar>(k).map(|i| i.get()), Some(k));
+    }
+    for k in 8..64 {
+        assert!(bitindex_from_caps::<Liar>(k).is_none(), "index {k}");
+    }
+    // `leading_zeros` = value % 64, so the claimed exponent is 63 - value % 64.
+    for value in 0..=u8::MAX {
+        let exp = 63 - u32::from(value) % 64;
+        let proof = pow2_from_caps(Liar(value)).map(|p| p.exp());
+        assert_eq!(proof, (exp < 8).then_some(exp), "value {value}");
+    }
+}
