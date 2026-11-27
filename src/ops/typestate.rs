@@ -9,8 +9,8 @@
 //! Resident families:
 //! - [`PowerOfTwo`] + [`PowerOfTwoOps`] (unsigned): div/rem/align as shifts/masks.
 //! - [`BitIndex`] + [`BitIndexOps`] (all ints): shift by an amount proven `< BITS`.
-//! - [`HasNonZero`] bridge to [`core::num::NonZero`] + [`DivNonZero`] (unsigned):
-//!   infallible division.
+//! - [`HasNonZero`] bridge to [`core::num::NonZero`] (all ints) + [`DivNonZero`]
+//!   (unsigned): infallible division.
 //! - [`NonNegative`] / [`Positive`] (signed): unsigned cast, `abs`, `isqrt`, plus
 //!   `const` narrowings into each other / `NonZero` / `NonMin`.
 //! - [`NonMin`] (signed): total `neg`/`abs` and total signed division.
@@ -85,6 +85,25 @@ impl<T> Clone for PowerOfTwo<T> {
     }
 }
 impl<T> Copy for PowerOfTwo<T> {}
+
+// Written by hand because a derive would require `T: PartialEq` / `T: Debug`,
+// and only the exponent is compared and printed. As with `Clone`/`Copy`, a
+// proof over a carrier without those traits still has them.
+impl<T> PartialEq for PowerOfTwo<T> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.exp == other.exp
+    }
+}
+impl<T> Eq for PowerOfTwo<T> {}
+
+impl<T> core::fmt::Debug for PowerOfTwo<T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("PowerOfTwo")
+            .field("exp", &self.exp)
+            .finish()
+    }
+}
 
 impl<T> PowerOfTwo<T> {
     /// Constructs the proof directly from an exponent, without checking.
@@ -272,6 +291,21 @@ impl<T> Clone for BitIndex<T> {
 }
 impl<T> Copy for BitIndex<T> {}
 
+// Bound-free for the same reason as `PowerOfTwo`'s.
+impl<T> PartialEq for BitIndex<T> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.index == other.index
+    }
+}
+impl<T> Eq for BitIndex<T> {}
+
+impl<T> core::fmt::Debug for BitIndex<T> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_tuple("BitIndex").field(&self.index).finish()
+    }
+}
+
 impl<T> BitIndex<T> {
     /// Constructs the proof directly from an index, without checking.
     ///
@@ -414,7 +448,15 @@ c0nst::c0nst! {
 ///
 /// **Unsigned only.** Signed `MIN / -1` still overflows, so the total signed
 /// form lives on [`NonMin::div_nonzero`] / [`NonMin::rem_nonzero`] (the dividend
-/// proven `!= MIN`), not here.
+/// proven `!= MIN`), not here. The signed primitives implement [`HasNonZero`]
+/// but not this trait:
+///
+/// ```compile_fail
+/// use const_num_traits::{DivNonZero, HasNonZero};
+///
+/// let d = 2i32.into_nonzero().unwrap();
+/// let _ = (-7i32).div_nonzero(d);
+/// ```
 pub c0nst trait DivNonZero: [c0nst] HasNonZero {
     /// Owned result. A fresh `Output` — the divisor is `Self::NonZero`, not
     /// `Self`, so `Div::Output` cannot be reused.
@@ -445,7 +487,11 @@ macro_rules! nonzero_bridge_impl {
             }
         }
         }
+    )+};
+}
 
+macro_rules! div_nonzero_impl {
+    ($($t:ty),+) => {$(
         c0nst::c0nst! {
         c0nst impl DivNonZero for $t {
             type Output = $t;
@@ -464,7 +510,11 @@ macro_rules! nonzero_bridge_impl {
     )+};
 }
 
-nonzero_bridge_impl!(u8, u16, u32, u64, u128, usize);
+nonzero_bridge_impl!(
+    u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+);
+// Unsigned only; see `DivNonZero`'s docs.
+div_nonzero_impl!(u8, u16, u32, u64, u128, usize);
 
 // ─────────────────────────────── sign typestates ──────────────────────────
 
@@ -1037,7 +1087,9 @@ mod ct_constructors {
             }
         )+};
     }
-    ct_nonzero!(u8, u16, u32, u64, u128, usize);
+    ct_nonzero!(
+        u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
+    );
 }
 
 #[cfg(test)]
@@ -1183,11 +1235,17 @@ mod tests {
         assert_eq!(Positive::<i32>::try_from(5).map(|p| p.get()), Ok(5));
         assert_eq!(NonMin::<i8>::try_from(i8::MIN), Err(TypestateError));
         assert_eq!(NonMin::<i8>::try_from(5).map(|n| n.get()), Ok(5));
-        // PowerOfTwo / BitIndex (no Debug/PartialEq on the proof — project first)
-        assert_eq!(PowerOfTwo::<u32>::try_from(64).map(|p| p.exp()), Ok(6));
-        assert!(PowerOfTwo::<u32>::try_from(63).is_err());
-        assert_eq!(BitIndex::<u64>::try_from(40u32).map(|i| i.get()), Ok(40));
-        assert!(BitIndex::<u8>::try_from(8u32).is_err());
+        // PowerOfTwo / BitIndex
+        assert_eq!(
+            PowerOfTwo::<u32>::try_from(64),
+            Ok(PowerOfTwo::<u32>::new(64).unwrap())
+        );
+        assert_eq!(PowerOfTwo::<u32>::try_from(63), Err(TypestateError));
+        assert_eq!(
+            BitIndex::<u64>::try_from(40u32),
+            Ok(BitIndex::<u64>::new(40).unwrap())
+        );
+        assert_eq!(BitIndex::<u8>::try_from(8u32), Err(TypestateError));
         // Finite (derives Debug; manual PartialEq)
         let x: Finite<f64> = 1.5f64.try_into().unwrap();
         assert_eq!(x.get(), 1.5);

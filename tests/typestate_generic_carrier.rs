@@ -201,3 +201,26 @@ fn typestates_construct_from_non_primitive_carrier() {
     assert!(odd_from_caps(Carrier(7)).is_some());
     assert!(odd_from_caps(Carrier(8)).is_none());
 }
+
+/// `PowerOfTwo<T>` and `BitIndex<T>` compare and format whatever `T` is: this
+/// compiles only while those impls carry no bound on `T`.
+#[allow(dead_code)]
+fn proofs_are_eq_and_debug_for_any_carrier<T>() {
+    fn has<X: Copy + Eq + core::fmt::Debug>() {}
+    has::<PowerOfTwo<T>>();
+    has::<BitIndex<T>>();
+}
+
+#[test]
+fn proofs_compare_over_a_carrier_without_partial_eq() {
+    assert_eq!(pow2_from_caps(Carrier(16)), pow2_from_caps(Carrier(16)));
+    assert_ne!(pow2_from_caps(Carrier(16)), pow2_from_caps(Carrier(32)));
+    assert_eq!(
+        bitindex_from_caps::<Carrier>(5),
+        bitindex_from_caps::<Carrier>(5)
+    );
+    assert_ne!(
+        bitindex_from_caps::<Carrier>(5),
+        bitindex_from_caps::<Carrier>(6)
+    );
+}
