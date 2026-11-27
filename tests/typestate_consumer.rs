@@ -1,7 +1,7 @@
 //! The proofs used the way a downstream fixed-point library uses them: a
 //! nearest-rounding division by a `Positive` divisor, and a rounding shift by
 //! a `BitIndex`, each with no error path. Checked against a wide reference,
-//! exhaustively at `i8` and at the edges of `i128`.
+//! exhaustively at `i8` and at the edges of `i64` and `i128`.
 
 use const_num_traits::{BitIndex, Positive};
 
@@ -14,8 +14,9 @@ macro_rules! divide_nearest {
             let denominator = denominator.get();
             let quotient = numerator / denominator;
             let remainder = numerator - quotient * denominator;
-            // `|remainder| < denominator`, so the rest of the divisor is
-            // positive; round away exactly when the remainder reaches it.
+            // Rounds away when `2|r| >= d`, compared as `|r| >= d - |r|`
+            // because the doubling can overflow and the subtraction can't
+            // (`|r| < d`).
             let magnitude = remainder.unsigned_abs();
             if magnitude < denominator.unsigned_abs() - magnitude {
                 quotient
@@ -109,7 +110,9 @@ fn divide_nearest_edges_i128() {
     }
     // MIN itself divides exactly by 1 and 2.
     let one = Positive::<i128>::new(1).unwrap();
+    let two = Positive::<i128>::new(2).unwrap();
     assert_eq!(divide_nearest_i128(i128::MIN, one), i128::MIN);
+    assert_eq!(divide_nearest_i128(i128::MIN, two), i128::MIN / 2);
 }
 
 #[test]
@@ -138,8 +141,8 @@ fn shift_nearest_edges_i64() {
     }
 }
 
-/// Validated configuration turned into proofs in a `const`, with no runtime
-/// check left behind: the pattern a constructor-validated shift uses.
+/// Builds the proof in a `const`, so an out-of-range shift is a compile error
+/// and no check is left at runtime.
 const fn accepted_shift(shift: u32) -> BitIndex<i64> {
     match BitIndex::<i64>::new(shift) {
         Some(index) => index,

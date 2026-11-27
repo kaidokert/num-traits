@@ -57,7 +57,8 @@ impl core::error::Error for TypestateError {}
 
 /// `position < 8 * size_of::<T>()`: the storage bound that [`PowerOfTwo`] and
 /// [`BitIndex`] add to their `< T::BITS` invariant. It equals `T::BITS` for
-/// every primitive and for any carrier that stores its bits inline, and unlike
+/// every primitive and for any carrier whose storage is exactly its bits, and
+/// unlike
 /// `T::BITS` it is known without a bound on `T`, so the accessors can state it
 /// to the optimiser.
 #[inline]
