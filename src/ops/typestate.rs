@@ -86,9 +86,9 @@ impl<T> Clone for PowerOfTwo<T> {
 }
 impl<T> Copy for PowerOfTwo<T> {}
 
-// `PartialEq`/`Eq`/`Debug` compare and print the exponent, so like `Clone`/`Copy`
-// they need no bound on `T`: a proof over a carrier without `PartialEq` (see
-// `tests/typestate_generic_carrier.rs`) still compares.
+// Written by hand because a derive would require `T: PartialEq` / `T: Debug`,
+// and only the exponent is compared and printed. As with `Clone`/`Copy`, a
+// proof over a carrier without those traits still has them.
 impl<T> PartialEq for PowerOfTwo<T> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
@@ -513,8 +513,7 @@ macro_rules! div_nonzero_impl {
 nonzero_bridge_impl!(
     u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize
 );
-// Unsigned only: signed `MIN / -1` overflows, so the total signed form is
-// `NonMin::div_nonzero` (see `DivNonZero`'s docs).
+// Unsigned only; see `DivNonZero`'s docs.
 div_nonzero_impl!(u8, u16, u32, u64, u128, usize);
 
 // ─────────────────────────────── sign typestates ──────────────────────────

@@ -213,7 +213,6 @@ fn proofs_are_eq_and_debug_for_any_carrier<T>() {
 
 #[test]
 fn proofs_compare_over_a_carrier_without_partial_eq() {
-    // `Carrier` has no `PartialEq`; its proofs still do.
     assert_eq!(pow2_from_caps(Carrier(16)), pow2_from_caps(Carrier(16)));
     assert_ne!(pow2_from_caps(Carrier(16)), pow2_from_caps(Carrier(32)));
     assert_eq!(
