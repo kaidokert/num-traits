@@ -82,6 +82,13 @@ fn assembly(manifest_dir: &Path, target: &str) -> String {
         manifest_dir,
     );
     let _ = std::fs::remove_file(&asm);
+    // Absent when `CARGO_TARGET_DIR` points elsewhere, and rustc won't create it.
+    if let Some(dir) = asm.parent() {
+        std::fs::create_dir_all(dir).unwrap_or_else(|e| {
+            eprintln!("FAIL creating {}: {e}", dir.display());
+            exit(1);
+        });
+    }
     let emit = format!("asm={}", asm.display());
     cargo(
         &[
