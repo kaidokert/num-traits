@@ -107,7 +107,8 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: thumbv6m-none-eabi, thumbv7em-none-eabihf
+          # ARM shifts read 8 bits of the amount, so unproven shifts get masked; RISC-V adds i64 shifts on a 32-bit core.
+          targets: thumbv6m-none-eabi, thumbv7em-none-eabihf, riscv32imac-unknown-none-elf
       - run: cargo test --quiet --manifest-path ci/codegen/Cargo.toml --bin check
       - run: cargo run --quiet --manifest-path ci/codegen/Cargo.toml --bin check
 

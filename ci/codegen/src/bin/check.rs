@@ -1,16 +1,21 @@
-//! Builds the library to assembly for Cortex-M targets and checks that the
+//! Builds the library to assembly for embedded targets and checks that the
 //! typestate accessors let the optimiser remove what each function's name
 //! says:
 //!   `nopanic_*`  must not reference a panic,
-//!   `nomask_*`   must not mask the shift amount (`and ..., #31` / `#63`).
+//!   `nomask_*`   must not mask the shift amount to 5 or 6 bits.
 //!
-//! Run with `cargo run --bin check`. Requires the `thumbv6m-none-eabi` and
-//! `thumbv7em-none-eabihf` targets.
+//! Run with `cargo run --bin check`. Requires the targets in [`TARGETS`].
 
 use std::path::Path;
 use std::process::{exit, Command};
 
-const TARGETS: [&str; 2] = ["thumbv6m-none-eabi", "thumbv7em-none-eabihf"];
+/// ARM register shifts read 8 bits of the amount, so every out-of-range shift
+/// needs a mask; RISC-V's read 5, so only multi-word shifts (`i64` on rv32) do.
+const TARGETS: [&str; 3] = [
+    "thumbv6m-none-eabi",
+    "thumbv7em-none-eabihf",
+    "riscv32imac-unknown-none-elf",
+];
 
 fn main() {
     // Taken from the library source, so every function added there is
@@ -127,17 +132,20 @@ fn function_body<'a>(asm: &'a str, name: &str) -> Option<Vec<&'a str>> {
     )
 }
 
-/// Instructions that mask a shift amount to 5 or 6 bits. thumbv7em masks with
-/// an immediate (`and r1, r1, #31`); thumbv6m has none, so it loads the
-/// constant (`movs r2, #31`) and then `ands` with it.
+/// Instructions that mask a shift amount to 5 or 6 bits. thumbv7em and RISC-V
+/// mask with an immediate (`and r1, r1, #31`, `andi a3, a2, 63`); thumbv6m has
+/// none, so it loads the constant (`movs r2, #31`) and then `ands` with it.
 fn shift_masks<'a>(body: &[&'a str]) -> Vec<&'a str> {
     let mnemonic = |line: &str| line.split_whitespace().next().unwrap_or("").to_owned();
-    let mask_imm = |line: &str| line.ends_with("#31") || line.ends_with("#63");
+    let mask_imm = |line: &str| {
+        let imm = line.rsplit([' ', '\t', ',']).next().unwrap_or("");
+        matches!(imm.trim_start_matches('#'), "31" | "63")
+    };
 
     let mut bad: Vec<&str> = body
         .iter()
         .filter(|line| {
-            matches!(mnemonic(line).as_str(), "and" | "ands" | "and.w") && mask_imm(line)
+            matches!(mnemonic(line).as_str(), "and" | "ands" | "and.w" | "andi") && mask_imm(line)
         })
         .copied()
         .collect();
@@ -168,6 +176,16 @@ mod tests {
             ["\tand\tr1, r1, #31"]
         );
         assert_eq!(shift_masks(&["\tand.w\tr1, r1, #63"]).len(), 1);
+    }
+
+    #[test]
+    fn finds_the_riscv_immediate_mask() {
+        assert_eq!(
+            shift_masks(&["\tandi\ta3, a2, 63", "\tsra\ta0, a1, a3"]),
+            ["\tandi\ta3, a2, 63"]
+        );
+        assert!(shift_masks(&["\tandi\ta3, a2, 15"]).is_empty());
+        assert!(shift_masks(&["\txori\ta1, a1, 31"]).is_empty());
     }
 
     #[test]
