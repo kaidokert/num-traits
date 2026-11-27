@@ -55,6 +55,18 @@ impl core::error::Error for TypestateError {}
 
 // ─────────────────────────────── bit positions ─────────────────────────────
 
+/// `position < 8 * size_of::<T>()`: the storage bound that [`PowerOfTwo`] and
+/// [`BitIndex`] add to their `< T::BITS` invariant. It equals `T::BITS` for
+/// every primitive and for any carrier whose storage is exactly its bits, and
+/// unlike
+/// `T::BITS` it is known without a bound on `T`, so the accessors can state it
+/// to the optimiser.
+#[inline]
+const fn fits_storage<T>(position: u32) -> bool {
+    // `u64`, so the product can't overflow for any `T`.
+    (position as u64) < 8 * core::mem::size_of::<T>() as u64
+}
+
 mod sealed {
     pub trait Sealed {}
 }
@@ -253,6 +265,12 @@ has_bit_pos_impl!(
 ///
 /// `PowerOfTwo<T>` is always `Copy`, independent of whether `T` is.
 ///
+/// For a carrier other than the primitives, the exponent must also be below
+/// `8 * size_of::<T>()` and `T::BitPos`'s `END`, so a carrier that keeps its
+/// bits behind a reference, or picks [`BitPos8`] while wider than 128 bits,
+/// can't prove its high powers: [`new_checked`](Self::new_checked) returns
+/// `None` for them.
+///
 /// # Examples
 ///
 /// ```
@@ -305,10 +323,11 @@ impl<T: HasBitPos> PowerOfTwo<T> {
     /// # Safety
     ///
     /// `exp` must be `< T::BITS` (so that `1 << exp` is a valid power of two of
-    /// `T`) and `< T::BitPos::END` (the representation's limit, implied by the
-    /// first condition when `T::BitPos` covers `T`'s width, as it does for every
-    /// primitive). An exponent at or above `END` is undefined behaviour on
-    /// construction.
+    /// `T`), `< 8 * size_of::<T>()` and `< T::BitPos::END` (the
+    /// representation's limits, implied by the first condition when `T::BitPos`
+    /// covers `T`'s width, as it does for every primitive). Violating any of
+    /// them is undefined behaviour: the representation can't hold `END` or more,
+    /// and [`exp`](Self::exp) states the other bounds to the optimiser.
     #[inline]
     pub const unsafe fn from_exp_unchecked(exp: u32) -> Self {
         PowerOfTwo {
@@ -322,14 +341,20 @@ impl<T: HasBitPos> PowerOfTwo<T> {
     /// zero-extension, no recompute).
     #[inline]
     pub const fn exp(self) -> u32 {
-        pos_get(&self.exp)
+        let exp = pos_get(&self.exp);
+        // SAFETY: an invariant of every constructor. Stated so that shifts by
+        // `exp` (and amounts derived from it) need no masking.
+        unsafe { core::hint::assert_unchecked(fits_storage::<T>(exp)) };
+        exp
     }
 }
 
 c0nst::c0nst! {
 impl<T: HasBitPos> PowerOfTwo<T> {
     /// Safe constructor for any carrier, not just the primitives: `Some` iff
-    /// `value` is a power of two `2^k` with `k < T::BitPos::END`. Keeps the `unsafe`
+    /// `value` is a power of two `2^k` with `k < T::BitPos::END` and
+    /// `k < 8 * size_of::<T>()` (a carrier that keeps its bits behind a
+    /// reference can't prove positions past its own size). Keeps the `unsafe`
     /// crate-internal; the per-primitive [`new`](Self::new) stays the `const`
     /// fast path.
     #[inline]
@@ -341,6 +366,9 @@ impl<T: HasBitPos> PowerOfTwo<T> {
             let width = T::ZERO.count_zeros();
             // `value` is a power of two, so `exp < width` (= `T::BITS`).
             let exp = width - 1 - value.leading_zeros();
+            if !fits_storage::<T>(exp) {
+                return None;
+            }
             match pos_new(exp) {
                 Some(exp) => Some(PowerOfTwo { exp, _t: PhantomData }),
                 None => None,
@@ -474,6 +502,11 @@ pow2_typestate_impl!(u8, u16, u32, u64, u128, usize);
 /// [`BitIndexOps`] (signed and unsigned). No constant-time constructor — shift
 /// amounts are public.
 ///
+/// For a carrier other than the primitives, the index must also be below
+/// `8 * size_of::<T>()` and `T::BitPos`'s `END`, so
+/// [`new_checked`](Self::new_checked) returns `None` past either, even below
+/// `T::BITS`.
+///
 /// ```
 /// use const_num_traits::{BitIndex, BitIndexOps};
 ///
@@ -517,11 +550,12 @@ impl<T: HasBitPos> BitIndex<T> {
     ///
     /// # Safety
     ///
-    /// `index` must be `< T::BITS` and `< T::BitPos::END` (the representation's
-    /// limit, implied by the first condition when `T::BitPos` covers `T`'s width,
-    /// as it does for every primitive). An index at or above `END` is undefined
-    /// behaviour on construction; one in `T::BITS..END` makes the consuming
-    /// shifts overflow.
+    /// `index` must be `< T::BITS`, `< 8 * size_of::<T>()` and
+    /// `< T::BitPos::END` (the representation's limits, implied by the first
+    /// condition when `T::BitPos` covers `T`'s width, as it does for every
+    /// primitive). Violating any of them is undefined behaviour: the
+    /// representation can't hold `END` or more, and [`get`](Self::get) states
+    /// the other bounds to the optimiser.
     #[inline]
     pub const unsafe fn from_u32_unchecked(index: u32) -> Self {
         BitIndex {
@@ -534,21 +568,26 @@ impl<T: HasBitPos> BitIndex<T> {
     /// The proven index. Free (a zero-extension, no recompute).
     #[inline]
     pub const fn get(self) -> u32 {
-        pos_get(&self.index)
+        let index = pos_get(&self.index);
+        // SAFETY: an invariant of every constructor. Stated so that shifts by
+        // the index (and amounts derived from it) need no masking.
+        unsafe { core::hint::assert_unchecked(fits_storage::<T>(index)) };
+        index
     }
 }
 
 c0nst::c0nst! {
 impl<T: HasBitPos> BitIndex<T> {
     /// Safe constructor for any [`PrimBits`] carrier, not just the primitives:
-    /// `Some` iff `index < T::BITS` and `index < T::BitPos::END`. The per-primitive
+    /// `Some` iff `index < T::BITS`, `index < T::BitPos::END` and
+    /// `index < 8 * size_of::<T>()`. The per-primitive
     /// [`new`](Self::new) stays the `const` fast path.
     #[inline]
     pub c0nst fn new_checked(index: u32) -> Option<Self>
     where
         T: [c0nst] PrimBits,
     {
-        if index < T::ZERO.count_zeros() {
+        if index < T::ZERO.count_zeros() && fits_storage::<T>(index) {
             match pos_new(index) {
                 Some(index) => Some(BitIndex { index, _t: PhantomData }),
                 None => None,
@@ -767,7 +806,11 @@ macro_rules! sign_typestate_impl {
             pub const unsafe fn new_unchecked(value: $t) -> Self { NonNegative(value) }
             /// The proven value.
             #[inline]
-            pub const fn get(self) -> $t { self.0 }
+            pub const fn get(self) -> $t {
+                // SAFETY: invariant `self.0 >= 0`.
+                unsafe { core::hint::assert_unchecked(self.0 >= 0) };
+                self.0
+            }
             /// Zero-cost borrowed proof (repr(transparent) reinterpret).
             #[inline]
             pub fn from_ref(value: &$t) -> Option<&Self> {
@@ -778,18 +821,18 @@ macro_rules! sign_typestate_impl {
             /// Infallible cast to the unsigned counterpart — the value is `>= 0`
             /// so the bit pattern is preserved; no `Option`, no panic.
             #[inline]
-            pub const fn to_unsigned(self) -> $u { self.0 as $u }
+            pub const fn to_unsigned(self) -> $u { self.get() as $u }
             /// `abs` is the identity on a non-negative value (branch-free).
             #[inline]
-            pub const fn abs(self) -> $t { self.0 }
+            pub const fn abs(self) -> $t { self.get() }
             /// `isqrt` is total on a non-negative value (the inherent signed
             /// `isqrt` would otherwise panic on negatives).
             #[inline]
-            pub const fn isqrt(self) -> $t { self.0.isqrt() }
+            pub const fn isqrt(self) -> $t { self.get().isqrt() }
             /// `NonNegative ⊂ NonMin` (`>= 0`, and `MIN < 0`, so `!= MIN`) —
             /// narrows with no recheck so it can feed total `neg`/`abs`/division.
             #[inline]
-            pub const fn into_nonmin(self) -> NonMin<$t> { NonMin(self.0) }
+            pub const fn into_nonmin(self) -> NonMin<$t> { NonMin(self.get()) }
         }
 
         impl Positive<$t> {
@@ -810,7 +853,14 @@ macro_rules! sign_typestate_impl {
             }
             /// The proven value.
             #[inline]
-            pub const fn get(self) -> $t { self.0.get() }
+            pub const fn get(self) -> $t {
+                let value = self.0.get();
+                // SAFETY: invariant `value > 0`. `NonZero` alone tells the
+                // optimiser only `!= 0`; this also rules out negative
+                // divisors and so `MIN / -1`.
+                unsafe { core::hint::assert_unchecked(value > 0) };
+                value
+            }
             /// Zero-cost borrowed proof (repr(transparent) reinterpret: a
             /// positive `$t` is a valid `NonZero<$t>`).
             #[inline]
@@ -909,7 +959,11 @@ macro_rules! nonmin_impl {
             pub const unsafe fn new_unchecked(value: $t) -> Self { NonMin(value) }
             /// The proven value.
             #[inline]
-            pub const fn get(self) -> $t { self.0 }
+            pub const fn get(self) -> $t {
+                // SAFETY: invariant `self.0 != MIN`.
+                unsafe { core::hint::assert_unchecked(self.0 != <$t>::MIN) };
+                self.0
+            }
             /// Zero-cost borrowed proof (repr(transparent) reinterpret).
             #[inline]
             pub fn from_ref(value: &$t) -> Option<&Self> {
@@ -919,22 +973,22 @@ macro_rules! nonmin_impl {
             }
             /// Total negation — `MIN` (the sole overflow) is excluded.
             #[inline]
-            pub const fn neg(self) -> $t { -self.0 }
+            pub const fn neg(self) -> $t { -self.get() }
             /// Total `abs` — `MIN` (the sole overflow) is excluded.
             #[inline]
-            pub const fn abs(self) -> $t { self.0.abs() }
+            pub const fn abs(self) -> $t { self.get().abs() }
             /// Total signed division by a non-zero divisor: the dividend is
             /// proven `!= MIN`, so `MIN / -1` (the only overflow) can't occur,
             /// and the divisor's niche rules out divide-by-zero.
             #[inline]
             pub const fn div_nonzero(self, d: core::num::NonZero<$t>) -> $t {
-                self.0 / d.get()
+                self.get() / d.get()
             }
             /// Total signed remainder by a non-zero divisor (same reasoning as
             /// [`div_nonzero`](Self::div_nonzero); `MIN % -1` is excluded).
             #[inline]
             pub const fn rem_nonzero(self, d: core::num::NonZero<$t>) -> $t {
-                self.0 % d.get()
+                self.get() % d.get()
             }
         }
 
@@ -1237,6 +1291,17 @@ mod ct_constructors {
     }
     ct_pow2!(u8, u16, u32, u64, u128, usize);
 
+    // A `None`-masked `CtOption` still holds a value, and the accessors state
+    // each proof's invariant to the optimiser, so that value must satisfy it
+    // too. `or_valid` swaps in a valid one without branching.
+    macro_rules! or_valid {
+        ($t:ty, $value:expr, $ok:expr, $fallback:expr) => {{
+            // All ones when `$ok` is set, zero otherwise.
+            let keep = (0 as $t).wrapping_sub($ok.unwrap_u8() as $t);
+            ($value & keep) | ($fallback & !keep)
+        }};
+    }
+
     macro_rules! ct_sign {
         ($($t:ty),+) => {$(
             impl NonNegative<$t> {
@@ -1244,7 +1309,8 @@ mod ct_constructors {
                 #[inline]
                 pub fn new_ct(value: $t) -> CtOption<NonNegative<$t>> {
                     let neg = Choice::from(((value >> (<$t>::BITS - 1)) & 1) as u8);
-                    CtOption::new(NonNegative(value), !neg)
+                    let safe = or_valid!($t, value, !neg, 0);
+                    CtOption::new(NonNegative(safe), !neg)
                 }
             }
             impl Positive<$t> {
@@ -1252,12 +1318,12 @@ mod ct_constructors {
                 #[inline]
                 pub fn new_ct(value: $t) -> CtOption<Positive<$t>> {
                     let neg = Choice::from(((value >> (<$t>::BITS - 1)) & 1) as u8);
-                    let zero = value.ct_is_zero();
-                    let safe = value | (zero.unwrap_u8() as $t);
-                    // SAFETY: `safe` is `value`, or 1 when `value` is 0. A
-                    // `NonZero` holding 0 is UB even when `CtOption` masks it.
+                    let ok = !neg & !value.ct_is_zero();
+                    let safe = or_valid!($t, value, ok, 1);
+                    // SAFETY: `safe` is `value` when it is positive and 1
+                    // otherwise.
                     let proof = Positive(unsafe { core::num::NonZero::new_unchecked(safe) });
-                    CtOption::new(proof, !neg & !zero)
+                    CtOption::new(proof, ok)
                 }
             }
         )+};
@@ -1272,7 +1338,8 @@ mod ct_constructors {
                 #[inline]
                 pub fn new_ct(value: $t) -> CtOption<NonMin<$t>> {
                     let is_min = value.ct_eq(&<$t>::MIN);
-                    CtOption::new(NonMin(value), !is_min)
+                    let safe = or_valid!($t, value, !is_min, 0);
+                    CtOption::new(NonMin(safe), !is_min)
                 }
             }
         )+};

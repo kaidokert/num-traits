@@ -98,10 +98,24 @@ jobs:
       - run: cargo miri test --no-default-features --features "std ct" --test typestate_proofs --test typestate_generic_carrier
       - run: cargo miri test --no-default-features --features "std ct" --lib ops::typestate
 
+  codegen:
+    name: Codegen (typestate accessors)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          # ARM shifts read 8 bits of the amount, so unproven shifts get masked; RISC-V adds i64 shifts on a 32-bit core.
+          targets: thumbv6m-none-eabi, thumbv7em-none-eabihf, riscv32imac-unknown-none-elf
+      - run: cargo test --quiet --manifest-path ci/codegen/Cargo.toml --bin check
+      - run: cargo run --quiet --manifest-path ci/codegen/Cargo.toml --bin check
+
   success:
     name: Success
     runs-on: ubuntu-latest
-    needs: [gate, test, nightly, cross, miri]
+    needs: [gate, test, nightly, cross, miri, codegen]
     # A single required check for branch protection. `if: always()` and the
     # explicit result scan are needed because GitHub counts a job skipped by a
     # failed dependency as success.
