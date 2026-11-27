@@ -1,4 +1,4 @@
-# Codegen check for the typestate accessors: see check.sh. Not part of the
+# Codegen check for the typestate accessors: see src/bin/check.rs. Not part of the
 # published crate (the package's `include` list leaves `ci/` out).
 [package]
 name = "typestate-codegen"

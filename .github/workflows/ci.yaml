@@ -108,7 +108,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: thumbv6m-none-eabi, thumbv7em-none-eabihf
-      - run: ci/codegen/check.sh
+      - run: cargo test --quiet --manifest-path ci/codegen/Cargo.toml --bin check
+      - run: cargo run --quiet --manifest-path ci/codegen/Cargo.toml --bin check
 
   success:
     name: Success

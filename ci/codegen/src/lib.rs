@@ -1,6 +1,6 @@
-//! Consumers of the typestate accessors, compiled to assembly by `check.sh`.
-//! Each function names what the proof should remove; `check.sh` fails if it
-//! is still there.
+//! Consumers of the typestate accessors, compiled to assembly by the `check`
+//! binary. Each function names what the proof should remove; `check` fails if
+//! it is still there.
 #![no_std]
 
 use const_num_traits::{BitIndex, NonMin, NonNegative, Positive, PowerOfTwo};
@@ -84,6 +84,8 @@ pub fn nomask_pow2_mask_u32(v: u32, p: PowerOfTwo<u32>) -> u32 {
     v & ((1u32 << p.exp()) - 1)
 }
 
+// Only on the bare-metal targets; the host build, for `check`, uses std's.
+#[cfg(target_os = "none")]
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
     loop {}
