@@ -73,7 +73,7 @@ pub fn nomask_shift_u32(v: u32, s: BitIndex<u32>) -> u32 {
     v << s.get()
 }
 
-/// A complement amount derived from the index.
+/// `31 - s` is in range only because `s < 32`.
 #[no_mangle]
 pub fn nomask_complement_u32(v: u32, s: BitIndex<u32>) -> u32 {
     v << (31 - s.get())

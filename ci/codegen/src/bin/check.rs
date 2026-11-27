@@ -9,8 +9,9 @@
 use std::path::Path;
 use std::process::{exit, Command};
 
-/// ARM register shifts read 8 bits of the amount, so every out-of-range shift
-/// needs a mask; RISC-V's read 5, so only multi-word shifts (`i64` on rv32) do.
+/// ARM register shifts read 8 bits of the amount, so a shift by an unproven
+/// amount gets masked; RISC-V's read 5, so only multi-word shifts (`i64` on
+/// rv32) do.
 const TARGETS: [&str; 3] = [
     "thumbv6m-none-eabi",
     "thumbv7em-none-eabihf",
