@@ -420,7 +420,9 @@ c0nst::c0nst! {
 /// This does **not** duplicate `core::num::NonZero`: for the integer primitives
 /// [`NonZero`](Self::NonZero) *is* `core::num::NonZero<Self>`, with its real
 /// niche. (`core::num::NonZero<T>` is sealed to primitives, so a future bignum
-/// backend supplies its own non-zero type as the associated type instead.)
+/// backend supplies its own non-zero type as the associated type instead.
+/// `Option` of that type, and of a [`Positive`] over the backend, is tag-free
+/// only if the type has a niche of its own.)
 ///
 /// The value is recovered through the crate-owned const accessor
 /// [`nonzero_get`](Self::nonzero_get) rather than an `Into<Self>` bound:
@@ -525,8 +527,8 @@ pub struct NonNegative<T>(T);
 
 /// Proof that a signed value is `> 0`.
 ///
-/// Stored as its [`HasNonZero::NonZero`] form (`core::num::NonZero` for the
-/// primitives), so `Option<Positive<T>>` is the size of `T`:
+/// Stored as its [`HasNonZero::NonZero`] form. For the primitives that form is
+/// `core::num::NonZero`, so `Option<Positive<T>>` is the size of `T`:
 ///
 /// ```
 /// use const_num_traits::Positive;
