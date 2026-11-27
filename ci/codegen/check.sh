@@ -7,11 +7,32 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Every checked function must appear in the assembly, so a renamed or
+# inlined-away function fails instead of passing unchecked.
+fns=$(grep -oE 'pub fn (nopanic|nomask)_[a-z0-9_]+' src/lib.rs | sed 's/^pub fn //')
+if [ -z "$fns" ]; then
+    echo "FAIL no nopanic_*/nomask_* functions in src/lib.rs"
+    exit 1
+fi
+
 status=0
 for target in thumbv6m-none-eabi thumbv7em-none-eabihf; do
-    cargo rustc --quiet --release --target "$target" -- --emit asm
-    asm=$(ls -t "target/$target/release/deps/"typestate_codegen-*.s | head -n 1)
-    for fn in $(grep -oE '^(nopanic|nomask)_[a-z0-9_]+:' "$asm" | tr -d ':'); do
+    # An explicit path: Cargo's layout of intermediate files varies by version.
+    asm="target/typestate_codegen-$target.s"
+    # Cleaning this crate makes rustc run, and write the file, every time.
+    cargo clean --quiet --release --target "$target" -p typestate-codegen
+    rm -f "$asm"
+    cargo rustc --quiet --release --target "$target" -- --emit "asm=$asm"
+    if [ ! -f "$asm" ]; then
+        echo "FAIL $target: rustc wrote no $asm"
+        exit 1
+    fi
+    for fn in $fns; do
+        if ! grep -qx "$fn:" "$asm"; then
+            echo "FAIL $target $fn: not in the assembly"
+            status=1
+            continue
+        fi
         body=$(awk -v f="$fn:" '$0 == f {on = 1; next} on && /^\.Lfunc_end/ {exit} on' "$asm")
         bad=""
         case "$fn" in

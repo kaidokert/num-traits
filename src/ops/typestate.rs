@@ -264,6 +264,12 @@ has_bit_pos_impl!(
 ///
 /// `PowerOfTwo<T>` is always `Copy`, independent of whether `T` is.
 ///
+/// For a carrier other than the primitives, the exponent must also be below
+/// `8 * size_of::<T>()` and `T::BitPos`'s `END`, so a carrier that keeps its
+/// bits behind a reference, or picks [`BitPos8`] while wider than 128 bits,
+/// can't prove its high powers: [`new_checked`](Self::new_checked) returns
+/// `None` for them.
+///
 /// # Examples
 ///
 /// ```
@@ -494,6 +500,11 @@ pow2_typestate_impl!(u8, u16, u32, u64, u128, usize);
 /// `Option<BitIndex<T>>` is one byte for the primitives; consuming ops live in
 /// [`BitIndexOps`] (signed and unsigned). No constant-time constructor — shift
 /// amounts are public.
+///
+/// For a carrier other than the primitives, the index must also be below
+/// `8 * size_of::<T>()` and `T::BitPos`'s `END`, so
+/// [`new_checked`](Self::new_checked) returns `None` past either, even below
+/// `T::BITS`.
 ///
 /// ```
 /// use const_num_traits::{BitIndex, BitIndexOps};

@@ -492,7 +492,12 @@ fn lying_carrier_cannot_prove_past_its_storage() {
     // `leading_zeros` = value % 64, so the claimed exponent is 63 - value % 64.
     for value in 0..=u8::MAX {
         let exp = 63 - u32::from(value) % 64;
-        let proof = pow2_from_caps(Liar(value)).map(|p| p.exp());
-        assert_eq!(proof, (exp < 8).then_some(exp), "value {value}");
+        let proof = pow2_from_caps(Liar(value));
+        if exp < 8 {
+            assert_eq!(proof.map(|p| p.exp()), Some(exp), "value {value}");
+        } else {
+            // `exp()` on such a proof would be undefined behaviour.
+            assert!(proof.is_none(), "value {value}");
+        }
     }
 }
