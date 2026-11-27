@@ -420,7 +420,9 @@ c0nst::c0nst! {
 /// This does **not** duplicate `core::num::NonZero`: for the integer primitives
 /// [`NonZero`](Self::NonZero) *is* `core::num::NonZero<Self>`, with its real
 /// niche. (`core::num::NonZero<T>` is sealed to primitives, so a future bignum
-/// backend supplies its own non-zero type as the associated type instead.)
+/// backend supplies its own non-zero type as the associated type instead.
+/// `Option` of that type, and of a [`Positive`] over the backend, is tag-free
+/// only if the type has a niche of its own.)
 ///
 /// The value is recovered through the crate-owned const accessor
 /// [`nonzero_get`](Self::nonzero_get) rather than an `Into<Self>` bound:
@@ -524,9 +526,18 @@ div_nonzero_impl!(u8, u16, u32, u64, u128, usize);
 pub struct NonNegative<T>(T);
 
 /// Proof that a signed value is `> 0`.
+///
+/// Stored as its [`HasNonZero::NonZero`] form. For the primitives that form is
+/// `core::num::NonZero`, so `Option<Positive<T>>` is the size of `T`:
+///
+/// ```
+/// use const_num_traits::Positive;
+///
+/// assert_eq!(core::mem::size_of::<Option<Positive<i32>>>(), 4);
+/// ```
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Positive<T>(T);
+pub struct Positive<T: HasNonZero>(T::NonZero);
 
 macro_rules! sign_typestate_impl {
     ($($t:ty => $u:ty),+) => {$(
@@ -571,16 +582,23 @@ macro_rules! sign_typestate_impl {
             /// `Some` iff `value > 0`.
             #[inline]
             pub const fn new(value: $t) -> Option<Self> {
-                if value > 0 { Some(Positive(value)) } else { None }
+                match core::num::NonZero::new(value) {
+                    Some(nonzero) if value > 0 => Some(Positive(nonzero)),
+                    _ => None,
+                }
             }
             /// # Safety
             /// `value` must be `> 0`.
             #[inline]
-            pub const unsafe fn new_unchecked(value: $t) -> Self { Positive(value) }
+            pub const unsafe fn new_unchecked(value: $t) -> Self {
+                // SAFETY: the caller guarantees `value > 0`, hence non-zero.
+                Positive(unsafe { core::num::NonZero::new_unchecked(value) })
+            }
             /// The proven value.
             #[inline]
-            pub const fn get(self) -> $t { self.0 }
-            /// Zero-cost borrowed proof (repr(transparent) reinterpret).
+            pub const fn get(self) -> $t { self.0.get() }
+            /// Zero-cost borrowed proof (repr(transparent) reinterpret: a
+            /// positive `$t` is a valid `NonZero<$t>`).
             #[inline]
             pub fn from_ref(value: &$t) -> Option<&Self> {
                 if *value > 0 {
@@ -589,30 +607,26 @@ macro_rules! sign_typestate_impl {
             }
             /// Infallible cast to the unsigned counterpart.
             #[inline]
-            pub const fn to_unsigned(self) -> $u { self.0 as $u }
+            pub const fn to_unsigned(self) -> $u { self.get() as $u }
             /// `abs` is the identity on a positive value.
             #[inline]
-            pub const fn abs(self) -> $t { self.0 }
+            pub const fn abs(self) -> $t { self.get() }
             /// `isqrt` is total on a positive value.
             #[inline]
-            pub const fn isqrt(self) -> $t { self.0.isqrt() }
+            pub const fn isqrt(self) -> $t { self.get().isqrt() }
 
             // ── refinement lattice (cheap const-fn narrowings) ──
             /// `Positive ⊂ NonNegative`.
             #[inline]
             pub const fn into_nonnegative(self) -> NonNegative<$t> {
-                NonNegative(self.0)
+                NonNegative(self.get())
             }
-            /// `Positive ⊂ NonZero` — narrows to `core::num::NonZero` with no
-            /// recheck, so a `Positive` divisor can feed `DivNonZero` directly.
+            /// `Positive ⊂ NonZero`: the stored form, so no recheck.
             #[inline]
-            pub const fn into_nonzero(self) -> core::num::NonZero<$t> {
-                // SAFETY: value > 0, hence non-zero.
-                unsafe { core::num::NonZero::new_unchecked(self.0) }
-            }
+            pub const fn into_nonzero(self) -> core::num::NonZero<$t> { self.0 }
             /// `Positive ⊂ NonMin` (`> 0`, so `!= MIN`).
             #[inline]
-            pub const fn into_nonmin(self) -> NonMin<$t> { NonMin(self.0) }
+            pub const fn into_nonmin(self) -> NonMin<$t> { NonMin(self.get()) }
         }
 
         /// Checked construction by value; mirrors [`NonNegative::new`].
@@ -1025,7 +1039,11 @@ mod ct_constructors {
                 pub fn new_ct(value: $t) -> CtOption<Positive<$t>> {
                     let neg = Choice::from(((value >> (<$t>::BITS - 1)) & 1) as u8);
                     let zero = value.ct_is_zero();
-                    CtOption::new(Positive(value), !neg & !zero)
+                    let safe = value | (zero.unwrap_u8() as $t);
+                    // SAFETY: `safe` is `value`, or 1 when `value` is 0. A
+                    // `NonZero` holding 0 is UB even when `CtOption` masks it.
+                    let proof = Positive(unsafe { core::num::NonZero::new_unchecked(safe) });
+                    CtOption::new(proof, !neg & !zero)
                 }
             }
         )+};
