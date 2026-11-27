@@ -2,7 +2,8 @@
 //! formatting, and the `HasNonZero` bridge, checked exhaustively where the
 //! domain allows.
 
-use const_num_traits::{BitIndex, HasNonZero, PowerOfTwo};
+use const_num_traits::{BitIndex, HasNonZero, Positive, PowerOfTwo, TypestateError};
+use core::mem::size_of;
 
 /// A struct that holds both proofs and derives `PartialEq`, `Eq` and `Debug`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -141,4 +142,112 @@ fn signed_nonzero_ct_matches_checked_bridge() {
         )+};
     }
     edges!(i16, i32, i64, i128, isize);
+}
+
+// ─────────────────────────────── Positive ───────────────────────────────────
+
+// `Positive<T>` stores `NonZero<T>`, so `Option` of it needs no tag.
+const _: () = {
+    assert!(size_of::<Positive<i8>>() == 1);
+    assert!(size_of::<Option<Positive<i8>>>() == 1);
+    assert!(size_of::<Option<Positive<i16>>>() == 2);
+    assert!(size_of::<Option<Positive<i32>>>() == 4);
+    assert!(size_of::<Option<Positive<i64>>>() == 8);
+    assert!(size_of::<Option<Positive<i128>>>() == 16);
+    assert!(size_of::<Option<Positive<isize>>>() == size_of::<isize>());
+    assert!(size_of::<Result<Positive<i32>, TypestateError>>() == 4);
+};
+
+// The constructors stay `const` on stable.
+const FIVE: Option<Positive<i32>> = Positive::<i32>::new(5);
+const NONE: Option<Positive<i32>> = Positive::<i32>::new(0);
+// SAFETY: 7 > 0.
+const SEVEN: Positive<i64> = unsafe { Positive::<i64>::new_unchecked(7) };
+
+#[test]
+fn positive_const_constructors() {
+    assert_eq!(FIVE.map(Positive::<i32>::get), Some(5));
+    assert!(NONE.is_none());
+    assert_eq!(SEVEN.get(), 7);
+    assert_eq!(SEVEN.into_nonzero().get(), 7);
+}
+
+/// Every accessor and narrowing agrees with the plain value, for every value
+/// of the type that the step visits.
+macro_rules! check_positive {
+    ($t:ty, $u:ty, $values:expr) => {
+        for value in $values {
+            let proof = Positive::<$t>::new(value);
+            assert_eq!(proof.is_some(), value > 0, "new({value})");
+            assert_eq!(Positive::<$t>::try_from(value).ok(), proof);
+            assert_eq!(Positive::<$t>::from_ref(&value).copied(), proof);
+            let Some(p) = proof else { continue };
+            // SAFETY: `value > 0` on this branch.
+            assert_eq!(unsafe { Positive::<$t>::new_unchecked(value) }, p);
+            assert_eq!(p.get(), value);
+            assert_eq!(p.into_nonzero().get(), value);
+            assert_eq!(p.to_unsigned(), value as $u);
+            assert_eq!(p.abs(), value);
+            assert_eq!(p.isqrt(), value.isqrt());
+            assert_eq!(p.into_nonnegative().get(), value);
+            assert_eq!(p.into_nonmin().get(), value);
+            // The borrowed proof is the same memory, not a copy.
+            let borrowed = Positive::<$t>::from_ref(&value).unwrap();
+            assert!(core::ptr::eq(
+                borrowed as *const Positive<$t> as *const $t,
+                &value
+            ));
+        }
+    };
+}
+
+/// Exhaustive natively; a stride under Miri, which is slow.
+fn stride() -> usize {
+    if cfg!(miri) { 251 } else { 1 }
+}
+
+#[test]
+fn positive_exhaustive_narrow() {
+    check_positive!(
+        i8,
+        u8,
+        (i8::MIN..=i8::MAX).step_by(if cfg!(miri) { 7 } else { 1 })
+    );
+    check_positive!(i16, u16, (i16::MIN..=i16::MAX).step_by(stride()));
+}
+
+#[test]
+fn positive_edges_wide() {
+    macro_rules! edges {
+        ($($t:ty => $u:ty),+) => {$(
+            let edges = [<$t>::MIN, <$t>::MIN + 1, -2, -1, 0, 1, 2, <$t>::MAX - 1, <$t>::MAX];
+            check_positive!($t, $u, edges);
+        )+};
+    }
+    edges!(i32 => u32, i64 => u64, i128 => u128, isize => usize);
+}
+
+#[test]
+fn positive_formats_as_its_value() {
+    assert_eq!(
+        format!("{:?}", Positive::<i32>::new(7).unwrap()),
+        "Positive(7)"
+    );
+}
+
+#[cfg(feature = "ct")]
+#[test]
+fn positive_ct_matches_checked_constructor() {
+    for value in (i8::MIN..=i8::MAX).step_by(if cfg!(miri) { 3 } else { 1 }) {
+        let ct = Positive::<i8>::new_ct(value);
+        assert_eq!(bool::from(ct.is_some()), value > 0, "new_ct({value})");
+        assert_eq!(Option::<Positive<i8>>::from(ct), Positive::<i8>::new(value));
+    }
+    for value in [i128::MIN, -1, 0, 1, i128::MAX] {
+        let ct = Positive::<i128>::new_ct(value);
+        assert_eq!(
+            Option::<Positive<i128>>::from(ct),
+            Positive::<i128>::new(value)
+        );
+    }
 }
