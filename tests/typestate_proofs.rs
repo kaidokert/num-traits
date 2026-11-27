@@ -120,3 +120,25 @@ fn signed_nonzero_bridge_edges_wide() {
     }
     edges!(i32, i64, i128, isize);
 }
+
+/// The masked bridge agrees with `into_nonzero` for signed values, `MIN` and
+/// negatives included.
+#[cfg(feature = "ct")]
+#[test]
+fn signed_nonzero_ct_matches_checked_bridge() {
+    use const_num_traits::CtNonZero;
+
+    for value in (i8::MIN..=i8::MAX).step_by(if cfg!(miri) { 7 } else { 1 }) {
+        let ct = value.into_nonzero_ct();
+        assert_eq!(bool::from(ct.is_some()), value != 0, "{value}");
+        assert_eq!(Option::from(ct), value.into_nonzero(), "{value}");
+    }
+    macro_rules! edges {
+        ($($t:ty),+) => {$(
+            for value in [<$t>::MIN, -1, 0, 1, <$t>::MAX] {
+                assert_eq!(Option::from(value.into_nonzero_ct()), value.into_nonzero(), "{value}");
+            }
+        )+};
+    }
+    edges!(i16, i32, i64, i128, isize);
+}
