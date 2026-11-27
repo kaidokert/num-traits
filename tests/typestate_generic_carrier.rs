@@ -15,7 +15,8 @@
 //! `Div`) that nonetheless constructs every proof below.
 
 use const_num_traits::{
-    BitIndex, ConstOne, ConstZero, IsPowerOfTwo, Odd, One, Parity, PowerOfTwo, PrimBits, Zero,
+    BitIndex, BitPos8, BitPos16, ConstOne, ConstZero, HasBitPos, IsPowerOfTwo, Odd, One, Parity,
+    PowerOfTwo, PrimBits, Zero,
 };
 use core::ops::{Add, BitAnd, BitOr, BitXor, Mul, Not, Shl, Shr};
 
@@ -150,6 +151,10 @@ impl PrimBits for Carrier {
     }
 }
 
+impl HasBitPos for Carrier {
+    type BitPos = BitPos8;
+}
+
 impl IsPowerOfTwo for Carrier {
     fn is_power_of_two(self) -> bool {
         self.0.is_power_of_two()
@@ -173,10 +178,10 @@ impl Parity for Carrier {
 // API. If any of these stops resolving, a proof has regressed to primitive-only
 // construction.
 
-fn pow2_from_caps<T: IsPowerOfTwo + PrimBits>(v: T) -> Option<PowerOfTwo<T>> {
+fn pow2_from_caps<T: IsPowerOfTwo + PrimBits + HasBitPos>(v: T) -> Option<PowerOfTwo<T>> {
     PowerOfTwo::new_checked(v)
 }
-fn bitindex_from_caps<T: PrimBits>(i: u32) -> Option<BitIndex<T>> {
+fn bitindex_from_caps<T: PrimBits + HasBitPos>(i: u32) -> Option<BitIndex<T>> {
     BitIndex::<T>::new_checked(i)
 }
 fn odd_from_caps<T: Parity + Copy>(v: T) -> Option<Odd<T>> {
@@ -203,9 +208,9 @@ fn typestates_construct_from_non_primitive_carrier() {
 }
 
 /// `PowerOfTwo<T>` and `BitIndex<T>` compare and format whatever `T` is: this
-/// compiles only while those impls carry no bound on `T`.
+/// compiles only while those impls carry no bound on `T` beyond `HasBitPos`.
 #[allow(dead_code)]
-fn proofs_are_eq_and_debug_for_any_carrier<T>() {
+fn proofs_are_eq_and_debug_for_any_carrier<T: HasBitPos>() {
     fn has<X: Copy + Eq + core::fmt::Debug>() {}
     has::<PowerOfTwo<T>>();
     has::<BitIndex<T>>();
@@ -223,4 +228,145 @@ fn proofs_compare_over_a_carrier_without_partial_eq() {
         bitindex_from_caps::<Carrier>(5),
         bitindex_from_caps::<Carrier>(6)
     );
+}
+
+// ── a carrier wider than 128 bits ─────────────────────────────────────────────
+
+/// A 256-bit carrier, limbs little-endian. Only what `PrimBits` and
+/// `IsPowerOfTwo` need; the methods the proofs never call are `unreachable!`.
+#[derive(Copy, Clone, Debug)]
+struct Wide([u128; 2]);
+
+impl Wide {
+    fn bit(k: u32) -> Self {
+        if k < 128 {
+            Wide([1 << k, 0])
+        } else {
+            Wide([0, 1 << (k - 128)])
+        }
+    }
+}
+
+impl Not for Wide {
+    type Output = Self;
+    fn not(self) -> Self {
+        Wide([!self.0[0], !self.0[1]])
+    }
+}
+impl BitAnd for Wide {
+    type Output = Self;
+    fn bitand(self, r: Self) -> Self {
+        Wide([self.0[0] & r.0[0], self.0[1] & r.0[1]])
+    }
+}
+impl BitOr for Wide {
+    type Output = Self;
+    fn bitor(self, r: Self) -> Self {
+        Wide([self.0[0] | r.0[0], self.0[1] | r.0[1]])
+    }
+}
+impl BitXor for Wide {
+    type Output = Self;
+    fn bitxor(self, r: Self) -> Self {
+        Wide([self.0[0] ^ r.0[0], self.0[1] ^ r.0[1]])
+    }
+}
+impl Shl<usize> for Wide {
+    type Output = Self;
+    fn shl(self, _: usize) -> Self {
+        unreachable!("not used by the proofs")
+    }
+}
+impl Shr<usize> for Wide {
+    type Output = Self;
+    fn shr(self, _: usize) -> Self {
+        unreachable!("not used by the proofs")
+    }
+}
+impl ConstZero for Wide {
+    const ZERO: Self = Wide([0, 0]);
+}
+impl ConstOne for Wide {
+    const ONE: Self = Wide([1, 0]);
+}
+
+impl PrimBits for Wide {
+    fn count_ones(self) -> u32 {
+        self.0[0].count_ones() + self.0[1].count_ones()
+    }
+    fn count_zeros(self) -> u32 {
+        self.0[0].count_zeros() + self.0[1].count_zeros()
+    }
+    fn leading_zeros(self) -> u32 {
+        if self.0[1] != 0 {
+            self.0[1].leading_zeros()
+        } else {
+            128 + self.0[0].leading_zeros()
+        }
+    }
+    fn trailing_zeros(self) -> u32 {
+        if self.0[0] != 0 {
+            self.0[0].trailing_zeros()
+        } else {
+            128 + self.0[1].trailing_zeros()
+        }
+    }
+    fn rotate_left(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn rotate_right(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn signed_shl(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn signed_shr(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn unsigned_shl(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn unsigned_shr(self, _: u32) -> Self {
+        unreachable!()
+    }
+    fn swap_bytes(self) -> Self {
+        unreachable!()
+    }
+    fn from_be(_: Self) -> Self {
+        unreachable!()
+    }
+    fn from_le(_: Self) -> Self {
+        unreachable!()
+    }
+    fn to_be(self) -> Self {
+        unreachable!()
+    }
+    fn to_le(self) -> Self {
+        unreachable!()
+    }
+}
+
+impl HasBitPos for Wide {
+    type BitPos = BitPos16;
+}
+
+impl IsPowerOfTwo for Wide {
+    fn is_power_of_two(self) -> bool {
+        self.count_ones() == 1
+    }
+}
+
+/// A 256-bit carrier with two-byte positions proves every power of two and
+/// every index it has, and `Option` of either proof is still tag-free.
+#[test]
+fn wide_carrier_proves_every_position() {
+    for k in 0..256 {
+        assert_eq!(pow2_from_caps(Wide::bit(k)).map(|p| p.exp()), Some(k));
+        assert_eq!(bitindex_from_caps::<Wide>(k).map(|i| i.get()), Some(k));
+    }
+    assert!(bitindex_from_caps::<Wide>(256).is_none()); // == BITS
+    assert!(pow2_from_caps(Wide([3, 0])).is_none());
+    assert!(pow2_from_caps(Wide::ZERO).is_none());
+    assert_eq!(core::mem::size_of::<Option<PowerOfTwo<Wide>>>(), 2);
+    assert_eq!(core::mem::size_of::<Option<BitIndex<Wide>>>(), 2);
 }
